@@ -1,0 +1,24 @@
+# permissions for end users to edit rds.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rds-editor-role
+rules:
+- apiGroups:
+  - database.opentelekomcloud.com
+  resources:
+  - rds
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - database.opentelekomcloud.com
+  resources:
+  - rds/status
+  verbs:
+  - get

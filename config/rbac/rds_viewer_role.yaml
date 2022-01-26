@@ -1,0 +1,20 @@
+# permissions for end users to view rds.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rds-viewer-role
+rules:
+- apiGroups:
+  - database.opentelekomcloud.com
+  resources:
+  - rds
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - database.opentelekomcloud.com
+  resources:
+  - rds/status
+  verbs:
+  - get

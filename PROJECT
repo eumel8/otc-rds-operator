@@ -1,0 +1,19 @@
+domain: opentelekomcloud.com
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: otc-rds-operator
+repo: github.com/eumel8/otc-rds-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: opentelekomcloud.com
+  group: database
+  kind: Rds
+  path: github.com/eumel8/otc-rds-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"
