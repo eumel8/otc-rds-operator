@@ -16,7 +16,7 @@ Kubernetes operator for OTC RDS
 ## Installation
 
 ```bash
-helm upgrade -i rdsoperator ./chart
+helm -n rdsoperator upgrade -i rdsoperator chart --create-namespace
 ```
 
 ## Custom Resource Definitions (CRDs)
