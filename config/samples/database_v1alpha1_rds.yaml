@@ -1,6 +1,0 @@
-apiVersion: database.opentelekomcloud.com/v1alpha1
-kind: Rds
-metadata:
-  name: rds-sample
-spec:
-  # TODO(user): Add fields here
