@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: {{ $fullName }}
   labels:
-    {{ include "otc-rds-operator.labels" . | nindent 4 }}
+    {{- include "otc-rds-operator.labels" . | nindent 4 }}
 data:
   NAMESPACE: {{ .Release.Namespace }}
   NUM_WORKERS: {{ .Values.numWorkers | quote }}

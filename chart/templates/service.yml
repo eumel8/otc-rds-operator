@@ -6,12 +6,12 @@ kind: Service
 metadata:
   name: {{ $fullName }}-metrics
   labels:
-    {{ include "otc-rds-operator.labels" . | nindent 4 }}
+    {{- include "otc-rds-operator.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
     - port: {{ .Values.monitoring.port }}
       name: metrics
   selector:
-    {{ $selectorLabels | nindent 4 }}
+    {{- $selectorLabels | nindent 4 }}
 {{ end }}

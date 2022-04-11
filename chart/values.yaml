@@ -20,6 +20,16 @@ ha:
     retryPeriodSeconds: 2
   replicaCount: 3
 
+otc: {}
+# otc:
+#   auth-url: https://iam.eu-de.otc.t-systems.com:443/v3
+#   api-version: 3
+#   region: eu-de
+#   project-name: eu-de
+#   domain-name: OTC-EU-DE-000000000010000000001
+#   username: user
+#   password: password
+
 monitoring:
   enabled: true
   path: /metrics

@@ -7,14 +7,14 @@ kind: ServiceMonitor
 metadata:
   name: {{ $fullName }}
   namespace: {{ .namespace }}
-  {{ with .labels }}
+  {{- with .labels }}
   labels:
-    {{ toYaml . | nindent 4 }}
-  {{ end }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   selector:
       matchLabels:
-        {{ $selectorLabels | nindent 8 }}
+        {{- $selectorLabels | nindent 8 }}
   namespaceSelector:
     any: true
   endpoints:

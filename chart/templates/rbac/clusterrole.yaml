@@ -3,7 +3,7 @@ kind: ClusterRole
 metadata:
   name: {{ include "otc-rds-operator.fullname" . }}
   labels:
-    {{ include "otc-rds-operator.labels" . | nindent 4 }}
+    {{- include "otc-rds-operator.labels" . | nindent 4 }}
 rules:
   - apiGroups:
       - otc.mcsps.de
