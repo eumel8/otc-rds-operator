@@ -1,0 +1,17 @@
+{{ $fullName := include "otc-rds-operator.fullname" . }}
+{{ $selectorLabels := include "otc-rds-operator.selectorLabels" . }}
+{{ if .Values.monitoring.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-metrics
+  labels:
+    {{ include "otc-rds-operator.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.monitoring.port }}
+      name: metrics
+  selector:
+    {{ $selectorLabels | nindent 4 }}
+{{ end }}

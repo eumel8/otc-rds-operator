@@ -1,0 +1,21 @@
+apiVersion: otc.mcsps.de/v1alpha1
+kind: Rds
+metadata:
+  name: my-rds
+spec:
+  datastoretype: "MySQL"
+  datastoreversion: "8.0"
+  volumetype: "COMMON"
+  volumesize: 40
+  hamode: "Ha"
+  hareplicationmode: "semisync"
+  port: "3306"
+  password: "A12345678+"
+  backupstarttime: "01:00-02:00"
+  backupkeepdays: 10
+  flavorref: "rds.mysql.c2.xlarge.ha"
+  region: "eu-de"
+  availabilityzone: "eu-de-01,eu-de-02"
+  vpc: "golang"
+  subnet: "golang"
+  securitygroup: "golang"

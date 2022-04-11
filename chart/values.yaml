@@ -1,0 +1,47 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/eumel8/otc-rds-operator
+  pullPolicy: IfNotPresent
+  tag: otcrds
+
+env: production
+
+logLevel: info
+
+numWorkers: 4
+
+ha:
+  enabled: true
+  leaderElection:
+    leaseDurationSeconds: 15
+    renewDeadlineSeconds: 10
+    retryPeriodSeconds: 2
+  replicaCount: 3
+
+monitoring:
+  enabled: true
+  path: /metrics
+  port: 2112
+  namespace: cattle-monitoring-system
+  interval: 10s
+  labels:
+    release: monitoring
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities: {}
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+nodeSelector: {}

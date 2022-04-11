@@ -1,0 +1,6 @@
+bin/
+*.test
+*.out
+vendor/
+.env
+cover.*

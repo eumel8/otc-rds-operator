@@ -1,0 +1,40 @@
+{{ $fullName := include "otc-rds-operator.fullname" . }}
+{{ $selectorLabels := include "otc-rds-operator.selectorLabels" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{ include "otc-rds-operator.labels" . | nindent 4 }}
+spec:
+  {{ if .Values.ha.enabled}}
+  replicas: {{ .Values.ha.replicaCount }}
+  {{ end }}
+  selector:
+    matchLabels:
+      {{ $selectorLabels  | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{ $selectorLabels  | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $fullName }}
+      containers:
+        - name: {{ $fullName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{ with .Values.resources }}
+          resources:
+            {{ toYaml . | nindent 12 }}
+          {{ end }}
+          {{ with .Values.securityContext }}
+          securityContext:
+            {{ toYaml . | nindent 12 }}
+          {{ end }}
+          envFrom:
+            - configMapRef:
+                name: {{ $fullName }}
+      {{ with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 }}
+      {{ end }}
