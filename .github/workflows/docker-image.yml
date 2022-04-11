@@ -2,9 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ otcrds ]
+    branches: [ master ]
   pull_request:
-    branches: [ otcrds ]
+    branches: [ master ]
     
 env:
   IMAGE_NAME: otc-rds-operator
