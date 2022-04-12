@@ -1,6 +1,19 @@
 package controller
 
 import (
+	"fmt"
+	"net/http"
+	"os"
+
+	"github.com/gophercloud/utils/client"
+	"github.com/opentelekomcloud/gophertelekomcloud"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
+	"k8s.io/klog/v2"
+
 	rds "github.com/eumel8/otc-rds-operator/pkg/rds"
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -60,4 +73,196 @@ func createJobSpec(name, namespace, msg string) batchv1.JobSpec {
 			},
 		},
 	}
+}
+
+// rds resource part here
+func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
+	pages, err := groups.List(client, *opts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+	n, err := groups.ExtractGroups(pages)
+	if len(n) == 0 {
+		klog.Exitf("no secgroup found")
+	}
+
+	return &n[0], nil
+}
+
+func subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnets.Subnet, error) {
+	n, err := subnets.List(client, *opts)
+	if err != nil {
+		return nil, err
+	}
+	if len(n) == 0 {
+		klog.Exitf("no subnet found")
+	}
+
+	return &n[0], nil
+}
+
+func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, error) {
+	n, err := vpcs.List(client, *opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(n) == 0 {
+		klog.Exitf("no vpc found")
+	}
+
+	return &n[0], nil
+}
+
+func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
+	listOpts := instances.ListRdsInstanceOpts{
+		Id: rdsId,
+	}
+	allPages, err := instances.List(client, listOpts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := instances.ExtractRdsInstances(allPages)
+	if err != nil {
+		return nil, err
+	}
+	if len(n.Instances) == 0 {
+		return nil, nil
+	}
+	return &n.Instances[0], nil
+}
+
+func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
+
+	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
+	if err != nil {
+		klog.Exitf("error getting secgroup state: %v", err)
+	}
+
+	s, err := subnetGet(netclient1, &subnets.ListOpts{Name: newRds.Spec.Subnet})
+	if err != nil {
+		klog.Exitf("error getting subnet state: %v", err)
+	}
+
+	v, err := vpcGet(netclient1, &vpcs.ListOpts{Name: newRds.Spec.Vpc})
+	if err != nil {
+		klog.Exitf("error getting vpc state: %v", err)
+	}
+
+	createOpts := instances.CreateRdsOpts{
+		Name: newRds.Name,
+		Datastore: &instances.Datastore{
+			Type:    newRds.Spec.Datastoretype,
+			Version: newRds.Spec.Datastoreversion,
+		},
+		Ha: &instances.Ha{
+			Mode:            newRds.Spec.Hamode,
+			ReplicationMode: newRds.Spec.Hareplicationmode,
+		},
+		Port:     newRds.Spec.Port,
+		Password: newRds.Spec.Password,
+		BackupStrategy: &instances.BackupStrategy{
+			StartTime: newRds.Spec.Backupstarttime,
+			KeepDays:  newRds.Spec.Backupkeepdays,
+		},
+		FlavorRef: newRds.Spec.Flavorref,
+		Volume: &instances.Volume{
+			Type: newRds.Spec.Volumetype,
+			Size: newRds.Spec.Volumesize,
+		},
+		Region:           newRds.Spec.Region,
+		AvailabilityZone: newRds.Spec.Availabilityzone,
+		VpcId:            v.ID,
+		SubnetId:         s.ID,
+		SecurityGroupId:  g.ID,
+	}
+
+	createResult := instances.Create(client, createOpts)
+	r, err := createResult.Extract()
+	if err != nil {
+		klog.Exitf("error creating rds instance: %v", err)
+	}
+	jobResponse, err := createResult.ExtractJobResponse()
+	if err != nil {
+		klog.Exitf("error creating rds job: %v", err)
+	}
+
+	if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+		klog.Exitf("error getting rds job: %v", err)
+	}
+
+	rdsInstance, err := rdsGet(client, r.Instance.Id)
+
+	fmt.Println(rdsInstance.PrivateIps[0])
+	if err != nil {
+		klog.Exitf("error getting rds state: %v", err)
+	}
+
+	return nil
+}
+
+func getProvider() *golangsdk.ProviderClient {
+	if os.Getenv("OS_AUTH_URL") == "" {
+		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
+	}
+
+	if os.Getenv("OS_IDENTITY_API_VERSION") == "" {
+		os.Setenv("OS_IDENTITY_API_VERSION", "3")
+	}
+
+	if os.Getenv("OS_REGION_NAME") == "" {
+		os.Setenv("OS_REGION_NAME", "eu-de")
+	}
+
+	if os.Getenv("OS_PROJECT_NAME") == "" {
+		os.Setenv("OS_PROJECT_NAME", "eu-de")
+	}
+
+	opts, err := openstack.AuthOptionsFromEnv()
+	if err != nil {
+		klog.Exitf("error getting auth from env: %v", err)
+	}
+
+	provider, err := openstack.AuthenticatedClient(opts)
+	if err != nil {
+		klog.Exitf("unable to initialize openstack client: %v", err)
+	}
+
+	if os.Getenv("OS_DEBUG") != "" {
+		provider.HTTPClient = http.Client{
+			Transport: &client.RoundTripper{
+				Rt:     &http.Transport{},
+				Logger: &client.DefaultLogger{},
+			},
+		}
+	}
+	return provider
+}
+
+func Create() {
+	provider := getProvider()
+
+	network1, err := openstack.NewNetworkV1(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		klog.Exitf("unable to initialize network v1 client: %v", err)
+		return
+	}
+	network2, err := openstack.NewNetworkV2(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		klog.Exitf("unable to initialize network v2 client: %v", err)
+		return
+	}
+	rds, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		klog.Exitf("unable to initialize rds client: %v", err)
+		return
+	}
+
+	rdsCreate(network1, network2, rds, &instances.CreateRdsOpts{}, &rdsv1alpha1.Rds{})
+	if err != nil {
+		klog.Exitf("rds creating failed: %v", err)
+		return
+	}
+	return
 }

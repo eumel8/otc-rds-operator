@@ -13,7 +13,6 @@ type Rds struct {
 }
 
 type RdsSpec struct {
-	Message           string `json:"message"`
 	Datastoretype     string `json:"datastoretype"`
 	Datastoreversion  string `json:"datastoreversion"`
 	Volumetype        string `json:"volumetype"`
