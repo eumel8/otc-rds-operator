@@ -240,7 +240,7 @@ func getProvider() *golangsdk.ProviderClient {
 	return provider
 }
 
-func Create() {
+func Create(newRds *rdsv1alpha1.Rds) {
 	provider := getProvider()
 
 	network1, err := openstack.NewNetworkV1(provider, golangsdk.EndpointOpts{})
@@ -253,13 +253,14 @@ func Create() {
 		klog.Exitf("unable to initialize network v2 client: %v", err)
 		return
 	}
-	rds, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
+	rdsapi, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
 	if err != nil {
 		klog.Exitf("unable to initialize rds client: %v", err)
 		return
 	}
 
-	rdsCreate(network1, network2, rds, &instances.CreateRdsOpts{}, &rdsv1alpha1.Rds{})
+	rdsCreate(network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
+	// rdsCreate(network1, network2, rdsapi, &instances.CreateRdsOpts{}, &rdsv1alpha1.Rds{})
 	if err != nil {
 		klog.Exitf("rds creating failed: %v", err)
 		return
