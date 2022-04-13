@@ -20,6 +20,9 @@ ha:
     retryPeriodSeconds: 2
   replicaCount: 3
 
+# addEnv:
+#   OS_DEBUG: 1
+
 otc: {}
 # otc:
 #   auth_url: https://iam.eu-de.otc.t-systems.com:443/v3
