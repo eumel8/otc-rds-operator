@@ -9,9 +9,9 @@ Kubernetes operator for OTC RDS
 
 ## Versioning 
 
-|Rds|Job|CronJob|Lease|Kubernetes|
-|----|-------------|---|-------|-----|----------|
-|v1alpha1|v1|v1|v1|v1.21.x|
+|Rds      | Job | CronJob | Lease | Kubernetes |
+|---------|-----|---------|-------|------------|
+|v1alpha1 | v1  | v1      | v1    | v1.21.x    |
 
 ## Installation
 
