@@ -25,7 +25,7 @@ type RdsSpec struct {
 	Backupkeepdays    int    `json:"backupkeepdays"`
 	Flavorref         string `json:"flavorref"`
 	Region            string `json:"region"`
-	Availabilityzone  string `json:"Availabilityzone"`
+	Availabilityzone  string `json:"availabilityzone"`
 	Vpc               string `json:"vpc"`
 	Subnet            string `json:"subnet"`
 	Securitygroup     string `json:"securitygroup"`
