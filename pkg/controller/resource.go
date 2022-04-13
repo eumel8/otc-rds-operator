@@ -202,7 +202,7 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 	return nil
 }
 
-func getProvider() *golangsdk.ProviderClient {
+func getProvider() (*golangsdk.ProviderClient,error) {
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
 	}
@@ -221,12 +221,12 @@ func getProvider() *golangsdk.ProviderClient {
 
 	opts, err := openstack.AuthOptionsFromEnv()
 	if err != nil {
-		klog.Exitf("error getting auth from env: %v", err)
+		return nil,fmt.Errorf("error getting auth from env: %v", err)
 	}
 
 	provider, err := openstack.AuthenticatedClient(opts)
 	if err != nil {
-		klog.Exitf("unable to initialize openstack client: %v", err)
+		return nil,fmt.Errorf("unable to initialize openstack client: %v", err)
 	}
 
 	if os.Getenv("OS_DEBUG") != "" {
@@ -237,33 +237,30 @@ func getProvider() *golangsdk.ProviderClient {
 			},
 		}
 	}
-	return provider
+	return provider,nil
 }
 
-func Create(newRds *rdsv1alpha1.Rds) {
-	provider := getProvider()
-
+func Create(newRds *rdsv1alpha1.Rds) error {
+	provider,err := getProvider()
+	if err != nil {
+		return fmt.Errorf("unable to initialize provider: %v", err)
+	}
 	network1, err := openstack.NewNetworkV1(provider, golangsdk.EndpointOpts{})
 	if err != nil {
-		klog.Exitf("unable to initialize network v1 client: %v", err)
-		return
+		return fmt.Errorf("unable to initialize network v1 client: %v", err)
 	}
 	network2, err := openstack.NewNetworkV2(provider, golangsdk.EndpointOpts{})
 	if err != nil {
-		klog.Exitf("unable to initialize network v2 client: %v", err)
-		return
+		return fmt.Errorf("unable to initialize network v2 client: %v", err)
 	}
 	rdsapi, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
 	if err != nil {
-		klog.Exitf("unable to initialize rds client: %v", err)
-		return
+		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
 	rdsCreate(network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
-	// rdsCreate(network1, network2, rdsapi, &instances.CreateRdsOpts{}, &rdsv1alpha1.Rds{})
 	if err != nil {
-		klog.Exitf("rds creating failed: %v", err)
-		return
+		return fmt.Errorf("rds creating failed: %v", err)
 	}
-	return
+	return nil
 }
