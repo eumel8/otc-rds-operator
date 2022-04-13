@@ -28,3 +28,5 @@ kubectl apply -f ./manifests/examples/my-rds.yml
 ```
 
 ## Credits
+
+@mmontes11 https://github.com/mmontes11/echoperator
