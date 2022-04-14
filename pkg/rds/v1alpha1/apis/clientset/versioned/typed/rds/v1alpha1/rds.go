@@ -100,6 +100,7 @@ func (c *rdss) Create(ctx context.Context, rds *v1alpha1.Rds, opts v1.CreateOpti
 		Body(rds).
 		Do(ctx).
 		Into(result)
+// HERE we do the otc api calls from resource.go
 	return
 }
 

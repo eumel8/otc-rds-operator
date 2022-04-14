@@ -7,8 +7,6 @@ import (
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/cache"
-
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const maxRetries = 3
@@ -55,24 +53,8 @@ func (c *Controller) processEvent(ctx context.Context, obj interface{}) error {
 }
 
 func (c *Controller) processAddRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
-	rdsresult := Create(rds)
-	/*
-	 job := createJob(rds, c.namespace)
-	exists, err := resourceExists(job, c.jobInformer.GetIndexer())
-	if err != nil {
-		return fmt.Errorf("error checking job existence %v", err)
-	}
-	if exists {
-		c.logger.Debug("job already exists, skipping")
-		return nil
-	}
-
-	_, err = c.kubeClientSet.BatchV1().
-		Jobs(c.namespace).
-		Create(ctx, job, metav1.CreateOptions{})
+	err := Create(rds)
 	return err
-	*/
-	return rdsresult
 }
 
 func resourceExists(obj interface{}, indexer cache.Indexer) (bool, error) {
