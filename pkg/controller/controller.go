@@ -83,6 +83,19 @@ func (c *Controller) addRds(obj interface{}) {
 	})
 }
 
+func (c *Controller) delRds(obj interface{}) {
+	c.logger.Debug("delete rds")
+	rds, ok := obj.(*rdsv1alpha1.Rds)
+	if !ok {
+		c.logger.Errorf("unexpected object %v", obj)
+		return
+	}
+	c.queue.Add(event{
+		eventType: delRds,
+		newObj:    rds.DeepCopy(),
+	})
+}
+
 func New(
 	kubeClientSet kubernetes.Interface,
 	rdsClientSet rdsv1alpha1clientset.Interface,
