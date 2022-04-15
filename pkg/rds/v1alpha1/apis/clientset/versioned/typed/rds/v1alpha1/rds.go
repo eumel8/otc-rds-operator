@@ -85,6 +85,7 @@ func (c *rdss) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface,
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
 	}
 	opts.Watch = true
+	fmt.Println("I am Watch alpha1")
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -112,6 +113,7 @@ func (c *rdss) Create(ctx context.Context, rds *v1alpha1.Rds, opts v1.CreateOpti
 // Update takes the representation of a rds and updates it. Returns the server's representation of the rds, and an error, if there is any.
 func (c *rdss) Update(ctx context.Context, rds *v1alpha1.Rds, opts v1.UpdateOptions) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
+	fmt.Println("I am Update alpha1")
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -125,6 +127,7 @@ func (c *rdss) Update(ctx context.Context, rds *v1alpha1.Rds, opts v1.UpdateOpti
 
 // Delete takes name of the rds and deletes it. Returns an error if one occurs.
 func (c *rdss) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+	fmt.Println("I am Delete alpha1")
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -153,6 +156,7 @@ func (c *rdss) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, list
 // Patch applies the patch and returns the patched rds.
 func (c *rdss) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
+	fmt.Println("I am Patch alpha1")
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("rdss").
