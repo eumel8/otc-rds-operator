@@ -117,7 +117,7 @@ func New(
 	ctrl := &Controller{
 		kubeClientSet: kubeClientSet,
 
-		// rdsInformer: rdsInformer,
+		rdsInformer: rdsInformer,
 		jobInformer: jobInformer,
 
 		queue: queue,
