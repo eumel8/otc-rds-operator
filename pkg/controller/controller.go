@@ -104,7 +104,7 @@ func New(
 	ctrl := &Controller{
 		kubeClientSet: kubeClientSet,
 
-		rdsInformer: rdsInformer,
+		// rdsInformer: rdsInformer,
 		jobInformer: jobInformer,
 
 		queue: queue,
@@ -116,6 +116,7 @@ func New(
 
 	rdsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: ctrl.addRds,
+		DelFunc: ctrl.delRds,
 	})
 
 	return ctrl
