@@ -53,8 +53,10 @@ func (c *Controller) processEvent(ctx context.Context, obj interface{}) error {
 }
 
 func (c *Controller) processAddRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
-	err := Create(rds)
-	return err
+	// err := Create(rds)
+	fmt.Println("I am Ok here")
+	return nil
+	// return err
 }
 
 func resourceExists(obj interface{}, indexer cache.Indexer) (bool, error) {
