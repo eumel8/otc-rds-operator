@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"fmt"
+
 	v1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	"github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
@@ -17,6 +19,7 @@ type McspsV1alpha1Client struct {
 }
 
 func (c *McspsV1alpha1Client) Rdss(namespace string) RdsInterface {
+	fmt.Println("I am Rdss here")
 	return newRdss(c, namespace)
 }
 
