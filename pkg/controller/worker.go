@@ -48,6 +48,8 @@ func (c *Controller) processEvent(ctx context.Context, obj interface{}) error {
 	switch event.eventType {
 	case addRds:
 		return c.processAddRds(ctx, event.newObj.(*rdsv1alpha1.Rds))
+	case delRds:
+		return c.processDelRds(ctx, event.newObj.(*rdsv1alpha1.Rds))
 	}
 	return nil
 }
@@ -55,6 +57,13 @@ func (c *Controller) processEvent(ctx context.Context, obj interface{}) error {
 func (c *Controller) processAddRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
 	// err := Create(rds)
 	fmt.Println("I am Ok here")
+	return nil
+	// return err
+}
+
+func (c *Controller) processDelRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
+	// err := Create(rds)
+	fmt.Println("I am Delete here")
 	return nil
 	// return err
 }
