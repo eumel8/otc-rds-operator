@@ -115,8 +115,8 @@ func New(
 	}
 
 	rdsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: ctrl.addRds,
-		DelFunc: ctrl.delRds,
+		AddFunc:    ctrl.addRds,
+		DeleteFunc: ctrl.delRds,
 	})
 
 	return ctrl
