@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	v1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
@@ -48,6 +49,7 @@ func newRdss(c *McspsV1alpha1Client, namespace string) *rdss {
 // Get takes name of the rds, and returns the corresponding rds object, and an error if there is any.
 func (c *rdss) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
+	fmt.Println("I am Get alpha1")
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -65,6 +67,7 @@ func (c *rdss) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
 	}
 	result = &v1alpha1.RdsList{}
+	fmt.Println("I am List alpha1")
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -93,6 +96,7 @@ func (c *rdss) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface,
 // Create takes the representation of a rds and creates it.  Returns the server's representation of the rds, and an error, if there is any.
 func (c *rdss) Create(ctx context.Context, rds *v1alpha1.Rds, opts v1.CreateOptions) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
+	fmt.Println("I am Create alpha1")
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("rdss").
