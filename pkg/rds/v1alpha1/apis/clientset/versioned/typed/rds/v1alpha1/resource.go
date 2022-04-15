@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/gophercloud/utils/client"
-	"github.com/opentelekomcloud/gophertelekomcloud"
+	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
@@ -183,7 +183,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 	return provider, nil
 }
 
-func Create(newRds *rdsv1alpha1.Rds) error {
+func CreateRds(newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
