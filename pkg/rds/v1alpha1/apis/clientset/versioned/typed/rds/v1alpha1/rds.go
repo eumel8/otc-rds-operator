@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	v1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
@@ -49,7 +48,6 @@ func newRdss(c *McspsV1alpha1Client, namespace string) *rdss {
 // Get takes name of the rds, and returns the corresponding rds object, and an error if there is any.
 func (c *rdss) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
-	fmt.Println("I am Get alpha1")
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -67,7 +65,6 @@ func (c *rdss) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
 	}
 	result = &v1alpha1.RdsList{}
-	fmt.Println("I am List alpha1")
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -85,7 +82,6 @@ func (c *rdss) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface,
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
 	}
 	opts.Watch = true
-	fmt.Println("I am Watch alpha1")
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -97,7 +93,6 @@ func (c *rdss) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface,
 // Create takes the representation of a rds and creates it.  Returns the server's representation of the rds, and an error, if there is any.
 func (c *rdss) Create(ctx context.Context, rds *v1alpha1.Rds, opts v1.CreateOptions) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
-	fmt.Println("I am Create alpha1")
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -105,15 +100,12 @@ func (c *rdss) Create(ctx context.Context, rds *v1alpha1.Rds, opts v1.CreateOpti
 		Body(rds).
 		Do(ctx).
 		Into(result)
-		// HERE we do the otc api calls from resource.go
-	err = CreateRds(rds)
 	return
 }
 
 // Update takes the representation of a rds and updates it. Returns the server's representation of the rds, and an error, if there is any.
 func (c *rdss) Update(ctx context.Context, rds *v1alpha1.Rds, opts v1.UpdateOptions) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
-	fmt.Println("I am Update alpha1")
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -127,7 +119,6 @@ func (c *rdss) Update(ctx context.Context, rds *v1alpha1.Rds, opts v1.UpdateOpti
 
 // Delete takes name of the rds and deletes it. Returns an error if one occurs.
 func (c *rdss) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	fmt.Println("I am Delete alpha1")
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("rdss").
@@ -156,7 +147,6 @@ func (c *rdss) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, list
 // Patch applies the patch and returns the patched rds.
 func (c *rdss) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Rds, err error) {
 	result = &v1alpha1.Rds{}
-	fmt.Println("I am Patch alpha1")
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("rdss").

@@ -35,6 +35,8 @@ spec:
                   type: string
                 hareplicationmode:
                   type: string
+                id:
+                  type: string
                 port:
                   type: string
                 password:

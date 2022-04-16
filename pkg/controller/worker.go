@@ -50,22 +50,36 @@ func (c *Controller) processEvent(ctx context.Context, obj interface{}) error {
 		return c.processAddRds(ctx, event.newObj.(*rdsv1alpha1.Rds))
 	case delRds:
 		return c.processDelRds(ctx, event.newObj.(*rdsv1alpha1.Rds))
+	case updateRds:
+		return c.processUpdateRds(
+			ctx,
+			event.oldObj.(*rdsv1alpha1.Rds),
+			event.newObj.(*rdsv1alpha1.Rds),
+		)
 	}
 	return nil
 }
 
 func (c *Controller) processAddRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
-	// err := Create(rds)
-	fmt.Println("I am Ok here")
-	return nil
-	// return err
+	err := Create(rds)
+	return err
 }
 
 func (c *Controller) processDelRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
-	// err := Create(rds)
-	fmt.Println("I am Delete here")
-	return nil
-	// return err
+	err := Delete(rds)
+	return err
+}
+
+func (c *Controller) processUpdateRds(
+	ctx context.Context,
+	oldRds, newRds *rdsv1alpha1.Rds,
+) error {
+	if !oldRds.HasChanged(newRds) {
+		c.logger.Debug("rds has not changed, skipping")
+		return nil
+	}
+	err := Update(newRds)
+	return err
 }
 
 func resourceExists(obj interface{}, indexer cache.Indexer) (bool, error) {

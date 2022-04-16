@@ -96,6 +96,25 @@ func (c *Controller) delRds(obj interface{}) {
 	})
 }
 
+func (c *Controller) updateRds(oldObj, newObj interface{}) {
+	c.logger.Debug("updating rds")
+	oldRds, ok := oldObj.(*rdsv1alpha1.Rds)
+	if !ok {
+		c.logger.Errorf("unexpected new object %v", newObj)
+		return
+	}
+	rds, ok := newObj.(*rdsv1alpha1.Rds)
+	if !ok {
+		c.logger.Errorf("unexpected new object %v", newObj)
+		return
+	}
+	c.queue.Add(event{
+		eventType: updateRds,
+		oldObj:    oldRds.DeepCopy(),
+		newObj:    rds.DeepCopy(),
+	})
+}
+
 func New(
 	kubeClientSet kubernetes.Interface,
 	rdsClientSet rdsv1alpha1clientset.Interface,
@@ -130,6 +149,7 @@ func New(
 	rdsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    ctrl.addRds,
 		DeleteFunc: ctrl.delRds,
+		UpdateFunc: ctrl.updateRds,
 	})
 
 	return ctrl

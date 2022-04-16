@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/gophercloud/utils/client"
-	"github.com/opentelekomcloud/gophertelekomcloud"
+	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
@@ -202,6 +202,77 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 	return nil
 }
 
+func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
+	/*
+		createResult := instances.Create(client, createOpts)
+		r, err := createResult.Extract()
+		if err != nil {
+			klog.Exitf("error creating rds instance: %v", err)
+		}
+		rdsInstance, err := rdsGet(client, r.Instance.Id)
+
+		fmt.Println(rdsInstance.PrivateIps[0])
+		if err != nil {
+			klog.Exitf("error getting rds state: %v", err)
+		}
+	*/
+	return nil
+}
+
+func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
+	/*
+		createOpts := instances.CreateRdsOpts{
+			Name: newRds.Name,
+			Datastore: &instances.Datastore{
+				Type:    newRds.Spec.Datastoretype,
+				Version: newRds.Spec.Datastoreversion,
+			},
+			Ha: &instances.Ha{
+				Mode:            newRds.Spec.Hamode,
+				ReplicationMode: newRds.Spec.Hareplicationmode,
+			},
+			Port:     newRds.Spec.Port,
+			Password: newRds.Spec.Password,
+			BackupStrategy: &instances.BackupStrategy{
+				StartTime: newRds.Spec.Backupstarttime,
+				KeepDays:  newRds.Spec.Backupkeepdays,
+			},
+			FlavorRef: newRds.Spec.Flavorref,
+			Volume: &instances.Volume{
+				Type: newRds.Spec.Volumetype,
+				Size: newRds.Spec.Volumesize,
+			},
+			Region:           newRds.Spec.Region,
+			AvailabilityZone: newRds.Spec.Availabilityzone,
+			VpcId:            v.ID,
+			SubnetId:         s.ID,
+			SecurityGroupId:  g.ID,
+		}
+
+		createResult := instances.Create(client, createOpts)
+		r, err := createResult.Extract()
+		if err != nil {
+			klog.Exitf("error creating rds instance: %v", err)
+		}
+		jobResponse, err := createResult.ExtractJobResponse()
+		if err != nil {
+			klog.Exitf("error creating rds job: %v", err)
+		}
+
+		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+			klog.Exitf("error getting rds job: %v", err)
+		}
+
+		rdsInstance, err := rdsGet(client, r.Instance.Id)
+
+		fmt.Println(rdsInstance.PrivateIps[0])
+		if err != nil {
+			klog.Exitf("error getting rds state: %v", err)
+		}
+	*/
+	return nil
+}
+
 func getProvider() (*golangsdk.ProviderClient, error) {
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
@@ -261,6 +332,40 @@ func Create(newRds *rdsv1alpha1.Rds) error {
 	rdsCreate(network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
 	if err != nil {
 		return fmt.Errorf("rds creating failed: %v", err)
+	}
+	return nil
+}
+
+func Delete(newRds *rdsv1alpha1.Rds) error {
+	provider, err := getProvider()
+	if err != nil {
+		return fmt.Errorf("unable to initialize provider: %v", err)
+	}
+	rdsapi, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		return fmt.Errorf("unable to initialize rds client: %v", err)
+	}
+
+	rdsDelete(rdsapi, newRds)
+	if err != nil {
+		return fmt.Errorf("rds delete failed: %v", err)
+	}
+	return nil
+}
+
+func Update(newRds *rdsv1alpha1.Rds) error {
+	provider, err := getProvider()
+	if err != nil {
+		return fmt.Errorf("unable to initialize provider: %v", err)
+	}
+	rdsapi, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		return fmt.Errorf("unable to initialize rds client: %v", err)
+	}
+
+	rdsUpdate(rdsapi, &instances.CreateRdsOpts{}, newRds)
+	if err != nil {
+		return fmt.Errorf("rds update failed: %v", err)
 	}
 	return nil
 }

@@ -19,6 +19,7 @@ type RdsSpec struct {
 	Volumesize        int    `json:"volumesize"`
 	Hamode            string `json:"hamode"`
 	Hareplicationmode string `json:"hareplicationmode"`
+	Id                string `json:"id"`
 	Port              string `json:"port"`
 	Password          string `json:"password"`
 	Backupstarttime   string `json:"backupstarttime"`
@@ -36,4 +37,8 @@ type RdsList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 	Items           []Rds `json:"items"`
+}
+
+func (e *Rds) HasChanged(other *Rds) bool {
+	return e.Spec.Flavorref != other.Spec.Flavorref || e.Spec.Volumesize != other.Spec.Volumesize
 }
