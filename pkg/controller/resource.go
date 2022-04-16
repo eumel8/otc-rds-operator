@@ -203,6 +203,7 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 }
 
 func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
+	fmt.Println("enter resource delete")
 	/*
 		createResult := instances.Create(client, createOpts)
 		r, err := createResult.Extract()
@@ -220,6 +221,7 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 }
 
 func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
+	fmt.Println("enter resource update")
 	/*
 		createOpts := instances.CreateRdsOpts{
 			Name: newRds.Name,
