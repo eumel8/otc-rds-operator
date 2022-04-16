@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
+	// rdsv1alpha1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned/typed/rds/v1alpha1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/cache"
 )
@@ -78,6 +79,9 @@ func (c *Controller) processUpdateRds(
 		c.logger.Debug("rds has not changed, skipping")
 		return nil
 	}
+	// rdsv1alpha1.Update(ctx, newRds, "")
+	newObj := newRds.DeepCopy()
+	fmt.Println(newObj)
 	err := Update(newRds)
 	return err
 }
