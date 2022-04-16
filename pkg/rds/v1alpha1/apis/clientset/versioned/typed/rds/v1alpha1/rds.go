@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	v1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
@@ -105,6 +106,7 @@ func (c *rdss) Create(ctx context.Context, rds *v1alpha1.Rds, opts v1.CreateOpti
 
 // Update takes the representation of a rds and updates it. Returns the server's representation of the rds, and an error, if there is any.
 func (c *rdss) Update(ctx context.Context, rds *v1alpha1.Rds, opts v1.UpdateOptions) (result *v1alpha1.Rds, err error) {
+	fmt.Println("enter alpha1 update")
 	result = &v1alpha1.Rds{}
 	err = c.client.Put().
 		Namespace(c.ns).
