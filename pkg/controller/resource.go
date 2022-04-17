@@ -141,7 +141,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	var restConfig *rest.Config
 	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
-		panic(fmt.Errorf("error getting rdsclientset %v", err))
+		klog.Exitf("error creating rdsclientset")
 	}
 	fmt.Println(rdsclientset)
 	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
