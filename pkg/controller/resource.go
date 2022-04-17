@@ -138,6 +138,10 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds, namespace string) error {
 
+	if newRds.Status.Id != "" {
+		klog.Exitf("rds already exists %v", newRds.Status.Id)
+	}
+
 	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
 	if err != nil {
 		klog.Exitf("error getting secgroup state: %v", err)
