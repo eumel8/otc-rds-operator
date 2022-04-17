@@ -194,8 +194,9 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
 	newRds.Spec.Id = r.Instance.Id
-	newRds.DeepCopy()
+	newObj := newRds.DeepCopy()
 
+	fmt.Println(newObj)
 	fmt.Println(rdsInstance.PrivateIps[0])
 	if err != nil {
 		klog.Exitf("error getting rds state: %v", err)
