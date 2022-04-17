@@ -138,7 +138,11 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 
-	var restConfig *rest.Config
+	//var restConfig *rest.Config
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		klog.Exitf("error init incluster config")
+	}
 	// rdsclientset, err := rdsv1alpha1clientset.Interface
 	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
