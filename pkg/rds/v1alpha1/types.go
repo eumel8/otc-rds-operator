@@ -9,7 +9,14 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type Rds struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              RdsSpec `json:"spec"`
+	Spec              RdsSpec   `json:"spec"`
+	Status            RdsStatus `json:"status"`
+}
+
+type RdsStatus struct {
+	Id     string `json:"id"`
+	Ip     string `json:"ip"`
+	Status string `json:"status"`
 }
 
 type RdsSpec struct {

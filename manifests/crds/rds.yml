@@ -75,3 +75,12 @@ spec:
                 - vpc
                 - subnet
                 - securitygroup
+          status:
+            type: object
+            properties:
+              id:
+                type: string
+              ip:
+                type: string
+              status:
+                type: string

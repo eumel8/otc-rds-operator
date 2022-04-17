@@ -148,6 +148,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	//listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
 	newRds.Spec.Id = "00001"
+	newRds.Status.Ip = "127.0.0.2"
 	newObj := newRds.DeepCopy()
 	updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newObj, metav1.UpdateOptions{})
 	if err != nil {
