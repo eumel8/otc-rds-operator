@@ -136,26 +136,7 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 	return &n.Instances[0], nil
 }
 
-func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
-
-	restConfig, err := rest.InClusterConfig()
-	if err != nil {
-		klog.Exitf("error init incluster config")
-	}
-	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	if err != nil {
-		klog.Exitf("error creating rdsclientset")
-	}
-	//listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
-	newRds.Spec.Id = "00001"
-	newRds.Status.Ip = "127.0.0.2"
-	newObj := newRds.DeepCopy()
-	updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newObj, metav1.UpdateOptions{})
-	if err != nil {
-		klog.Exitf("error update rds: %v", err)
-	}
-	fmt.Println(updateRds)
-	klog.Exitf("all okay")
+func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds, namespace string) error {
 
 	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
 	if err != nil {
@@ -215,15 +196,25 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
-	newRds.Spec.Id = r.Instance.Id
-	// newObj := newRds.DeepCopy()
+	newRds.Status.Id = r.Instance.Id
+	newRds.Status.Ip = rdsInstance.PrivateIps[0]
+	newRds.Status.Status = r.Instance.Status
 
-	fmt.Println(newObj)
-	fmt.Println(rdsInstance.PrivateIps[0])
+	restConfig, err := rest.InClusterConfig()
 	if err != nil {
-		klog.Exitf("error getting rds state: %v", err)
+		klog.Exitf("error init incluster config")
 	}
-
+	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	if err != nil {
+		klog.Exitf("error creating rdsclientset")
+	}
+	newObj := newRds.DeepCopy()
+	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
+	// updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newObj, metav1.UpdateOptions{})
+	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+	if err != nil {
+		klog.Exitf("error update rds: %v", err)
+	}
 	return nil
 }
 
@@ -338,7 +329,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 	return provider, nil
 }
 
-func Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
+func Create(ctx context.Context, newRds *rdsv1alpha1.Rds, namespace string) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -356,7 +347,7 @@ func Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsCreate(ctx, network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
+	rdsCreate(ctx, network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds, namespace)
 	if err != nil {
 		return fmt.Errorf("rds creating failed: %v", err)
 	}
