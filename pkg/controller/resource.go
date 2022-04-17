@@ -139,12 +139,13 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 
 	var restConfig *rest.Config
-	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	// rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	_,, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
 		klog.Exitf("error creating rdsclientset")
 	}
 	klog.Exitf("all okay")
-	fmt.Println(rdsclientset)
+	// fmt.Println(rdsclientset)
 	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
 	// fmt.Println(listRds)
 
