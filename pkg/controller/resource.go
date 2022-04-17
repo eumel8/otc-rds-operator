@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,10 +13,12 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	rds "github.com/eumel8/otc-rds-operator/pkg/rds"
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
+	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -195,6 +198,26 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
 	newRds.Spec.Id = r.Instance.Id
 	newObj := newRds.DeepCopy()
+	var restConfig *rest.Config
+	if err != nil {
+		panic(fmt.Errorf("error getting config %v", err))
+	}
+	rdsclientset, _ := rdsv1alpha1clientset.NewForConfig(restConfig)
+	listRds, _ := rdsclientset.McspsV1alpha1().Rdss("").List(context.TODO(), metav1.ListOptions{})
+	fmt.Println(listRds)
+	/* bastel
+	rdsClientSet := rdsv1alpha1clientset.New()
+	rdsClientSet.Update(newObj)
+	req := rdsv1alpha1clientset.v1alpha1().RESTClient().Post().Resource("rdss").Name(r.Instance.Name).Namespace(namespace)
+	.SubResource("exec").VersionedParams(&core.PodExecOptions{
+		Command: cmd,
+		Stdin:   true,
+		Stdout:  true,
+		Stderr:  true,
+	}, scheme.ParameterCodec)
+
+	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	*/
 
 	fmt.Println(newObj)
 	fmt.Println(rdsInstance.PrivateIps[0])

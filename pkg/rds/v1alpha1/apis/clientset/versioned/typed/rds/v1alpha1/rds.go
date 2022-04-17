@@ -65,6 +65,7 @@ func (c *rdss) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
 	}
+	fmt.Println("enter alpha1 list")
 	result = &v1alpha1.RdsList{}
 	err = c.client.Get().
 		Namespace(c.ns).
