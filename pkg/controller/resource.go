@@ -140,7 +140,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 
 	var restConfig *rest.Config
 	// rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	_,, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	_, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
 		klog.Exitf("error creating rdsclientset")
 	}
