@@ -223,9 +223,11 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 }
 
 func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
+	fmt.Println("enter resource delete")
 	if newRds.Status.Id != "" {
 		deleteResult := instances.Delete(client, newRds.Status.Id)
-		_, err := deleteResult.Extract()
+		deleteExtract, err := deleteResult.Extract()
+		fmt.Println(deleteExtract)
 		if err != nil {
 			klog.Exitf("error deleting rds instance: %v", err)
 		}
