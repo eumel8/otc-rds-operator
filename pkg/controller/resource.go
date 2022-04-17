@@ -203,7 +203,10 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 		panic(fmt.Errorf("error getting config %v", err))
 	}
 	rdsclientset, _ := rdsv1alpha1clientset.NewForConfig(restConfig)
-	listRds, _ := rdsclientset.McspsV1alpha1().Rdss("").List(context.TODO(), metav1.ListOptions{})
+	listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(listRds)
 	/* bastel
 	rdsClientSet := rdsv1alpha1clientset.New()
