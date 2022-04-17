@@ -62,7 +62,7 @@ func (c *Controller) processEvent(ctx context.Context, obj interface{}) error {
 }
 
 func (c *Controller) processAddRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
-	err := Create(rds)
+	err := Create(ctx, rds)
 	return err
 }
 

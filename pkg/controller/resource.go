@@ -136,7 +136,7 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 	return &n.Instances[0], nil
 }
 
-func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
+func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 
 	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
 	if err != nil {
@@ -203,7 +203,7 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 		panic(fmt.Errorf("error getting config %v", err))
 	}
 	rdsclientset, _ := rdsv1alpha1clientset.NewForConfig(restConfig)
-	listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(context.Context, metav1.ListOptions{})
+	listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -342,7 +342,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 	return provider, nil
 }
 
-func Create(newRds *rdsv1alpha1.Rds) error {
+func Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -360,7 +360,7 @@ func Create(newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsCreate(network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
+	rdsCreate(ctx, network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
 	if err != nil {
 		return fmt.Errorf("rds creating failed: %v", err)
 	}
