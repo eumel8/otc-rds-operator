@@ -80,7 +80,9 @@ func (c *Controller) processUpdateRds(
 		return nil
 	}
 	// rdsv1alpha1.Update(ctx, newRds, "")
+	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
+	fmt.Println(oldObj)
 	fmt.Println(newObj)
 	err := Update(newRds)
 	return err
