@@ -47,7 +47,6 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	fmt.Println("I am here")
 	cs.mcspsV1alpha1, err = mcspsv1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err

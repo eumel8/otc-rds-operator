@@ -138,23 +138,21 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 
-	//var restConfig *rest.Config
 	restConfig, err := rest.InClusterConfig()
 	if err != nil {
 		klog.Exitf("error init incluster config")
 	}
-	// rdsclientset, err := rdsv1alpha1clientset.Interface
 	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
 		klog.Exitf("error creating rdsclientset")
 	}
-	//_, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	// fmt.Println(rdsclientset)
-	listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
+	//listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
+	newRds.Spec.Id = "00001"
+	updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newRds, metav1.UpdateOptions{})
 	if err != nil {
-		klog.Exitf("error list rds")
+		klog.Exitf("error update rds")
 	}
-	fmt.Println(listRds)
+	fmt.Println(updateRds)
 	klog.Exitf("all okay")
 
 	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
