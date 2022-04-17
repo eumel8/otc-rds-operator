@@ -223,20 +223,15 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 }
 
 func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
-	fmt.Println("enter resource delete")
-	/*
-		createResult := instances.Create(client, createOpts)
-		r, err := createResult.Extract()
+	if newRds.Status.Id != "" {
+		deleteResult := instances.Delete(client, newRds.Status.Id)
+		_, err := deleteResult.Extract()
 		if err != nil {
-			klog.Exitf("error creating rds instance: %v", err)
+			klog.Exitf("error deleting rds instance: %v", err)
 		}
-		rdsInstance, err := rdsGet(client, r.Instance.Id)
-
-		fmt.Println(rdsInstance.PrivateIps[0])
-		if err != nil {
-			klog.Exitf("error getting rds state: %v", err)
-		}
-	*/
+	} else {
+		klog.Exitf("no rds id to delete")
+	}
 	return nil
 }
 
