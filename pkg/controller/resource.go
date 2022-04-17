@@ -138,6 +138,15 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 
+	var restConfig *rest.Config
+	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	if err != nil {
+		panic(fmt.Errorf("error getting rdsclientset %v", err))
+	}
+	fmt.Println(rdsclientset)
+	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
+	// fmt.Println(listRds)
+
 	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
 	if err != nil {
 		klog.Exitf("error getting secgroup state: %v", err)
@@ -198,17 +207,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
 	newRds.Spec.Id = r.Instance.Id
 	newObj := newRds.DeepCopy()
-	var restConfig *rest.Config
-	if err != nil {
-		panic(fmt.Errorf("error getting config %v", err))
-	}
-	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	fmt.Println(rdsclientset)
-	if err != nil {
-		panic(fmt.Errorf("error getting rdsclientset %v", err))
-	}
-	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
-	// fmt.Println(listRds)
+
 	/* bastel
 	rdsClientSet := rdsv1alpha1clientset.New()
 	rdsClientSet.Update(newObj)
