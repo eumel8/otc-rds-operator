@@ -148,7 +148,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	//listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
 	newRds.Spec.Id = "00001"
-	updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newRds, metav1.UpdateOptions{})
+	newObj := newRds.DeepCopy()
+	updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newObj, metav1.UpdateOptions{})
 	if err != nil {
 		klog.Exitf("error update rds")
 	}
@@ -214,21 +215,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
 	newRds.Spec.Id = r.Instance.Id
-	newObj := newRds.DeepCopy()
-
-	/* bastel
-	rdsClientSet := rdsv1alpha1clientset.New()
-	rdsClientSet.Update(newObj)
-	req := rdsv1alpha1clientset.v1alpha1().RESTClient().Post().Resource("rdss").Name(r.Instance.Name).Namespace(namespace)
-	.SubResource("exec").VersionedParams(&core.PodExecOptions{
-		Command: cmd,
-		Stdin:   true,
-		Stdout:  true,
-		Stderr:  true,
-	}, scheme.ParameterCodec)
-
-	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
-	*/
+	// newObj := newRds.DeepCopy()
 
 	fmt.Println(newObj)
 	fmt.Println(rdsInstance.PrivateIps[0])
