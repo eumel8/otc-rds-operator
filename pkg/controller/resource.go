@@ -151,7 +151,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newObj := newRds.DeepCopy()
 	updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newObj, metav1.UpdateOptions{})
 	if err != nil {
-		klog.Exitf("error update rds")
+		klog.Exitf("error update rds: %v", err)
 	}
 	fmt.Println(updateRds)
 	klog.Exitf("all okay")
