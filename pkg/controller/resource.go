@@ -13,10 +13,12 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	rds "github.com/eumel8/otc-rds-operator/pkg/rds"
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
+	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -136,13 +138,13 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 
-	// var restConfig *rest.Config
-	// rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	// if err != nil {
-	// 	klog.Exitf("error creating rdsclientset")
-	// }
-	// fmt.Println(rdsclientset)
+	var restConfig *rest.Config
+	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	if err != nil {
+		klog.Exitf("error creating rdsclientset")
+	}
 	klog.Exitf("all okay")
+	fmt.Println(rdsclientset)
 	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
 	// fmt.Println(listRds)
 
