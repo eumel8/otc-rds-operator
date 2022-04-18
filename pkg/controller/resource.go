@@ -223,13 +223,15 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 }
 
 func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
-	fmt.Println("enter resource delete")
 	if newRds.Status.Id != "" {
 		deleteResult := instances.Delete(client, newRds.Status.Id)
-		deleteExtract, err := deleteResult.Extract()
-		fmt.Println(deleteExtract)
+		jobResponse, err := deleteResult.ExtractJobResponse()
 		if err != nil {
-			klog.Exitf("error deleting rds instance: %v", err)
+			klog.Exitf("error delete rds job: %v", err)
+		}
+
+		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+			klog.Exitf("error getting rds job: %v", err)
 		}
 	} else {
 		klog.Exitf("no rds id to delete")
@@ -365,7 +367,7 @@ func Delete(newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsDelete(rdsapi, newRds)
+	err = rdsDelete(rdsapi, newRds)
 	if err != nil {
 		return fmt.Errorf("rds delete failed: %v", err)
 	}
