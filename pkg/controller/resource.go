@@ -241,6 +241,14 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 
 func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 	fmt.Println("enter resource update")
+	/* What we have todo here:
+	* Resize Flavor https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L269
+	* Resize Storage https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
+	* Error Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
+	* Slow Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L375
+	* Restart https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L160
+	* Backup PITR Restore https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/backups/requests.go#L217
+	 */
 	/*
 		createOpts := instances.CreateRdsOpts{
 			Name: newRds.Name,
