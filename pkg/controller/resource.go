@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -14,71 +15,12 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog/v2"
 
-	rds "github.com/eumel8/otc-rds-operator/pkg/rds"
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var (
-	image      = string("ghcr.io/eumel8/busybox:latest")
-	user       = int64(1000)
-	privledged = bool(false)
-	readonly   = bool(true)
-)
-
-func createJob(newRds *rdsv1alpha1.Rds, namespace string) *batchv1.Job {
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      newRds.ObjectMeta.Name,
-			Namespace: namespace,
-			Labels:    make(map[string]string),
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(
-					newRds,
-					rdsv1alpha1.SchemeGroupVersion.WithKind(rds.RdsKind),
-				),
-			},
-		},
-		Spec: createJobSpec(newRds.Name, namespace, newRds.Spec.Flavorref),
-	}
-}
-
-func createJobSpec(name, namespace, msg string) batchv1.JobSpec {
-	return batchv1.JobSpec{
-		Template: corev1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: name + "-",
-				Namespace:    namespace,
-				Labels:       make(map[string]string),
-			},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:            name,
-						Image:           "ghcr.io/eumel8/echobusybox:latest",
-						Command:         []string{"echo", msg},
-						ImagePullPolicy: "Always",
-						SecurityContext: &corev1.SecurityContext{
-							AllowPrivilegeEscalation: &privledged,
-							Privileged:               &privledged,
-							ReadOnlyRootFilesystem:   &readonly,
-							RunAsGroup:               &user,
-							RunAsUser:                &user,
-						},
-					},
-				},
-				RestartPolicy: corev1.RestartPolicyNever,
-			},
-		},
-	}
-}
-
-// rds resource part here
 func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
 	pages, err := groups.List(client, *opts).AllPages()
 	if err != nil {
@@ -86,7 +28,8 @@ func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*group
 	}
 	n, err := groups.ExtractGroups(pages)
 	if len(n) == 0 {
-		klog.Exitf("no secgroup found")
+		err := errors.New("no secgroup found")
+		return nil, err
 	}
 
 	return &n[0], nil
@@ -98,7 +41,8 @@ func subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnet
 		return nil, err
 	}
 	if len(n) == 0 {
-		klog.Exitf("no subnet found")
+		err := errors.New("no subnet found")
+		return nil, err
 	}
 
 	return &n[0], nil
@@ -111,7 +55,8 @@ func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, er
 	}
 
 	if len(n) == 0 {
-		klog.Exitf("no vpc found")
+		err := errors.New("no vpc found")
+		return nil, err
 	}
 
 	return &n[0], nil
@@ -139,22 +84,26 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds, namespace string) error {
 
 	if newRds.Status.Id != "" {
-		klog.Exitf("rds already exists %v", newRds.Status.Id)
+		err := fmt.Errorf("rds already exists %s", newRds.Status.Id)
+		return err
 	}
 
 	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
 	if err != nil {
-		klog.Exitf("error getting secgroup state: %v", err)
+		err := fmt.Errorf("error getting secgroup state: %v", err)
+		return err
 	}
 
 	s, err := subnetGet(netclient1, &subnets.ListOpts{Name: newRds.Spec.Subnet})
 	if err != nil {
-		klog.Exitf("error getting subnet state: %v", err)
+		err := fmt.Errorf("error getting subnet state: %v", err)
+		return err
 	}
 
 	v, err := vpcGet(netclient1, &vpcs.ListOpts{Name: newRds.Spec.Vpc})
 	if err != nil {
-		klog.Exitf("error getting vpc state: %v", err)
+		err := fmt.Errorf("error getting vpc state: %v", err)
+		return err
 	}
 
 	createOpts := instances.CreateRdsOpts{
@@ -188,15 +137,18 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	createResult := instances.Create(client, createOpts)
 	r, err := createResult.Extract()
 	if err != nil {
-		klog.Exitf("error creating rds instance: %v", err)
+		err := fmt.Errorf("error creating rds instance: %v", err)
+		return err
 	}
 	jobResponse, err := createResult.ExtractJobResponse()
 	if err != nil {
-		klog.Exitf("error creating rds job: %v", err)
+		err := fmt.Errorf("error creating rds job: %v", err)
+		return err
 	}
 
 	if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
-		klog.Exitf("error getting rds job: %v", err)
+		err := fmt.Errorf("error getting rds job: %v", err)
+		return err
 	}
 
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
@@ -206,18 +158,21 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 
 	restConfig, err := rest.InClusterConfig()
 	if err != nil {
-		klog.Exitf("error init incluster config")
+		err := fmt.Errorf("error init in-cluster config: %v", err)
+		return err
 	}
 	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
-		klog.Exitf("error creating rdsclientset")
+		err := fmt.Errorf("error creating rdsclientset: %v", err)
+		return err
 	}
 	newObj := newRds.DeepCopy()
 	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
 	// updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newObj, metav1.UpdateOptions{})
 	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
 	if err != nil {
-		klog.Exitf("error update rds: %v", err)
+		err := fmt.Errorf("error update rds: %v", err)
+		return err
 	}
 	return nil
 }
@@ -227,14 +182,17 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 		deleteResult := instances.Delete(client, newRds.Status.Id)
 		jobResponse, err := deleteResult.ExtractJobResponse()
 		if err != nil {
-			klog.Exitf("error delete rds job: %v", err)
+			err := fmt.Errorf("error rds delete job: %v", err)
+			return err
 		}
 
 		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
-			klog.Exitf("error getting rds job: %v", err)
+			err := fmt.Errorf("error getting rds delete job: %v", err)
+			return err
 		}
 	} else {
-		klog.Exitf("no rds id to delete")
+		err := fmt.Errorf("no rds id to delete")
+		return err
 	}
 	return nil
 }
