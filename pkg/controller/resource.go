@@ -172,6 +172,9 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 	newObj := newRds.DeepCopy()
+	fmt.Println(newRds)
+	fmt.Println(newObj)
+	fmt.Println("=======")
 	if err := UpdateStatus(ctx, newObj, namespace); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
