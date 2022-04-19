@@ -213,7 +213,7 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	return nil
 }
 
-func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
+func rdsUpdate(client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	fmt.Println("enter resource update")
 	/* What we have todo here:
 	* Resize Flavor https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L269
@@ -277,6 +277,7 @@ func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, n
 }
 
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
+	fmt.Println("enter rdsUpdateStatus:")
 	fmt.Println(newRds)
 	if newRds.Status.Id != "" {
 		fmt.Printf("Enter rdsUpdateStatus %s", newRds.Status.Id)
@@ -384,7 +385,7 @@ func Delete(newRds *rdsv1alpha1.Rds) error {
 	return nil
 }
 
-func Update(newRds *rdsv1alpha1.Rds) error {
+func Update(oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -394,7 +395,7 @@ func Update(newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsUpdate(rdsapi, &instances.CreateRdsOpts{}, newRds)
+	rdsUpdate(rdsapi, oldRds, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
 	}

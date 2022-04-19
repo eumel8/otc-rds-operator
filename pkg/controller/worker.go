@@ -85,9 +85,7 @@ func (c *Controller) processUpdateRds(
 	}
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
-	fmt.Println(oldObj)
-	fmt.Println(newObj)
-	err := Update(newRds)
+	err := Update(oldObj, newObj)
 	return err
 }
 
