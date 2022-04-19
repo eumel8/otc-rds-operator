@@ -63,7 +63,7 @@ func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, er
 }
 
 func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
-	fmt.Printf("rdsGetById lookup %s", rdsId)
+	fmt.Printf("rdsGetById lookup %s\n", rdsId)
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
 	}
@@ -83,7 +83,7 @@ func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsIn
 }
 
 func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
-	fmt.Printf("rdsGetByName lookup %s", rdsName)
+	fmt.Printf("rdsGetByName lookup %s\n", rdsName)
 	listOpts := instances.ListRdsInstanceOpts{
 		Name: rdsName,
 	}
@@ -168,9 +168,11 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	fmt.Println("RDS r")
 	fmt.Println(r)
+	fmt.Println(r.Instance.Id)
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
-	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+	newObj := newRds.DeepCopy()
+	if err := UpdateStatus(ctx, newObj, namespace); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
 	}
