@@ -155,25 +155,11 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = r.Instance.Status
+	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		err := fmt.Errorf("error update rds status: %v", err)
+		return err
+	}
 
-	restConfig, err := rest.InClusterConfig()
-	if err != nil {
-		err := fmt.Errorf("error init in-cluster config: %v", err)
-		return err
-	}
-	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	if err != nil {
-		err := fmt.Errorf("error creating rdsclientset: %v", err)
-		return err
-	}
-	newObj := newRds.DeepCopy()
-	// listRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").List(ctx, metav1.ListOptions{})
-	// updateRds, err := rdsclientset.McspsV1alpha1().Rdss("rdsoperator").Update(ctx, newObj, metav1.UpdateOptions{})
-	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
-	if err != nil {
-		err := fmt.Errorf("error update rds: %v", err)
-		return err
-	}
 	return nil
 }
 
@@ -353,6 +339,27 @@ func Update(newRds *rdsv1alpha1.Rds) error {
 	rdsUpdate(rdsapi, &instances.CreateRdsOpts{}, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
+	}
+	return nil
+}
+
+// Update K8s RDS Resource
+func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds, namespace string) error {
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		err := fmt.Errorf("error init in-cluster config: %v", err)
+		return err
+	}
+	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	if err != nil {
+		err := fmt.Errorf("error creating rdsclientset: %v", err)
+		return err
+	}
+	newObj := newRds.DeepCopy()
+	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+	if err != nil {
+		err := fmt.Errorf("error update rds: %v", err)
+		return err
 	}
 	return nil
 }
