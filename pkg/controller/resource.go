@@ -102,9 +102,13 @@ func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.R
 
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds, namespace string) error {
 
-	_, err := rdsGetByName(client, newRds.Name)
-	if err != nil {
+	rdsCheck, err := rdsGetByName(client, newRds.Name)
+	if rdsCheck != nil {
 		err := fmt.Errorf("rds already exists %s", newRds.Name)
+		return err
+	}
+	if err != nil {
+		err := fmt.Errorf("error checking rds status %v", err)
 		return err
 	}
 
