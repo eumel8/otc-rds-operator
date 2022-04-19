@@ -277,6 +277,7 @@ func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, n
 }
 
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
+	fmt.Println(newRds)
 	if newRds.Status.Id != "" {
 		fmt.Printf("Enter rdsUpdateStatus %s", newRds.Status.Id)
 		restConfig, err := rest.InClusterConfig()
