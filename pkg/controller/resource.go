@@ -147,6 +147,9 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	fmt.Println("=================")
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
+	fmt.Println("RDS Instance:")
+	fmt.Println(newRds.Status.Id)
+	fmt.Println("=================")
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
@@ -261,7 +264,7 @@ func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, n
 
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
 	fmt.Println("NEW RDS update")
-	fmt.Println(newRds)
+	fmt.Println(newRds.Status.Id)
 	restConfig, err := rest.InClusterConfig()
 	if err != nil {
 		err := fmt.Errorf("error init in-cluster config: %v", err)
