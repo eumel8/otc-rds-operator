@@ -303,6 +303,8 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 		}
 		rdsInstance, err := rdsGetByName(client, newRds.Name)
 		newRds.Status.Ip = rdsInstance.PrivateIps[0]
+		fmt.Println("Enter rdsInstance")
+		fmt.Println(rdsInstance)
 		newRds.Status.Status = rdsInstance.Status
 
 		newObj := newRds.DeepCopy()
