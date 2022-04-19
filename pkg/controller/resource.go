@@ -140,11 +140,6 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		err := fmt.Errorf("error creating rds instance: %v", err)
 		return err
 	}
-	fmt.Println("RDS:")
-	fmt.Println(r)
-	fmt.Println("RDS Instance:")
-	fmt.Println(r.Instance.Id)
-	fmt.Println("=================")
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 	fmt.Println("RDS Instance:")
@@ -263,28 +258,27 @@ func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, n
 }
 
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
-	fmt.Println("NEW RDS update")
-	fmt.Println(newRds.Status.Id)
-	restConfig, err := rest.InClusterConfig()
-	if err != nil {
-		err := fmt.Errorf("error init in-cluster config: %v", err)
-		return err
-	}
-	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	if err != nil {
-		err := fmt.Errorf("error creating rdsclientset: %v", err)
-		return err
-	}
+	if newRds.Status.Id != "" {
+		restConfig, err := rest.InClusterConfig()
+		if err != nil {
+			err := fmt.Errorf("error init in-cluster config: %v", err)
+			return err
+		}
+		rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+		if err != nil {
+			err := fmt.Errorf("error creating rdsclientset: %v", err)
+			return err
+		}
+		rdsInstance, err := rdsGet(client, newRds.Status.Id)
+		newRds.Status.Ip = rdsInstance.PrivateIps[0]
+		newRds.Status.Status = rdsInstance.Status
 
-	rdsInstance, err := rdsGet(client, newRds.Status.Id)
-	newRds.Status.Ip = rdsInstance.PrivateIps[0]
-	newRds.Status.Status = rdsInstance.Status
-
-	newObj := newRds.DeepCopy()
-	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
-	if err != nil {
-		err := fmt.Errorf("error update rds: %v", err)
-		return err
+		newObj := newRds.DeepCopy()
+		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+		if err != nil {
+			err := fmt.Errorf("error update rds: %v", err)
+			return err
+		}
 	}
 	return nil
 }
