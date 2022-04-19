@@ -290,7 +290,7 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 	fmt.Println("enter rdsUpdateStatus:")
 	fmt.Println(newRds)
 	if newRds.Status.Id != "" {
-		fmt.Printf("Enter rdsUpdateStatus %s", newRds.Status.Id)
+		fmt.Printf("Enter rdsUpdateStatus %s\n", newRds.Status.Id)
 		restConfig, err := rest.InClusterConfig()
 		if err != nil {
 			err := fmt.Errorf("error init in-cluster config: %v", err)
@@ -306,6 +306,9 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 		newRds.Status.Status = rdsInstance.Status
 
 		newObj := newRds.DeepCopy()
+		fmt.Println("Enter newObj")
+		fmt.Println(newObj)
+		fmt.Println("=====================")
 		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
 		if err != nil {
 			err := fmt.Errorf("error update rds: %v", err)
