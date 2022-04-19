@@ -260,6 +260,8 @@ func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, n
 }
 
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
+	fmt.Println("NEW RDS update")
+	fmt.Println(newRds)
 	restConfig, err := rest.InClusterConfig()
 	if err != nil {
 		err := fmt.Errorf("error init in-cluster config: %v", err)
