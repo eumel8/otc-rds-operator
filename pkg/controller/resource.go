@@ -252,6 +252,26 @@ func rdsUpdate(client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, n
 	return nil
 }
 
+func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		err := fmt.Errorf("error init in-cluster config: %v", err)
+		return err
+	}
+	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	if err != nil {
+		err := fmt.Errorf("error creating rdsclientset: %v", err)
+		return err
+	}
+	newObj := newRds.DeepCopy()
+	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+	if err != nil {
+		err := fmt.Errorf("error update rds: %v", err)
+		return err
+	}
+	return nil
+}
+
 func getProvider() (*golangsdk.ProviderClient, error) {
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
@@ -351,21 +371,18 @@ func Update(newRds *rdsv1alpha1.Rds) error {
 
 // Update K8s RDS Resource
 func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds, namespace string) error {
-	restConfig, err := rest.InClusterConfig()
+	provider, err := getProvider()
 	if err != nil {
-		err := fmt.Errorf("error init in-cluster config: %v", err)
-		return err
+		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
-	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	rdsapi, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
 	if err != nil {
-		err := fmt.Errorf("error creating rdsclientset: %v", err)
-		return err
+		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
-	newObj := newRds.DeepCopy()
-	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+
+	rdsUpdateStatus(ctx, rdsapi, newRds, namespace)
 	if err != nil {
-		err := fmt.Errorf("error update rds: %v", err)
-		return err
+		return fmt.Errorf("rds update failed: %v", err)
 	}
 	return nil
 }
