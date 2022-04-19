@@ -140,6 +140,12 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		err := fmt.Errorf("error creating rds instance: %v", err)
 		return err
 	}
+	newRds.Status.Id = r.Instance.Id
+	newRds.Status.Status = r.Instance.Status
+	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		err := fmt.Errorf("error update rds create status: %v", err)
+		return err
+	}
 	jobResponse, err := createResult.ExtractJobResponse()
 	if err != nil {
 		err := fmt.Errorf("error creating rds job: %v", err)
@@ -152,9 +158,9 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
-	newRds.Status.Id = r.Instance.Id
+	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
-	newRds.Status.Status = r.Instance.Status
+	newRds.Status.Status = rdsInstance.Status
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds status: %v", err)
 		return err
