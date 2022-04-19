@@ -62,7 +62,7 @@ func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, er
 	return &n[0], nil
 }
 
-func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
+func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
 	}
@@ -81,10 +81,30 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 	return &n.Instances[0], nil
 }
 
+func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
+	listOpts := instances.ListRdsInstanceOpts{
+		Name: rdsName,
+	}
+	allPages, err := instances.List(client, listOpts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := instances.ExtractRdsInstances(allPages)
+	if err != nil {
+		return nil, err
+	}
+	if len(n.Instances) == 0 {
+		return nil, nil
+	}
+	return &n.Instances[0], nil
+}
+
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds, namespace string) error {
 
-	if newRds.Status.Id != "" {
-		err := fmt.Errorf("rds already exists %s", newRds.Status.Id)
+	_, err := rdsGetByName(client, newRds.Name)
+	if err != nil {
+		err := fmt.Errorf("rds already exists %s", newRds.Name)
 		return err
 	}
 
@@ -142,9 +162,6 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
-	fmt.Println("RDS Instance:")
-	fmt.Println(newRds.Status.Id)
-	fmt.Println("=================")
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
@@ -160,9 +177,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		return err
 	}
 
-	rdsInstance, err := rdsGet(client, r.Instance.Id)
-	fmt.Println("RDS2:")
-	fmt.Println(rdsInstance)
+	rdsInstance, err := rdsGetById(client, r.Instance.Id)
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
@@ -269,7 +284,7 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 			err := fmt.Errorf("error creating rdsclientset: %v", err)
 			return err
 		}
-		rdsInstance, err := rdsGet(client, newRds.Status.Id)
+		rdsInstance, err := rdsGetByName(client, newRds.Name)
 		newRds.Status.Ip = rdsInstance.PrivateIps[0]
 		newRds.Status.Status = rdsInstance.Status
 
