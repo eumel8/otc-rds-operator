@@ -75,8 +75,8 @@ func (c *Controller) processUpdateRds(
 	oldRds, newRds *rdsv1alpha1.Rds,
 ) error {
 	// refreshing state of otc resource
-	if err := UpdateStatus(ctx, oldRds, c.namespace); err != nil {
-		err := fmt.Errorf("error update rds status: %v", err)
+	if err := UpdateStatus(ctx, newRds, c.namespace); err != nil {
+		err := fmt.Errorf("error update rds status from worker: %v", err)
 		return err
 	}
 	if !oldRds.HasChanged(newRds) {
