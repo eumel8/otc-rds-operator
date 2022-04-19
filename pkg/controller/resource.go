@@ -63,7 +63,7 @@ func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, er
 }
 
 func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
-	fmt.Printf("rdsGetById lookup ",rdsId)
+	fmt.Printf("rdsGetById lookup %s", rdsId)
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
 	}
@@ -83,7 +83,7 @@ func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsIn
 }
 
 func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
-	fmt.Printf("rdsGetByName lookup ",rdsName)
+	fmt.Printf("rdsGetByName lookup %s", rdsName)
 	listOpts := instances.ListRdsInstanceOpts{
 		Name: rdsName,
 	}
