@@ -263,6 +263,11 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 		err := fmt.Errorf("error creating rdsclientset: %v", err)
 		return err
 	}
+
+	rdsInstance, err := rdsGet(client, newRds.Status.Id)
+	newRds.Status.Ip = rdsInstance.PrivateIps[0]
+	newRds.Status.Status = rdsInstance.Status
+
 	newObj := newRds.DeepCopy()
 	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
 	if err != nil {
