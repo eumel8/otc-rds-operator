@@ -140,6 +140,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		err := fmt.Errorf("error creating rds instance: %v", err)
 		return err
 	}
+	fmt.Println("RDS:")
+	fmt.Println(r)
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
@@ -158,6 +160,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
+	fmt.Println("RDS2:")
+	fmt.Println(rdsInstance)
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
