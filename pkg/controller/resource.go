@@ -217,7 +217,7 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
 	fmt.Println("enter resource update")
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
-		fmt.Println("doing a volume scale up")
+		fmt.Println("noing a volume scale up")
 		enlargeOpts := instances.EnlargeVolumeRdsOpts{
 			EnlargeVolume: &instances.EnlargeVolumeSize{
 				Size: newRds.Spec.Volumesize,
@@ -278,7 +278,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
-	if oldRds.Spec.Reboot == true {
+	if NewRds.Spec.Reboot == true {
 		fmt.Println("doing restart")
 		restartOpts := instances.RestartRdsInstanceOpts{
 			Restart: "true",
