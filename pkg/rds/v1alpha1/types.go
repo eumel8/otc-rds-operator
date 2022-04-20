@@ -20,23 +20,24 @@ type RdsStatus struct {
 }
 
 type RdsSpec struct {
-	Datastoretype     string `json:"datastoretype"`
-	Datastoreversion  string `json:"datastoreversion"`
-	Volumetype        string `json:"volumetype"`
-	Volumesize        int    `json:"volumesize"`
-	Hamode            string `json:"hamode"`
-	Hareplicationmode string `json:"hareplicationmode"`
-	Id                string `json:"id"`
-	Port              string `json:"port"`
-	Password          string `json:"password"`
+	Availabilityzone  string `json:"availabilityzone"`
+	Backuprestoretime string `json:"backuprestoretime"`
 	Backupstarttime   string `json:"backupstarttime"`
 	Backupkeepdays    int    `json:"backupkeepdays"`
+	Datastoretype     string `json:"datastoretype"`
+	Datastoreversion  string `json:"datastoreversion"`
 	Flavorref         string `json:"flavorref"`
+	Hamode            string `json:"hamode"`
+	Hareplicationmode string `json:"hareplicationmode"`
+	Port              string `json:"port"`
+	Password          string `json:"password"`
+	Reboot            bool   `json:"reboot"`
 	Region            string `json:"region"`
-	Availabilityzone  string `json:"availabilityzone"`
-	Vpc               string `json:"vpc"`
 	Subnet            string `json:"subnet"`
 	Securitygroup     string `json:"securitygroup"`
+	Volumetype        string `json:"volumetype"`
+	Volumesize        int    `json:"volumesize"`
+	Vpc               string `json:"vpc"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

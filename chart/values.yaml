@@ -4,7 +4,7 @@ fullnameOverride: ""
 image:
   repository: ghcr.io/eumel8/otc-rds-operator
   pullPolicy: IfNotPresent
-  tag: latest
+#  tag: latest
 
 env: production
 

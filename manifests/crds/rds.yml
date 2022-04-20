@@ -32,15 +32,16 @@ spec:
                   type: string
                 volumesize:
                   type: integer
+                  minimum: 40
                 hamode:
                   type: string
                 hareplicationmode:
                   type: string
-                id:
-                  type: string
                 port:
                   type: string
                 password:
+                  type: string
+                backuprestoretime:
                   type: string
                 backupstarttime:
                   type: string
@@ -48,6 +49,8 @@ spec:
                   type: integer
                 flavorref:
                   type: string
+                reboot:
+                  type: boolean
                 region:
                   type: string
                 availabilityzone:
@@ -75,12 +78,12 @@ spec:
                 - vpc
                 - subnet
                 - securitygroup
-          status:
-            type: object
-            properties:
-              id:
-                type: string
-              ip:
-                type: string
-              status:
-                type: string
+            status:
+              type: object
+              properties:
+                id:
+                  type: string
+                ip:
+                  type: string
+                status:
+                  type: string

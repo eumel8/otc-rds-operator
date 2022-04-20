@@ -1,5 +1,7 @@
 package controller
 
+// factory otc resources here
+
 import (
 	"context"
 	"errors"
@@ -276,12 +278,39 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
+	if oldRds.Spec.Reboot == true {
+		fmt.Println("doing restart")
+		restartOpts := instances.RestartRdsInstanceOpts{
+			Restart: "true",
+		}
+		restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
+		_, err := restartResult.Extract()
+		if err != nil {
+			err := fmt.Errorf("error resizing rds: %v", err)
+			return err
+		}
+		jobResponse, err := restartResult.ExtractJobResponse()
+		if err != nil {
+			err := fmt.Errorf("error creating rds restart job: %v", err)
+			return err
+		}
+
+		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+			err := fmt.Errorf("error getting rds restart job: %v", err)
+			return err
+		}
+
+		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		newRds.Spec.Reboot = false
+		newRds.Status.Status = rdsInstance.Status
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
+	}
 	/* What we have todo here:
-	* Resize Flavor https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L269
-	* Resize Storage https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
 	* Error Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
 	* Slow Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L375
-	* Restart https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L160
 	* Backup PITR Restore https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/backups/requests.go#L217
 	 */
 	return nil

@@ -47,6 +47,13 @@ finding the available flavor for data type and version, and ha:
 openstack rds flavor list mysql 8.0| grep ha
 ```
 
+hint: only `ha` flavor are good for ha installations
+
+### Enlarge Volume
+
+Due the API spec change the volume size only upwards with a 10 GB step
+and a minimum of 40 GB
+
 
 ## Credits
 

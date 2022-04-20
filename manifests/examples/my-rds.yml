@@ -15,6 +15,7 @@ spec:
   backupkeepdays: 10
   flavorref: "rds.mysql.c2.xlarge.ha"
   region: "eu-de"
+  reboot: false
   availabilityzone: "eu-de-01,eu-de-02"
   vpc: "golang"
   subnet: "golang"
