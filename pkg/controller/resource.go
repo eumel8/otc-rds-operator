@@ -281,7 +281,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	if newRds.Spec.Reboot == true {
 		fmt.Println("doing restart")
 		restartOpts := instances.RestartRdsInstanceOpts{
-			Restart: "true",
+			Restart: "",
 		}
 		restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
 		_, err := restartResult.Extract()
