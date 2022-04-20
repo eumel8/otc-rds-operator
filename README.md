@@ -7,6 +7,7 @@ Kubernetes operator for OTC RDS
 * Create OTC RDS Instance
 * Delete OTC RDS Instance
 * Giving a status of the backend RDS (id,ip-address,state)
+* Resize Flavor
 
 
 ## Versioning 
