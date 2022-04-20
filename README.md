@@ -5,6 +5,8 @@ Kubernetes operator for OTC RDS
 ## Features
 
 * Create OTC RDS Instance
+* Delete OTC RDS Instance
+* Giving a status of the backend RDS (id,ip-address,state)
 
 
 ## Versioning 

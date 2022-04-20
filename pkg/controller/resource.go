@@ -63,7 +63,6 @@ func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, er
 }
 
 func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
-	fmt.Printf("rdsGetById lookup %s\n", rdsId)
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
 	}
@@ -83,7 +82,6 @@ func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsIn
 }
 
 func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
-	fmt.Printf("rdsGetByName lookup %s\n", rdsName)
 	listOpts := instances.ListRdsInstanceOpts{
 		Name: rdsName,
 	}
@@ -166,16 +164,10 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		err := fmt.Errorf("error creating rds instance: %v", err)
 		return err
 	}
-	fmt.Println("RDS r")
-	fmt.Println(r)
-	fmt.Println(r.Instance.Id)
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
-	newObj := newRds.DeepCopy()
-	fmt.Println(newRds)
-	fmt.Println(newObj)
-	fmt.Println("=======")
-	if err := UpdateStatus(ctx, newObj, namespace); err != nil {
+	// newObj := newRds.DeepCopy()
+	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
 	}
@@ -194,8 +186,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
-	newObj = newRds.DeepCopy()
-	if err := UpdateStatus(ctx, newObj, namespace); err != nil {
+	// newObj = newRds.DeepCopy()
+	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds status: %v", err)
 		return err
 	}
@@ -225,6 +217,12 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 
 func rdsUpdate(client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	fmt.Println("enter resource update")
+	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
+		fmt.Println("doing a volume scale up")
+	}
+	if oldRds.Spec.Flavorref != newRds.Spec.Flavorref {
+		fmt.Println("doing a flavor change")
+	}
 	/* What we have todo here:
 	* Resize Flavor https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L269
 	* Resize Storage https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
