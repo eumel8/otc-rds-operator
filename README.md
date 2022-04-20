@@ -2,6 +2,12 @@
 
 Kubernetes operator for OTC RDS
 
+## Prerequisites
+
+* Kubernetes Cluster 1.21+ with cluster-admin permissions
+* Existing OTC tenant with RDS Administrator permissions
+* Existing OTC resources VPC,Subnet, SecurityGroup
+
 ## Features
 
 * Create OTC RDS Instance

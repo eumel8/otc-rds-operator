@@ -41,7 +41,7 @@ jobs:
         docker push $IMAGE_ID:$VERSION
 
     - name: Push image release
-      if: ${GITHUB_REF_TYPE} == 'tag'
+      if: github.ref.type == 'tag'
       run: |
         IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
         IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
