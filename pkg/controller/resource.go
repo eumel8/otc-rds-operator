@@ -166,7 +166,6 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
-	// newObj := newRds.DeepCopy()
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
@@ -186,7 +185,6 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
-	// newObj = newRds.DeepCopy()
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds status: %v", err)
 		return err
@@ -215,13 +213,42 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	return nil
 }
 
-func rdsUpdate(client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
+func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
 	fmt.Println("enter resource update")
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		fmt.Println("doing a volume scale up")
 	}
 	if oldRds.Spec.Flavorref != newRds.Spec.Flavorref {
 		fmt.Println("doing a flavor change")
+		resizeOpts := instances.ResizeFlavorOpts{
+			ResizeFlavor: &instances.SpecCode{
+				Speccode: newRds.Spec.Flavorref,
+			},
+		}
+		resizeResult := instances.Resize(client, resizeOpts, newRds.Status.Id)
+		r, err := resizeResult.Extract()
+		if err != nil {
+			err := fmt.Errorf("error resizing rds: %v", err)
+			return err
+		}
+		fmt.Println(r)
+		jobResponse, err := resizeResult.ExtractJobResponse()
+		if err != nil {
+			err := fmt.Errorf("error creating rds resize job: %v", err)
+			return err
+		}
+
+		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+			err := fmt.Errorf("error getting rds resize job: %v", err)
+			return err
+		}
+
+		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		newRds.Status.Status = rdsInstance.Status
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
 	}
 	/* What we have todo here:
 	* Resize Flavor https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L269
@@ -285,10 +312,7 @@ func rdsUpdate(client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds 
 }
 
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
-	fmt.Println("enter rdsUpdateStatus:")
-	fmt.Println(newRds)
 	if newRds.Status.Id != "" {
-		fmt.Printf("Enter rdsUpdateStatus %s\n", newRds.Status.Id)
 		restConfig, err := rest.InClusterConfig()
 		if err != nil {
 			err := fmt.Errorf("error init in-cluster config: %v", err)
@@ -307,13 +331,8 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 			newRds.Status.Status = rdsInstance.Status
 		}
 
-		newObj := newRds.DeepCopy()
-		fmt.Println("Enter newObj")
-		fmt.Println(newRds)
-		fmt.Println("---------------------")
-		fmt.Println(newObj)
-		fmt.Println("=====================")
-		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+		// newObj := newRds.DeepCopy()
+		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
 		if err != nil {
 			err := fmt.Errorf("error update rds: %v", err)
 			return err
@@ -402,7 +421,7 @@ func Delete(newRds *rdsv1alpha1.Rds) error {
 	return nil
 }
 
-func Update(oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
+func Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -412,7 +431,7 @@ func Update(oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsUpdate(rdsapi, oldRds, newRds)
+	rdsUpdate(ctx, rdsapi, oldRds, newRds, namespace)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
 	}
