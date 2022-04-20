@@ -101,7 +101,6 @@ func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.R
 }
 
 func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds, namespace string) error {
-
 	rdsCheck, err := rdsGetByName(client, newRds.Name)
 	if rdsCheck != nil {
 		err := fmt.Errorf("rds already exists %s", newRds.Name)
@@ -217,6 +216,34 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	fmt.Println("enter resource update")
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		fmt.Println("doing a volume scale up")
+		enlargeOpts := instances.EnlargeVolumeRdsOpts{
+			EnlargeVolume: &instances.EnlargeVolumeSize{
+				Size: newRds.Spec.Volumesize,
+			},
+		}
+		enlargeResult := instances.EnlargeVolume(client, enlargeOpts, newRds.Status.Id)
+		_, err := enlargeResult.Extract()
+		if err != nil {
+			err := fmt.Errorf("error enlarge rds: %v", err)
+			return err
+		}
+		jobResponse, err := enlargeResult.ExtractJobResponse()
+		if err != nil {
+			err := fmt.Errorf("error creating rds enlarge job: %v", err)
+			return err
+		}
+
+		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+			err := fmt.Errorf("error getting rds enlarge job: %v", err)
+			return err
+		}
+
+		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		newRds.Status.Status = rdsInstance.Status
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
 	}
 	if oldRds.Spec.Flavorref != newRds.Spec.Flavorref {
 		fmt.Println("doing a flavor change")
@@ -226,12 +253,11 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			},
 		}
 		resizeResult := instances.Resize(client, resizeOpts, newRds.Status.Id)
-		r, err := resizeResult.Extract()
+		_, err := resizeResult.Extract()
 		if err != nil {
 			err := fmt.Errorf("error resizing rds: %v", err)
 			return err
 		}
-		fmt.Println(r)
 		jobResponse, err := resizeResult.ExtractJobResponse()
 		if err != nil {
 			err := fmt.Errorf("error creating rds resize job: %v", err)
@@ -258,56 +284,6 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	* Restart https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L160
 	* Backup PITR Restore https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/backups/requests.go#L217
 	 */
-	/*
-		createOpts := instances.CreateRdsOpts{
-			Name: newRds.Name,
-			Datastore: &instances.Datastore{
-				Type:    newRds.Spec.Datastoretype,
-				Version: newRds.Spec.Datastoreversion,
-			},
-			Ha: &instances.Ha{
-				Mode:            newRds.Spec.Hamode,
-				ReplicationMode: newRds.Spec.Hareplicationmode,
-			},
-			Port:     newRds.Spec.Port,
-			Password: newRds.Spec.Password,
-			BackupStrategy: &instances.BackupStrategy{
-				StartTime: newRds.Spec.Backupstarttime,
-				KeepDays:  newRds.Spec.Backupkeepdays,
-			},
-			FlavorRef: newRds.Spec.Flavorref,
-			Volume: &instances.Volume{
-				Type: newRds.Spec.Volumetype,
-				Size: newRds.Spec.Volumesize,
-			},
-			Region:           newRds.Spec.Region,
-			AvailabilityZone: newRds.Spec.Availabilityzone,
-			VpcId:            v.ID,
-			SubnetId:         s.ID,
-			SecurityGroupId:  g.ID,
-		}
-
-		createResult := instances.Create(client, createOpts)
-		r, err := createResult.Extract()
-		if err != nil {
-			klog.Exitf("error creating rds instance: %v", err)
-		}
-		jobResponse, err := createResult.ExtractJobResponse()
-		if err != nil {
-			klog.Exitf("error creating rds job: %v", err)
-		}
-
-		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
-			klog.Exitf("error getting rds job: %v", err)
-		}
-
-		rdsInstance, err := rdsGet(client, r.Instance.Id)
-
-		fmt.Println(rdsInstance.PrivateIps[0])
-		if err != nil {
-			klog.Exitf("error getting rds state: %v", err)
-		}
-	*/
 	return nil
 }
 

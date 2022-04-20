@@ -14,6 +14,7 @@ Kubernetes operator for OTC RDS
 * Delete OTC RDS Instance
 * Giving a status of the backend RDS (id,ip-address,state)
 * Resize Flavor
+* Enlarge Volume
 
 
 ## Versioning 
@@ -35,6 +36,17 @@ helm -n rdsoperator upgrade -i rdsoperator chart --create-namespace
 ```bash
 kubectl apply -f ./manifests/examples/my-rds.yml
 ```
+
+## Operation
+
+### Resize Flavor
+
+finding the available flavor for data type and version, and ha:
+
+```bash
+openstack rds flavor list mysql 8.0| grep ha
+```
+
 
 ## Credits
 
