@@ -302,13 +302,17 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 			return err
 		}
 		rdsInstance, err := rdsGetByName(client, newRds.Name)
-		//newRds.Status.Ip = rdsInstance.PrivateIps[0]
-		fmt.Println("Enter rdsInstance")
-		fmt.Println(rdsInstance)
-		//newRds.Status.Status = rdsInstance.Status
+		if rdsInstance.PrivateIps[0] != "" {
+			newRds.Status.Ip = rdsInstance.PrivateIps[0]
+		}
+		if rdsInstance.Status != "" {
+			newRds.Status.Status = rdsInstance.Status
+		}
 
 		newObj := newRds.DeepCopy()
 		fmt.Println("Enter newObj")
+		fmt.Println(newRds)
+		fmt.Println("---------------------")
 		fmt.Println(newObj)
 		fmt.Println("=====================")
 		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newObj, metav1.UpdateOptions{})
