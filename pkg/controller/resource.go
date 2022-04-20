@@ -302,7 +302,7 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 			return err
 		}
 		rdsInstance, err := rdsGetByName(client, newRds.Name)
-		if rdsInstance.PrivateIps[0] != "" {
+		if len(rdsInstance.PrivateIps) > 0 {
 			newRds.Status.Ip = rdsInstance.PrivateIps[0]
 		}
 		if rdsInstance.Status != "" {
