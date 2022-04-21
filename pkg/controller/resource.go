@@ -306,7 +306,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 
 		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
 		fmt.Println("doing update spec")
-		newRds.Status.Reboot = ""
+		newRds.Status.Reboot = false
 		newRds.Status.Status = rdsInstance.Status
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
