@@ -9,20 +9,8 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type Rds struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Events            RdsEvents `json:"events"`
 	Spec              RdsSpec   `json:"spec"`
 	Status            RdsStatus `json:"status"`
-}
-
-type RdsEvents struct {
-	Errorlog []Errorlog `json:"errorlog"`
-	Slowlog  string     `json:"slowlog"`
-}
-
-type Errorlog struct {
-	Time    []string `json:"time"`
-	Level   []string `json:"level"`
-	Content []string `json:"content"`
 }
 
 type RdsSpec struct {
@@ -61,5 +49,4 @@ type RdsList struct {
 
 func (e *Rds) HasChanged(other *Rds) bool {
 	return e.Spec != other.Spec || e.Status != other.Status
-	//	return e.Spec.Flavorref != other.Spec.Flavorref || e.Spec.Volumesize != other.Spec.Volumesize || e.Status.Reboot != other.Status.Reboot || e.Spec.Backuprestoretime != other.Spec.Backuprestoretime
 }

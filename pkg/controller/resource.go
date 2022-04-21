@@ -6,10 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jinzhu/copier"
+	// "github.com/jinzhu/copier"
 	"net/http"
 	"os"
-	"time"
+	// "time"
 
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
@@ -230,9 +230,8 @@ func (opts myRDSRestartOpts) ToRestartRdsInstanceMap() (map[string]interface{}, 
 }
 
 func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
-	fmt.Println("enter resource update")
+	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
-		fmt.Println("noing a volume scale up")
 		enlargeOpts := instances.EnlargeVolumeRdsOpts{
 			EnlargeVolume: &instances.EnlargeVolumeSize{
 				Size: newRds.Spec.Volumesize,
@@ -262,8 +261,8 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
+	// Change Flavor here
 	if oldRds.Spec.Flavorref != newRds.Spec.Flavorref {
-		fmt.Println("doing a flavor change")
 		resizeOpts := instances.ResizeFlavorOpts{
 			ResizeFlavor: &instances.SpecCode{
 				Speccode: newRds.Spec.Flavorref,
@@ -293,8 +292,8 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
+	// Restart instance here
 	if newRds.Status.Reboot == true {
-		fmt.Println("doing restart")
 		newRds.Status.Reboot = false
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
@@ -318,41 +317,48 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
+	/*
+		// Implementation of errorlog/slowquerylog
+		// can be very long (+500 events)
+		// structured data https://pkg.go.dev/github.com/opentelekomcloud/gophertelekomcloud@v0.5.9/openstack/rds/v3/instances#ErrorLogResp.ErrorLogList
+		// needs the implementaion of event log handler
+		// https://github.com/kubernetes/client-go/blob/master/tools/record/event.go
+		// examples:
+		// https://github.com/gaulzhw/learning_k8s/blob/3bab7e22958a30684bd464b0f174b3ac38d5b891/code/pkg/controllers/informer_controller.go
+		// https://github.com/kaidotdev/events-logger/blob/master/main.go
+		//  Error Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
+		// Slow Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L375
 
-	fmt.Println("doing errorlog catchup")
-	sd := time.Now().AddDate(0, -1, 0)
-	ed := time.Now()
-	start_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
-		sd.Year(), sd.Month(), sd.Day(),
-		sd.Hour(), sd.Minute(), sd.Second())
-	end_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
-		ed.Year(), ed.Month(), ed.Day(),
-		ed.Hour(), ed.Minute(), ed.Second())
+		fmt.Println("doing errorlog catchup")
+		sd := time.Now().AddDate(0, -1, 0)
+		ed := time.Now()
+		start_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
+			sd.Year(), sd.Month(), sd.Day(),
+			sd.Hour(), sd.Minute(), sd.Second())
+		end_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
+			ed.Year(), ed.Month(), ed.Day(),
+			ed.Hour(), ed.Minute(), ed.Second())
 
-	errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date, EndDate: end_date}
-	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
-	if err != nil {
-		err := fmt.Errorf("error getting rds pages: %v", err)
-		return err
-	}
-	errorLogs, err := instances.ExtractErrorLog(allPages)
-	if err != nil {
-		err := fmt.Errorf("error getting rds errorlog: %v", err)
-		return err
-	}
+		errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date, EndDate: end_date}
+		allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
+		if err != nil {
+			err := fmt.Errorf("error getting rds pages: %v", err)
+			return err
+		}
+		errorLogs, err := instances.ExtractErrorLog(allPages)
+		if err != nil {
+			err := fmt.Errorf("error getting rds errorlog: %v", err)
+			return err
+		}
 
-	// for _, li := range errorLogs {
-	// 	}
-	// newRds.Events.Errorlog = errorLogs.ErrorLogList{}
-	copier.Copy(&newRds.Events.Errorlog, &errorLogs.ErrorLogList)
-	fmt.Println(newRds.Events)
-	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
-		err := fmt.Errorf("error update rds error log events: %v", err)
-		return err
-	}
+		copier.Copy(&newRds.Events.Errorlog, &errorLogs.ErrorLogList)
+		fmt.Println(newRds.Events)
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds error log events: %v", err)
+			return err
+		}
+	*/
 	/* What we have todo here:
-	* Error Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
-	* Slow Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L375
 	* Backup PITR Restore https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/backups/requests.go#L217
 	 */
 	return nil
