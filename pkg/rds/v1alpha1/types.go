@@ -49,6 +49,6 @@ type RdsList struct {
 }
 
 func (e *Rds) HasChanged(other *Rds) bool {
-	return e.Spec != other.Spec
+	return e.Spec != other.Spec || e.Status != other.Status
 	//	return e.Spec.Flavorref != other.Spec.Flavorref || e.Spec.Volumesize != other.Spec.Volumesize || e.Status.Reboot != other.Status.Reboot || e.Spec.Backuprestoretime != other.Spec.Backuprestoretime
 }
