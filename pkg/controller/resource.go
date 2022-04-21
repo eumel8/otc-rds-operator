@@ -291,7 +291,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
-	if oldRds.Status.Reboot == true {
+	if newRds.Status.Reboot == true {
 		fmt.Println("doing restart")
 
 		restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
@@ -306,14 +306,12 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 
 		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
 		fmt.Println("doing update spec")
-		newRds.Status.Reboot = false
+		newRds.Status.Reboot = ""
 		newRds.Status.Status = rdsInstance.Status
-		fmt.Println(newRds)
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
-		fmt.Println("doing update spec finished")
 	}
 	/*
 		fmt.Println("doing errorlog catchup")
