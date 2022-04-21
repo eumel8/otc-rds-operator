@@ -15,6 +15,10 @@ Kubernetes operator for OTC RDS
 * Giving a status of the backend RDS (id,ip-address,state)
 * Resize Flavor
 * Enlarge Volume
+* Restart Instance
+* (Backup restore PITR)
+* (Log handling)
+* (User handling)
 
 
 ## Versioning 
@@ -54,6 +58,19 @@ hint: only `ha` flavor are good for ha installations
 Due the API spec change the volume size only upwards with a 10 GB step
 and a minimum of 40 GB
 
+### Restart Instance
+
+Edit the status of the RDS instance and set `reboot: true`. Instance will restart immediatally.
+
+Example:
+
+```yaml
+status:
+  id: 59ce9eca5ef543e2a643fea393b2cfbcin01
+  ip: 192.168.0.71
+  reboot: false
+  status: ACTIVE
+```
 
 ## Credits
 
