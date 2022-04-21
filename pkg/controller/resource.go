@@ -23,6 +23,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+
+// workaround https://github.com/opentelekomcloud/gophertelekomcloud/issues/342
 type myRDSRestartOpts struct {
 	Restart struct{} `json:"restart"`
 }
@@ -364,6 +366,8 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 		if rdsInstance.Status != "" {
 			newRds.Status.Status = rdsInstance.Status
 		}
+		fmt.Println("doing rdsUpdateStatus")
+		fmt.Println(newRds)
 
 		// newObj := newRds.DeepCopy()
 		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
