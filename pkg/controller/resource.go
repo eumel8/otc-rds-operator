@@ -319,10 +319,16 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 
 	fmt.Println("doing errorlog catchup")
-	start_date := time.Now().AddDate(0, -1, 0)
-	end_date := time.Now()
+	sd := time.Now().AddDate(0, -1, 0)
+	ed := time.Now()
+	start_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00\n",
+		sd.Year(), sd.Month(), sd.Day(),
+		sd.Hour(), sd.Minute(), sd.Second())
+	end_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d-00:00\n",
+		ed.Year(), ed.Month(), ed.Day(),
+		ed.Hour(), ed.Minute(), ed.Second())
 
-	errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date.Format(time.RFC3339) + "+0000", EndDate: end_date.Format(time.RFC3339) + "+0000"}
+	errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date, EndDate: end_date}
 	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
 	if err != nil {
 		err := fmt.Errorf("error getting rds pages: %v", err)
