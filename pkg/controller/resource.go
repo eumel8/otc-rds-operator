@@ -23,6 +23,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type myRDSRestartOpts struct {
+	Restart struct{} `json:"restart,omitempty"`
+}
+
 func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
 	pages, err := groups.List(client, *opts).AllPages()
 	if err != nil {
@@ -214,6 +218,14 @@ func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	return nil
 }
 
+func (opts myRDSRestartOpts) ToRestartRdsInstanceMap() (map[string]interface{}, error) {
+	b, err := golangsdk.BuildRequestBody(&opts, "")
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
 func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
 	fmt.Println("enter resource update")
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
@@ -280,25 +292,13 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 	if newRds.Spec.Reboot == true {
 		fmt.Println("doing restart")
-		// rdsInstance, err := rdsGetById(client, newRds.Status.Id)
-		// for _, li := range rdsInstance.Nodes {
-		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, newRds.Status.Id).Extract()
-		// restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, "b0cc044b4d9a471c9370539ac1bd5b5bno01").Extract()
-		// restartOpts := instances.RestartRdsInstanceOpts{Restart: "{}"}
-		// restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
-		// _, err := restartResult.Extract()
+
+		restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
 		if err != nil {
 			err := fmt.Errorf("error rebooting rds: %v", err)
 			return err
 		}
-		// jobResponse, err := restartResult.ExtractJobResponse()
-		// if err != nil {
-		// 		err := fmt.Errorf("error creating rds restart job: %v", err)
-		// 		return err
-		// 	}
-
 		if err := instances.WaitForJobCompleted(client, int(1800), restartResult.JobId); err != nil {
-			// if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
 			err := fmt.Errorf("error getting rds restart job: %v", err)
 			return err
 		}
@@ -311,6 +311,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
+
 	fmt.Println("doing errorlog catchup")
 	errorLogOpts := instances.DbErrorlogOpts{StartDate: "2020-01-01T00:00:00+0000", EndDate: "2022-12-31T00:00:00+0000", Level: "ALL"}
 	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
