@@ -24,7 +24,7 @@ import (
 )
 
 type myRDSRestartOpts struct {
-	Restart struct{} `json:"restart,omitempty"`
+	Restart struct{} `json:"restart"`
 }
 
 func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
