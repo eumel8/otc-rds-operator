@@ -285,7 +285,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 		// restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
 		// _, err := restartResult.Extract()
 		if err != nil {
-			err := fmt.Errorf("error resizing rds: %v", err)
+			err := fmt.Errorf("error rebooting rds: %v", err)
 			return err
 		}
 		// jobResponse, err := restartResult.ExtractJobResponse()
@@ -310,7 +310,11 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 	fmt.Println("doing errorlog catchup")
 	errorLogOpts := instances.DbErrorlogOpts{}
-	allPages, _ := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
+	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
+	if err != nil {
+		err := fmt.Errorf("error getting rds pages: %v", err)
+		return err
+	}
 	errorLogs, err := instances.ExtractErrorLog(allPages)
 	if err != nil {
 		err := fmt.Errorf("error getting rds errorlog: %v", err)
