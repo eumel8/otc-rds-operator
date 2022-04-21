@@ -321,10 +321,10 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	fmt.Println("doing errorlog catchup")
 	sd := time.Now().AddDate(0, -1, 0)
 	ed := time.Now()
-	start_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000\n",
+	start_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
 		sd.Year(), sd.Month(), sd.Day(),
 		sd.Hour(), sd.Minute(), sd.Second())
-	end_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000\n",
+	end_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
 		ed.Year(), ed.Month(), ed.Day(),
 		ed.Hour(), ed.Minute(), ed.Second())
 
