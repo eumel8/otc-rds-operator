@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
@@ -319,7 +320,11 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 
 	fmt.Println("doing errorlog catchup")
-	errorLogOpts := instances.DbErrorlogOpts{StartDate: "2022-04-01T00:00:00+0000", EndDate: "2022-04-21T00:00:00+0000"}
+	start_date := time.Now().AddDate(0, -1, 0)
+	end_date := time.Now()
+	// fmt.Println(start_date.Format(time.RFC1123))
+
+	errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date.Format(time.RFC1123), EndDate: end_date.Format(time.RFC1123)}
 	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
 	if err != nil {
 		err := fmt.Errorf("error getting rds pages: %v", err)
@@ -332,7 +337,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 
 	// for _, li := range errorLogs {
-	fmt.Println(errorLogs)
+	fmt.Println(errorLogs.ErrorLogList)
 	// 	}
 	// newRds.Status.Events = errorLogs.ErrorLogList.ErrorLog.Content
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
