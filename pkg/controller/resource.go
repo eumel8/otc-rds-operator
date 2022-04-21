@@ -282,8 +282,8 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 		fmt.Println("doing restart")
 		// rdsInstance, err := rdsGetById(client, newRds.Status.Id)
 		// for _, li := range rdsInstance.Nodes {
-		// restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, newRds.Status.Id).Extract()
-		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, "b0cc044b4d9a471c9370539ac1bd5b5bno01").Extract()
+		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, newRds.Status.Id).Extract()
+		// restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, "b0cc044b4d9a471c9370539ac1bd5b5bno01").Extract()
 		// restartOpts := instances.RestartRdsInstanceOpts{Restart: "{}"}
 		// restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
 		// _, err := restartResult.Extract()
