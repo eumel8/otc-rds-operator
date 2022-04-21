@@ -280,7 +280,10 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 	if newRds.Spec.Reboot == true {
 		fmt.Println("doing restart")
-		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, newRds.Status.Id).Extract()
+		// rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		// for _, li := range rdsInstance.Nodes {
+		// restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, newRds.Status.Id).Extract()
+		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, "b0cc044b4d9a471c9370539ac1bd5b5bno01").Extract()
 		// restartOpts := instances.RestartRdsInstanceOpts{Restart: "{}"}
 		// restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
 		// _, err := restartResult.Extract()
@@ -309,7 +312,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 		}
 	}
 	fmt.Println("doing errorlog catchup")
-	errorLogOpts := instances.DbErrorlogOpts{StartDate: "1970-01-01T00:00:00+0000", EndDate: "2099-01-01T00:00:00+0000", Level: "ALL"}
+	errorLogOpts := instances.DbErrorlogOpts{StartDate: "2020-01-01T00:00:00+0000", EndDate: "2030-01-01T00:00:00+0000", Level: "ALL"}
 	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
 	if err != nil {
 		err := fmt.Errorf("error getting rds pages: %v", err)
