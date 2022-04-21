@@ -23,7 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-
 // workaround https://github.com/opentelekomcloud/gophertelekomcloud/issues/342
 type myRDSRestartOpts struct {
 	Restart struct{} `json:"restart"`
@@ -292,7 +291,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
-	if newRds.Spec.Reboot == true {
+	if newRds.Status.Reboot == true {
 		fmt.Println("doing restart")
 
 		restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
@@ -307,7 +306,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 
 		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
 		fmt.Println("doing update spec")
-		newRds.Spec.Reboot = false
+		newRds.Status.Reboot = false
 		newRds.Status.Status = rdsInstance.Status
 		fmt.Println(newRds)
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
@@ -317,27 +316,27 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 		fmt.Println("doing update spec finished")
 	}
 	/*
-	fmt.Println("doing errorlog catchup")
-	errorLogOpts := instances.DbErrorlogOpts{StartDate: "2021-01-01T00:00:00+0000", EndDate: "2022-04-21T00:00:00+0000", Level: "ALL"}
-	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
-	if err != nil {
-		err := fmt.Errorf("error getting rds pages: %v", err)
-		return err
-	}
-	errorLogs, err := instances.ExtractErrorLog(allPages)
-	if err != nil {
-		err := fmt.Errorf("error getting rds errorlog: %v", err)
-		return err
-	}
+		fmt.Println("doing errorlog catchup")
+		errorLogOpts := instances.DbErrorlogOpts{StartDate: "2021-01-01T00:00:00+0000", EndDate: "2022-04-21T00:00:00+0000", Level: "ALL"}
+		allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
+		if err != nil {
+			err := fmt.Errorf("error getting rds pages: %v", err)
+			return err
+		}
+		errorLogs, err := instances.ExtractErrorLog(allPages)
+		if err != nil {
+			err := fmt.Errorf("error getting rds errorlog: %v", err)
+			return err
+		}
 
-	// for _, li := range errorLogs {
-	fmt.Println(errorLogs)
-	// 	}
-	// newRds.Status.Events = errorLogs.ErrorLogList.ErrorLog.Content
-	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
-		err := fmt.Errorf("error update rds error log events: %v", err)
-		return err
-	}
+		// for _, li := range errorLogs {
+		fmt.Println(errorLogs)
+		// 	}
+		// newRds.Status.Events = errorLogs.ErrorLogList.ErrorLog.Content
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds error log events: %v", err)
+			return err
+		}
 	*/
 	/* What we have todo here:
 	* Error Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302

@@ -16,6 +16,7 @@ type Rds struct {
 type RdsStatus struct {
 	Id     string `json:"id"`
 	Ip     string `json:"ip"`
+	Reboot bool   `json:"reboot"`
 	Status string `json:"status"`
 	Events string `json:"events"`
 }
@@ -32,7 +33,6 @@ type RdsSpec struct {
 	Hareplicationmode string `json:"hareplicationmode"`
 	Port              string `json:"port"`
 	Password          string `json:"password"`
-	Reboot            bool   `json:"reboot"`
 	Region            string `json:"region"`
 	Subnet            string `json:"subnet"`
 	Securitygroup     string `json:"securitygroup"`
