@@ -49,8 +49,6 @@ spec:
                   type: integer
                 flavorref:
                   type: string
-                reboot:
-                  type: boolean
                 region:
                   type: string
                 availabilityzone:
@@ -69,7 +67,6 @@ spec:
                 - hamode
                 - hareplicationmode
                 - port
-                - password
                 - backupstarttime
                 - backupkeepdays
                 - flavorref
@@ -87,5 +84,7 @@ spec:
                   type: string
                 ip:
                   type: string
+                reboot:
+                  type: boolean
                 status:
                   type: string

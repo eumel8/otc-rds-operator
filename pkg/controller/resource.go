@@ -365,9 +365,6 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 		if rdsInstance.Status != "" {
 			newRds.Status.Status = rdsInstance.Status
 		}
-		fmt.Println("doing rdsUpdateStatus")
-		fmt.Println(newRds)
-
 		// newObj := newRds.DeepCopy()
 		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
 		if err != nil {
