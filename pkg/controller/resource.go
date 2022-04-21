@@ -9,7 +9,7 @@ import (
 	// "github.com/jinzhu/copier"
 	"net/http"
 	"os"
-	// "time"
+	"time"
 
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
@@ -17,6 +17,7 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"k8s.io/client-go/rest"
 
@@ -190,6 +191,10 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 
 	rdsInstance, err := rdsGetById(client, r.Instance.Id)
+	if err != nil {
+		err := fmt.Errorf("error getting rds by id: %v", err)
+		return err
+	}
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
@@ -230,6 +235,10 @@ func (opts myRDSRestartOpts) ToRestartRdsInstanceMap() (map[string]interface{}, 
 }
 
 func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
+	if newRds.Status.Id == "" {
+		err := fmt.Errorf("rdsUpdate failed, Rds.Status.Id is empty")
+		return err
+	}
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		enlargeOpts := instances.EnlargeVolumeRdsOpts{
@@ -255,6 +264,10 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 		}
 
 		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
 		newRds.Status.Status = rdsInstance.Status
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
@@ -286,6 +299,10 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 		}
 
 		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
 		newRds.Status.Status = rdsInstance.Status
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
@@ -311,12 +328,81 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 		}
 
 		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
 		newRds.Status.Status = rdsInstance.Status
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
 	}
+	// Restore backup PITR
+	if newRds.Spec.Backuprestoretime != "" { // 2020-04-04T22:08:41+00:00
+		newRds.Spec.Backuprestoretime = ""
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
+
+		rdsRestoredate, err := time.Parse(time.RFC3339, newRds.Spec.Backuprestoretime)
+		if err != nil {
+			err := fmt.Errorf("can't parse rds restore time: %v", err)
+			return err
+		}
+		rdsRestoretime := rdsRestoredate.UnixMilli()
+
+		restoreOpts := backups.RestorePITROpts{
+			Source: backups.Source{
+				InstanceID:  newRds.Status.Id,
+				RestoreTime: rdsRestoretime,
+				Type:        "timestamp",
+			},
+			Target: backups.Target{
+				InstanceID: newRds.Status.Id,
+			},
+		}
+
+		restoreResult := backups.RestorePITR(client, restoreOpts)
+		// restoredRds, err := restoreResult.Extract()
+		if err != nil {
+			err := fmt.Errorf("rds restore failed: %v", err)
+			return err
+		}
+		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
+		newRds.Status.Status = rdsInstance.Status
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
+
+		jobResponse, err := restoreResult.ExtractJobResponse()
+		if err != nil {
+			err := fmt.Errorf("can't get rds restore job: %v", err)
+			return err
+		}
+
+		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+			err := fmt.Errorf("error rds restore job: %v", err)
+			return err
+		}
+		rdsInstance, err = rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
+		newRds.Status.Status = rdsInstance.Status
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
+	}
+
 	/*
 		// Implementation of errorlog/slowquerylog
 		// can be very long (+500 events)
@@ -365,30 +451,32 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 }
 
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
-	if newRds.Status.Id != "" {
-		restConfig, err := rest.InClusterConfig()
-		if err != nil {
-			err := fmt.Errorf("error init in-cluster config: %v", err)
-			return err
-		}
-		rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-		if err != nil {
-			err := fmt.Errorf("error creating rdsclientset: %v", err)
-			return err
-		}
-		rdsInstance, err := rdsGetByName(client, newRds.Name)
-		if len(rdsInstance.PrivateIps) > 0 {
-			newRds.Status.Ip = rdsInstance.PrivateIps[0]
-		}
-		if rdsInstance.Status != "" {
-			newRds.Status.Status = rdsInstance.Status
-		}
-		// newObj := newRds.DeepCopy()
-		_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
-		if err != nil {
-			err := fmt.Errorf("error update rds: %v", err)
-			return err
-		}
+	if newRds.Status.Id == "" {
+		err := fmt.Errorf("rdsUpdateStatus failed, Rds.Status.Id is empty")
+		return err
+	}
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		err := fmt.Errorf("error init in-cluster config: %v", err)
+		return err
+	}
+	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	if err != nil {
+		err := fmt.Errorf("error creating rdsclientset: %v", err)
+		return err
+	}
+	rdsInstance, err := rdsGetByName(client, newRds.Name)
+	if len(rdsInstance.PrivateIps) > 0 {
+		newRds.Status.Ip = rdsInstance.PrivateIps[0]
+	}
+	if rdsInstance.Status != "" {
+		newRds.Status.Status = rdsInstance.Status
+	}
+	// newObj := newRds.DeepCopy()
+	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
+	if err != nil {
+		err := fmt.Errorf("error update rds: %v", err)
+		return err
 	}
 	return nil
 }
