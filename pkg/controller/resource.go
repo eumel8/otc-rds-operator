@@ -280,20 +280,22 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 	if newRds.Spec.Reboot == true {
 		fmt.Println("doing restart")
-		restartOpts := instances.RestartRdsInstanceOpts{Restart: "{}"}
-		restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
-		_, err := restartResult.Extract()
+		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{Restart: "{}"}, newRds.Status.Id).Extract()
+		// restartOpts := instances.RestartRdsInstanceOpts{Restart: "{}"}
+		// restartResult := instances.Restart(client, restartOpts, newRds.Status.Id)
+		// _, err := restartResult.Extract()
 		if err != nil {
 			err := fmt.Errorf("error resizing rds: %v", err)
 			return err
 		}
-		jobResponse, err := restartResult.ExtractJobResponse()
-		if err != nil {
-			err := fmt.Errorf("error creating rds restart job: %v", err)
-			return err
-		}
+		// jobResponse, err := restartResult.ExtractJobResponse()
+		// if err != nil {
+		// 		err := fmt.Errorf("error creating rds restart job: %v", err)
+		// 		return err
+		// 	}
 
-		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+		if err := instances.WaitForJobCompleted(client, int(1800), restartResult.JobId); err != nil {
+			// if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
 			err := fmt.Errorf("error getting rds restart job: %v", err)
 			return err
 		}
