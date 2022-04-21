@@ -306,6 +306,23 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 	}
+	fmt.Println("doing errorlog catchup")
+	errorLogOpts := instances.DbErrorlogOpts{}
+	allPages, _ := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
+	errorLogs, err := instances.ExtractErrorLog(allPages)
+	if err != nil {
+		err := fmt.Errorf("error getting rds errorlog: %v", err)
+		return err
+	}
+
+	// for _, li := range errorLogs {
+	fmt.Println(errorLogs)
+	// 	}
+	// newRds.Status.Events = errorLogs.ErrorLogList.ErrorLog.Content
+	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		err := fmt.Errorf("error update rds error log events: %v", err)
+		return err
+	}
 	/* What we have todo here:
 	* Error Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
 	* Slow Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L375

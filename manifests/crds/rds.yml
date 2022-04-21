@@ -81,6 +81,8 @@ spec:
             status:
               type: object
               properties:
+                events:
+                  type: string
                 id:
                   type: string
                 ip:

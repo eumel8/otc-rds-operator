@@ -17,6 +17,7 @@ type RdsStatus struct {
 	Id     string `json:"id"`
 	Ip     string `json:"ip"`
 	Status string `json:"status"`
+	Events string `json:"events"`
 }
 
 type RdsSpec struct {
