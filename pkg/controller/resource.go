@@ -322,7 +322,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	start_date := time.Now().AddDate(0, -1, 0)
 	end_date := time.Now()
 
-	errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date.Format(time.RFC3339), EndDate: end_date.Format(time.RFC3339)}
+	errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date.Format(time.RFC3339) + "+0000", EndDate: end_date.Format(time.RFC3339) + "+0000"}
 	allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
 	if err != nil {
 		err := fmt.Errorf("error getting rds pages: %v", err)

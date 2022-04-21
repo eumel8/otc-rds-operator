@@ -9,16 +9,14 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type Rds struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
+	Events            RdsEvents `json:"events"`
 	Spec              RdsSpec   `json:"spec"`
 	Status            RdsStatus `json:"status"`
 }
 
-type RdsStatus struct {
-	Id     string `json:"id"`
-	Ip     string `json:"ip"`
-	Reboot bool   `json:"reboot"`
-	Status string `json:"status"`
-	Events string `json:"events"`
+type RdsEvents struct {
+	Errorlog string `json:"errorlog"`
+	Slowlog  string `json:"slowlog"`
 }
 
 type RdsSpec struct {
@@ -39,6 +37,13 @@ type RdsSpec struct {
 	Volumetype        string `json:"volumetype"`
 	Volumesize        int    `json:"volumesize"`
 	Vpc               string `json:"vpc"`
+}
+
+type RdsStatus struct {
+	Id     string `json:"id"`
+	Ip     string `json:"ip"`
+	Reboot bool   `json:"reboot"`
+	Status string `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

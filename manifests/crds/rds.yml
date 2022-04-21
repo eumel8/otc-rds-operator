@@ -21,6 +21,13 @@ spec:
           x-kubernetes-preserve-unknown-fields: true
           type: object
           properties:
+            events:
+              properties:
+                errorlog:
+                  type: string
+                slowlog:
+                  type: string
+              type: object
             spec:
               type: object
               properties:
@@ -78,8 +85,6 @@ spec:
             status:
               type: object
               properties:
-                events:
-                  type: string
                 id:
                   type: string
                 ip:
