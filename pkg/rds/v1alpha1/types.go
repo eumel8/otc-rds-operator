@@ -20,9 +20,9 @@ type RdsEvents struct {
 }
 
 type Errorlog struct {
-	Time    string `json:"time"`
-	Level   string `json:"level"`
-	Content string `json:"content"`
+	Time    []string `json:"time"`
+	Level   []string `json:"level"`
+	Content []string `json:"content"`
 }
 
 type RdsSpec struct {
