@@ -343,7 +343,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	// for _, li := range errorLogs {
 	fmt.Println(errorLogs.ErrorLogList)
 	// 	}
-	// newRds.Status.Events = errorLogs.ErrorLogList.ErrorLog.Content
+	newRds.Events.Errorlog = errorLogs.ErrorLogList
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds error log events: %v", err)
 		return err
