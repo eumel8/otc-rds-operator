@@ -15,8 +15,14 @@ type Rds struct {
 }
 
 type RdsEvents struct {
-	Errorlog string `json:"errorlog"`
-	Slowlog  string `json:"slowlog"`
+	Errorlog []Errorlog `json:"errorlog"`
+	Slowlog  string     `json:"slowlog"`
+}
+
+type Errorlog struct {
+	Time    string `json:"time"`
+	Level   string `json:"level"`
+	Content string `json:"content"`
 }
 
 type RdsSpec struct {
