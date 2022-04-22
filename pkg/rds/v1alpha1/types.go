@@ -21,8 +21,8 @@ type RdsSpec struct {
 	Datastoretype     string `json:"datastoretype"`
 	Datastoreversion  string `json:"datastoreversion"`
 	Flavorref         string `json:"flavorref"`
-	Hamode            *string `json:"hamode"`
-	Hareplicationmode *string `json:"hareplicationmode"`
+	Hamode            string `json:"hamode,omitempty"`
+	Hareplicationmode string `json:"hareplicationmode,omitempty"`
 	Port              string `json:"port"`
 	Password          string `json:"password"`
 	Region            string `json:"region"`
