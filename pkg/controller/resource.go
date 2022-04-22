@@ -200,7 +200,6 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		err := fmt.Errorf("error creating rds instance: %v", err)
 		return err
 	}
-	newRds.Spec.Password = "" // remove the initial root password from spec
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
@@ -223,6 +222,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		err := fmt.Errorf("error getting rds by id: %v", err)
 		return err
 	}
+	// remove the initial root password from spec
+	newRds.Spec.Password = ""
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
