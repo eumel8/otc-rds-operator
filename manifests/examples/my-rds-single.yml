@@ -1,0 +1,9 @@
+apiVersion: otc.mcsps.de/v1alpha1
+kind: Rds
+metadata:
+  name: my-rds-single
+spec:
+  password: "A12345678+"
+  vpc: "golang"
+  subnet: "golang"
+  securitygroup: "golang"
