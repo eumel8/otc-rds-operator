@@ -139,32 +139,59 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		return err
 	}
 
-	createOpts := instances.CreateRdsOpts{
-		Name: newRds.Name,
-		Datastore: &instances.Datastore{
-			Type:    newRds.Spec.Datastoretype,
-			Version: newRds.Spec.Datastoreversion,
-		},
-		Ha: &instances.Ha{
-			Mode:            newRds.Spec.Hamode,
-			ReplicationMode: newRds.Spec.Hareplicationmode,
-		},
-		Port:     newRds.Spec.Port,
-		Password: newRds.Spec.Password,
-		BackupStrategy: &instances.BackupStrategy{
-			StartTime: newRds.Spec.Backupstarttime,
-			KeepDays:  newRds.Spec.Backupkeepdays,
-		},
-		FlavorRef: newRds.Spec.Flavorref,
-		Volume: &instances.Volume{
-			Type: newRds.Spec.Volumetype,
-			Size: newRds.Spec.Volumesize,
-		},
-		Region:           newRds.Spec.Region,
-		AvailabilityZone: newRds.Spec.Availabilityzone,
-		VpcId:            v.ID,
-		SubnetId:         s.ID,
-		SecurityGroupId:  g.ID,
+	createOpts := instances.CreateRdsOpts{}
+	if newRds.Spec.Hamode == "Ha" {
+		createOpts = instances.CreateRdsOpts{
+			Name: newRds.Name,
+			Datastore: &instances.Datastore{
+				Type:    newRds.Spec.Datastoretype,
+				Version: newRds.Spec.Datastoreversion,
+			},
+			Ha: &instances.Ha{
+				Mode:            newRds.Spec.Hamode,
+				ReplicationMode: newRds.Spec.Hareplicationmode,
+			},
+			Port:     newRds.Spec.Port,
+			Password: newRds.Spec.Password,
+			BackupStrategy: &instances.BackupStrategy{
+				StartTime: newRds.Spec.Backupstarttime,
+				KeepDays:  newRds.Spec.Backupkeepdays,
+			},
+			FlavorRef: newRds.Spec.Flavorref,
+			Volume: &instances.Volume{
+				Type: newRds.Spec.Volumetype,
+				Size: newRds.Spec.Volumesize,
+			},
+			Region:           newRds.Spec.Region,
+			AvailabilityZone: newRds.Spec.Availabilityzone,
+			VpcId:            v.ID,
+			SubnetId:         s.ID,
+			SecurityGroupId:  g.ID,
+		}
+	} else {
+		createOpts = instances.CreateRdsOpts{
+			Name: newRds.Name,
+			Datastore: &instances.Datastore{
+				Type:    newRds.Spec.Datastoretype,
+				Version: newRds.Spec.Datastoreversion,
+			},
+			Port:     newRds.Spec.Port,
+			Password: newRds.Spec.Password,
+			BackupStrategy: &instances.BackupStrategy{
+				StartTime: newRds.Spec.Backupstarttime,
+				KeepDays:  newRds.Spec.Backupkeepdays,
+			},
+			FlavorRef: newRds.Spec.Flavorref,
+			Volume: &instances.Volume{
+				Type: newRds.Spec.Volumetype,
+				Size: newRds.Spec.Volumesize,
+			},
+			Region:           newRds.Spec.Region,
+			AvailabilityZone: newRds.Spec.Availabilityzone,
+			VpcId:            v.ID,
+			SubnetId:         s.ID,
+			SecurityGroupId:  g.ID,
+		}
 	}
 
 	createResult := instances.Create(client, createOpts)
