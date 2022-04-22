@@ -511,7 +511,8 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 	// newObj := newRds.DeepCopy()
 	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
 	fmt.Println("doing updatestatus")
-	fmt.Println(newRds)
+	fmt.Println(newRds.Name)
+	fmt.Println(newRds.Status)
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
