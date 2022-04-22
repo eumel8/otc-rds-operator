@@ -16,7 +16,7 @@ Kubernetes operator for OTC RDS
 * Resize Flavor
 * Enlarge Volume
 * Restart Instance
-* (Backup restore PITR)
+* Backup restore PITR
 * (Log handling)
 * (User handling)
 
@@ -60,7 +60,7 @@ and a minimum of 40 GB
 
 ### Restart Instance
 
-Edit the status of the RDS instance and set `reboot: true`. Instance will restart immediatally.
+Edit the status of the RDS instance and set `reboot: true`. Instance will restart immediatelly.
 
 Example:
 
@@ -70,6 +70,15 @@ status:
   ip: 192.168.0.71
   reboot: false
   status: ACTIVE
+```
+
+### Backup Restore PITR
+
+Set `backuprestoretime` to a valid date. RDS will recover immediatelly:
+
+```yaml
+spec:
+  backuprestoretime: "2022-04-20T22:08:41+00:00"
 ```
 
 ## Credits
