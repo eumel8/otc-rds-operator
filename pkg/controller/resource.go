@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	// "github.com/jinzhu/copier"
 	"net/http"
 	"os"
@@ -222,8 +223,6 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		err := fmt.Errorf("error getting rds by id: %v", err)
 		return err
 	}
-	// remove the initial root password from spec
-	newRds.Spec.Password = ""
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
@@ -267,6 +266,14 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	if newRds.Status.Id == "" {
 		err := fmt.Errorf("rdsUpdate failed, Rds.Status.Id is empty")
 		return err
+	}
+	// remove the initial root password from spec
+	if newRds.Spec.Password != "" {
+		newRds.Spec.Password = ""
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
 	}
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
@@ -501,6 +508,8 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 	}
 	// newObj := newRds.DeepCopy()
 	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
+	fmt.Println("doing updatestatus")
+	fmt.Println(newRds)
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
