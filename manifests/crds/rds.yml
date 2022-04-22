@@ -2,6 +2,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: rdss.otc.mcsps.de
+  finalizers:
+  - otc.mcsps.de/rds
 spec:
   group: otc.mcsps.de
   names:
@@ -24,48 +26,88 @@ spec:
             spec:
               type: object
               properties:
-                datastoretype:
-                  type: string
-                datastoreversion:
-                  type: string
-                volumetype:
-                  type: string
-                volumesize:
-                  type: integer
-                  minimum: 40
-                hamode:
-                  type: string
-                hareplicationmode:
-                  type: string
-                port:
-                  type: string
-                password:
+                availabilityzone:
+                  default: "eu-de-01"
+                  description: Specifies the AZ ID. If the DB instance is not a single instance, you need to specify an AZ for each node of the instance and separate the AZs with commas (,).
                   type: string
                 backuprestoretime:
+                  description: Specifies the backup restore time. Point In Time Recovery (PITR) will restore the instance to that point if set.
                   type: string
                 backupstarttime:
+                  description: Specifies the backup time window. Automated backups will be triggered during the backup time window.
+                  default: "01:00-02:00"
                   type: string
                 backupkeepdays:
+                  description: Specifies the retention days for specific backup files.
+                  default: 12
+                  minimum: 0
+                  maximum: 732
                   type: integer
+                datastoretype:
+                  description: Specifies the DB engine.
+                  default: "MySQL"
+                  pattern: "^(MySQL|PostgreSQL|SQLServer)$"
+                  type: string
+                datastoreversion:
+                  description: Specifies the database version.
+                  default: "8.0"
+                  pattern: "^(5.6|5.7|8.0|9.5|9.6|10|11|12|2014 SE|2016 SE|2016 EE|2017 SE|2017 EE)$"
+                  type: string
                 flavorref:
+                  description: Specifies the specification code. The value cannot be empty.
+                  default: "rds.mysql.c2.medium"
+                  type: string
+                hamode:
+                  description: Specifies the DB instance type. The value is Ha
+                  pattern: "^Ha"
+                  type: string
+                hareplicationmode:
+                  description: Specifies the replication mode for the standby DB instance.
+                  pattern: "^(sync|async|semisync)"
+                  type: string
+                port:
+                  description: Specifies the database port information.
+                  default: "3306"
+                  pattern: ^[0-9]{4,5}$
+                  type: string
+                password:
+                  description: Specifies the database password.
+                  minLength: 8
+                  maxLength: 32
+                  pattern: ^[a-zA-Z0-9\~\!@\#\%\^\*\-\_\=\+\?]*$
                   type: string
                 region:
+                  description: Specifies the region ID. Currently, read replicas can be created only in the same region as that of the primary DB instance.
+                  default: "eu-de"
                   type: string
-                availabilityzone:
+                volumetype:
+                  description: Specifies the volume type. Its value can be any of the following and is case-sensitive- COMMON - indicates the SATA type.  ULTRAHIGH - indicates the SSD type.
+                  default: "COMMON"
+                  pattern: "^(COMMON|ULTRAHIGH)$"
                   type: string
+                volumesize:
+                  default: 40
+                  description: Specifies the volume size. Its value must be a multiple of 10 and the value range is from 40 GB to 4000 GB.
+                  minimum: 40
+                  maximum: 4000
+                  type: integer
                 vpc:
+                  description: Specifies the VPC
+                  default: "default"
                   type: string
                 subnet:
+                  description: Specifies the VPC
+                  default: "default"
                   type: string
                 securitygroup:
+                  description: Specifies the Security Group
+                  default: "default"
                   type: string
               required:
                 - datastoretype
                 - datastoreversion
                 - volumetype
                 - volumesize
-                - hamode
-                - hareplicationmode
                 - port
                 - backupstarttime
                 - backupkeepdays
