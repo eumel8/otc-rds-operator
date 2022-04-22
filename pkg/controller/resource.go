@@ -340,19 +340,17 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 	// Restore backup PITR
 	if newRds.Spec.Backuprestoretime != "" { // 2020-04-04T22:08:41+00:00
-		newRds.Spec.Backuprestoretime = ""
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
-			err := fmt.Errorf("error update rds status: %v", err)
-			return err
-		}
-
 		rdsRestoredate, err := time.Parse(time.RFC3339, newRds.Spec.Backuprestoretime)
 		if err != nil {
 			err := fmt.Errorf("can't parse rds restore time: %v", err)
 			return err
 		}
+		newRds.Spec.Backuprestoretime = ""
+		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
 		rdsRestoretime := rdsRestoredate.UnixMilli()
-
 		restoreOpts := backups.RestorePITROpts{
 			Source: backups.Source{
 				InstanceID:  newRds.Status.Id,
