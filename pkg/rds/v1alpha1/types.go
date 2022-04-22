@@ -35,7 +35,7 @@ type RdsSpec struct {
 
 type RdsStatus struct {
 	Id     string `json:"id"`
-	Ip     string `json:"ip"`
+	Ip     string `json:"ip,omitempty"`
 	Reboot bool   `json:"reboot"`
 	Status string `json:"status"`
 }
