@@ -61,7 +61,7 @@ func (c *Controller) processEvent(ctx context.Context, obj interface{}) error {
 }
 
 func (c *Controller) processAddRds(ctx context.Context, rds *rdsv1alpha1.Rds) error {
-	err := Create(ctx, rds, c.namespace)
+	err := Create(ctx, rds)
 	return err
 }
 
@@ -75,7 +75,7 @@ func (c *Controller) processUpdateRds(
 	oldRds, newRds *rdsv1alpha1.Rds,
 ) error {
 	// refreshing state of otc resource
-	if err := UpdateStatus(ctx, newRds, c.namespace); err != nil {
+	if err := UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds status from worker: %v", err)
 		return err
 	}
@@ -85,7 +85,7 @@ func (c *Controller) processUpdateRds(
 	}
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
-	err := Update(ctx, oldObj, newObj, c.namespace)
+	err := Update(ctx, oldObj, newObj)
 	return err
 }
 

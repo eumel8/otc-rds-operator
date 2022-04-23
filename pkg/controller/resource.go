@@ -111,7 +111,7 @@ func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.R
 	return &n.Instances[0], nil
 }
 
-func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds, namespace string) error {
+func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 	rdsCheck, err := rdsGetByName(client, newRds.Name)
 	if rdsCheck != nil {
 		err := fmt.Errorf("rds already exists %s", newRds.Name)
@@ -203,8 +203,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
-	fmt.Println("doing status update 1 ", namespace)
-	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+	fmt.Println("doing status update 1 ", newRds.Namespace)
+	if err := UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
 	}
@@ -227,8 +227,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
-	fmt.Println("doing status update 2", namespace)
-	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+	if err := UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds status: %v", err)
 		return err
 	}
@@ -264,7 +263,7 @@ func (opts myRDSRestartOpts) ToRestartRdsInstanceMap() (map[string]interface{}, 
 	return b, nil
 }
 
-func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
+func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	if newRds.Status.Id == "" {
 		err := fmt.Errorf("rdsUpdate failed, Rds.Status.Id is empty")
 		return err
@@ -272,7 +271,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	// remove the initial root password from spec
 	if newRds.Spec.Password != "" {
 		newRds.Spec.Password = ""
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -307,7 +306,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -342,7 +341,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -350,7 +349,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	// Restart instance here
 	if newRds.Status.Reboot == true {
 		newRds.Status.Reboot = false
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -371,7 +370,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -384,7 +383,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Spec.Backuprestoretime = ""
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -412,7 +411,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -433,7 +432,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -475,7 +474,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 
 		copier.Copy(&newRds.Events.Errorlog, &errorLogs.ErrorLogList)
 		fmt.Println(newRds.Events)
-		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
+		if err := UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds error log events: %v", err)
 			return err
 		}
@@ -486,7 +485,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	return nil
 }
 
-func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds, namespace string) error {
+func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	if newRds.Status.Id == "" {
 		err := fmt.Errorf("rdsUpdateStatus failed, Rds.Status.Id is empty")
 		return err
@@ -512,11 +511,7 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 	if rdsInstance.Status != "" {
 		newRds.Status.Status = rdsInstance.Status
 	}
-	// newObj := newRds.DeepCopy()
-	_, err = rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, newRds, metav1.UpdateOptions{})
-	fmt.Println("doing updatestatus ", namespace)
-	fmt.Println(newRds.Name)
-	fmt.Println(newRds.Status)
+	_, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
@@ -562,7 +557,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 	return provider, nil
 }
 
-func Create(ctx context.Context, newRds *rdsv1alpha1.Rds, namespace string) error {
+func Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -580,7 +575,7 @@ func Create(ctx context.Context, newRds *rdsv1alpha1.Rds, namespace string) erro
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsCreate(ctx, network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds, namespace)
+	rdsCreate(ctx, network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
 	if err != nil {
 		return fmt.Errorf("rds creating failed: %v", err)
 	}
@@ -604,7 +599,7 @@ func Delete(newRds *rdsv1alpha1.Rds) error {
 	return nil
 }
 
-func Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds, namespace string) error {
+func Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -614,7 +609,7 @@ func Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rd
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsUpdate(ctx, rdsapi, oldRds, newRds, namespace)
+	rdsUpdate(ctx, rdsapi, oldRds, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
 	}
@@ -622,7 +617,7 @@ func Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rd
 }
 
 // Update K8s RDS Resource
-func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds, namespace string) error {
+func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -632,7 +627,7 @@ func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds, namespace string
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsUpdateStatus(ctx, rdsapi, newRds, namespace)
+	rdsUpdateStatus(ctx, rdsapi, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
 	}
