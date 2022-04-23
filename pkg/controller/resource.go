@@ -203,6 +203,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
+	fmt.Println("doing status update 1")
+	fmt.Println(ctx)
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
@@ -226,6 +228,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
+	fmt.Println("doing status update 2")
+	fmt.Println(ctx)
 	if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 		err := fmt.Errorf("error update rds status: %v", err)
 		return err
@@ -305,6 +309,8 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
+		fmt.Println("doing status update 3")
+		fmt.Println(ctx)
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
@@ -340,6 +346,8 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
+		fmt.Println("doing status update 4")
+		fmt.Println(ctx)
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
@@ -369,6 +377,8 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
+		fmt.Println("doing status update 5")
+		fmt.Println(ctx)
 		if err := UpdateStatus(ctx, newRds, namespace); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
