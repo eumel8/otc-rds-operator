@@ -1,6 +1,11 @@
 # otc-rds-operator
 
-Kubernetes operator for OTC RDS
+Kubernetes Operator for OTC RDS
+
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+
+`master` branch might be broken, look at the [release page](https://github.com/eumel8/otc-rds-operator/releases) 
+to use a functional version.
 
 ## Prerequisites
 
@@ -29,16 +34,40 @@ Kubernetes operator for OTC RDS
 
 ## Installation
 
+Look at the `otc` section in the [chart/values.yaml](chart.values.yaml) to provide credentials.
+Best case to generate your own values.yaml and install the app:
+
 ```bash
-helm -n rdsoperator upgrade -i rdsoperator chart --create-namespace
+helm -n rdsoperator upgrade -i rdsoperator -f values.yaml chart --create-namespace
+```
+
+In a minimal set and if you use `eu-de` region, only `domain_name`, `username`, and `password` are required:
+
+```bash
+helm -n rdsoperator upgrade -i rdsoperator --set otc.domain_name=<OTC-EU-DE-000000000010000000001> --set otc.username=<user> --set otc.password=<password> chart --create-namespace
 ```
 
 ## Custom Resource Definitions (CRDs)
 
+In [manifests/crds/rds.yml](manifests/crds/rds.yml) the used CRD is located.
+
+```yaml
+Group: otc.mcsps.de
+Kind: Rds
+```
+ 
 ## Usage
 
+Install a MySQL Single Instance:
+
 ```bash
-kubectl apply -f ./manifests/examples/my-rds.yml
+kubectl apply -f ./manifests/examples/my-rds-single.yml
+```
+
+Install a MySQL HA Instance:
+
+```bash
+kubectl apply -f ./manifests/examples/my-rds-ha.yml
 ```
 
 ## Operation
@@ -81,6 +110,31 @@ spec:
   backuprestoretime: "2022-04-20T22:08:41+00:00"
 ```
 
+## Developement
+
+Using `make` in the doc root:
+
+```bash
+           fmt: Format
+           run: Run controller
+           vet: Vet
+          deps: Optimize dependencies
+          help: Show targets documentation
+          test: Run tests
+         build: Build binary
+         clean: Clean build files
+         cover: Run tests and generate coverage
+         mocks: Generate mocks
+        vendor: Vendor dependencies
+      generate: Generate code
+    test-clean: Clean test cache
+```
+
 ## Credits
 
-@mmontes11 https://github.com/mmontes11/echoperator
+Frank Kloeker f.kloeker@telekom.de
+
+Life is for sharing. If you have an issue with the code or want to improve it, feel free to open an issue or an pull request.
+
+The Operator is inspired by [@mmontes11](https://github.com/mmontes11/echoperator), a good place
+to learn fundamental things about K8S API.
