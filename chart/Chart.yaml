@@ -4,3 +4,8 @@ description: Kubernetes Operator for OTC RDS
 name: otc-rds-operator
 type: application
 version: 0.0.11
+sources: https://github.com/eumel8/otc-rds-operator
+maintainers:
+  - name: eumel8
+    email: f.kloeker@telekom.de
+    url: https://www.telekom.com
