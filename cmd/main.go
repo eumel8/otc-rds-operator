@@ -15,9 +15,14 @@ import (
 	"github.com/eumel8/otc-rds-operator/pkg/controller"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/record"
+	"k8s.io/klog/v2"
 )
 
 func main() {
@@ -47,12 +52,18 @@ func main() {
 	if err != nil {
 		logger.Fatal("error creating rds client ", err)
 	}
+	eventBroadcaster := record.NewBroadcaster()
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "otc-rds-operator"})
+	eventBroadcaster.StartStructuredLogging(0)
+	klog.Infof("Sending events to api server.")
+	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: kubeClientSet.CoreV1().Events("")})
 
 	ctrl := controller.New(
 		kubeClientSet,
 		rdsv1alpha1ClientSet,
 		config.Namespace,
 		logger.WithField("type", "controller"),
+		recorder,
 	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), []os.Signal{

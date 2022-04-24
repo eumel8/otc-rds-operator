@@ -11,16 +11,12 @@ import (
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
 	rdsinformers "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/informers/externalversions"
 
-	v1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
-	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/klog/v2"
 )
 
 type Controller struct {
@@ -131,13 +127,6 @@ func New(
 	//jobInformer := kubeInformerFactory.Batch().V1().Jobs().Informer()
 
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
-
-	eventBroadcaster := record.NewBroadcaster()
-	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "otc-rds-operator"})
-	eventBroadcaster.StartStructuredLogging(0)
-
-	klog.Infof("Sending events to api server.")
-	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: kubeClientSet.CoreV1().Events("")})
 
 	ctrl := &Controller{
 		kubeClientSet: kubeClientSet,
