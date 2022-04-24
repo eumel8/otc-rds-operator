@@ -6,3 +6,4 @@ vendor/
 cover.*
 values.*
 github.com/
+manifests/examples/loadtest.yml

@@ -20,7 +20,13 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
+	k8sclientset "k8s.io/client-go/kubernetes"
+	clientcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/record"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
@@ -485,6 +491,40 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	return nil
 }
 
+func rdsUpdateEvent(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
+	if newRds.Status.Id == "" {
+		err := fmt.Errorf("rdsUpdateStatus failed, Rds.Status.Id is empty")
+		return err
+	}
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		err := fmt.Errorf("error init in-cluster config: %v", err)
+		return err
+	}
+	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+	if err != nil {
+		err := fmt.Errorf("error creating rdsclientset: %v", err)
+		return err
+	}
+	k8sclientset, err := k8sclientset.NewForConfig(restConfig)
+	if err != nil {
+		err := fmt.Errorf("error creating k8sclientset: %v", err)
+		return err
+	}
+	rdsGet, err := rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
+	if err != nil {
+		err := fmt.Errorf("error update rds: %v", err)
+		return err
+	}
+
+	broadcaster := record.NewBroadcaster()
+	broadcaster.StartRecordingToSink(&clientcorev1.EventSinkImpl{Interface: k8sclientset.CoreV1().Events("")})
+	recorder := broadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "rdsoperator"})
+	recorder.Event(rdsGet, corev1.EventTypeWarning, "haha1", "haha1")
+	time.Sleep(time.Second * 100)
+	return nil
+}
+
 func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	if newRds.Status.Id == "" {
 		err := fmt.Errorf("rdsUpdateStatus failed, Rds.Status.Id is empty")
@@ -629,7 +669,11 @@ func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 
 	rdsUpdateStatus(ctx, rdsapi, newRds)
 	if err != nil {
-		return fmt.Errorf("rds update failed: %v", err)
+		return fmt.Errorf("rds update status failed: %v", err)
+	}
+	rdsUpdateEvent(ctx, rdsapi, newRds)
+	if err != nil {
+		return fmt.Errorf("rds update event failed: %v", err)
 	}
 	return nil
 }
