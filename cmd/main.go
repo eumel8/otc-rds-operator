@@ -53,7 +53,7 @@ func main() {
 		logger.Fatal("error creating rds client ", err)
 	}
 	eventBroadcaster := record.NewBroadcaster()
-	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "rdsoperator-otc-rds-operator"})
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "otc-rds-operator"})
 	eventBroadcaster.StartStructuredLogging(0)
 	klog.Infof("Sending events to api server.")
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: kubeClientSet.CoreV1().Events("")})
@@ -93,6 +93,7 @@ func main() {
 		kubeClientSet,
 		config,
 		logger.WithField("type", "runner"),
+		recorder,
 	)
 	r.Start(ctx)
 }
