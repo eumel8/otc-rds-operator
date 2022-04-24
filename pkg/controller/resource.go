@@ -584,7 +584,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 		return nil, fmt.Errorf("unable to initialize openstack client: %v", err)
 	}
 
-	if os.Getenv("OS_DEBUG") != "" {
+	if os.Getenv("OS_DEBUG") == "1" {
 		provider.HTTPClient = http.Client{
 			Transport: &client.RoundTripper{
 				Rt:     &http.Transport{},
