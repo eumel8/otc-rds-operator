@@ -204,7 +204,6 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
-	fmt.Println("doing status update 1 ", newRds.Namespace)
 	if err := UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
@@ -541,8 +540,6 @@ func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRd
 	rdsInstance, err := rdsGetByName(client, newRds.Name)
 	if len(rdsInstance.PrivateIps) > 0 {
 		newRds.Status.Ip = rdsInstance.PrivateIps[0]
-		fmt.Println("doing privip")
-		fmt.Println(newRds.Status.Ip)
 	} else {
 		newRds.Status.Ip = ""
 	}
