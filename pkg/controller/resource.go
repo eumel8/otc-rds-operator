@@ -524,6 +524,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	if rdsInstance.Status != "" {
 		newRds.Status.Status = rdsInstance.Status
 	}
+	newRds.Status.Reboot = false
 	c.logger.Debug("UpdateStatus Detail doing", newRds.Status)
 	_, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
 	if err != nil {
