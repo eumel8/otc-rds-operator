@@ -119,7 +119,6 @@ func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName strin
 
 func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("rdsCreate ", newRds.Name)
-	c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is creating.")
 	rdsCheck, err := c.rdsGetByName(client, newRds.Name)
 	if rdsCheck != nil {
 		err := fmt.Errorf("rds already exists %s", newRds.Name)
@@ -203,6 +202,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 		}
 	}
 
+	c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is creating.")
 	createResult := instances.Create(client, createOpts)
 	r, err := createResult.Extract()
 	if err != nil {
@@ -244,8 +244,8 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 
 func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("rdsDelete ", newRds.Name)
-	c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is deleting.")
 	if newRds.Status.Id != "" {
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is deleting.")
 		deleteResult := instances.Delete(client, newRds.Status.Id)
 		jobResponse, err := deleteResult.ExtractJobResponse()
 		if err != nil {
@@ -363,13 +363,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	// Restart instance here
 	if newRds.Status.Reboot == true {
 		c.logger.Debug("rdsUpdate: restart instance")
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is rebooting.")
 		newRds.Status.Reboot = false
 		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
 
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is rebooting.")
 		restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
 		if err != nil {
 			err := fmt.Errorf("error rebooting rds: %v", err)
