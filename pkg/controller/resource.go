@@ -526,7 +526,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	}
 	c.logger.Debug("UpdateStatus Detail doing", newRds.Status)
 	// rdsStatus, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
-	rdsStatus, err = rdsclientset.McspsV1alpha1().Rdss("loadtest").Update(ctx, newRds, metav1.UpdateOptions{})
+	rdsStatus, err := rdsclientset.McspsV1alpha1().Rdss("loadtest").Update(ctx, newRds, metav1.UpdateOptions{})
 	fmt.Println(rdsStatus)
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
