@@ -87,7 +87,7 @@ func (c *Controller) processUpdateRds(
 	}
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
-	c.logger.Debug("rds changed", oldRds.Status, newRds,Status")
+	c.logger.Debug("rds changed", oldRds.Status, newRds.Status)
 	err := c.Update(ctx, oldObj, newObj)
 	return err
 }
