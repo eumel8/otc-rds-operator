@@ -91,7 +91,7 @@ func (c *Controller) delRds(obj interface{}) {
 }
 
 func (c *Controller) updateRds(oldObj, newObj interface{}) {
-	c.logger.Debug("updating rds")
+	// c.logger.Debug("updating rds")
 	oldRds, ok := oldObj.(*rdsv1alpha1.Rds)
 	if !ok {
 		c.logger.Errorf("unexpected new object %v", newObj)
@@ -122,9 +122,6 @@ func New(
 		10*time.Second,
 	)
 	rdsInformer := rdsInformerFactory.Mcsps().V1alpha1().Rdss().Informer()
-
-	//kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClientSet, 10*time.Second)
-	//jobInformer := kubeInformerFactory.Batch().V1().Jobs().Informer()
 
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 

@@ -33,7 +33,8 @@ type myRDSRestartOpts struct {
 	Restart struct{} `json:"restart"`
 }
 
-func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
+func (c *Controller) secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
+	c.logger.Debug("secgroupGet")
 	pages, err := groups.List(client, *opts).AllPages()
 	if err != nil {
 		return nil, err
@@ -47,7 +48,8 @@ func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*group
 	return &n[0], nil
 }
 
-func subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnets.Subnet, error) {
+func (c *Controller) subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnets.Subnet, error) {
+	c.logger.Debug("subnetGet")
 	n, err := subnets.List(client, *opts)
 	if err != nil {
 		return nil, err
@@ -60,7 +62,8 @@ func subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnet
 	return &n[0], nil
 }
 
-func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, error) {
+func (c *Controller) vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, error) {
+	c.logger.Debug("vpcGet")
 	n, err := vpcs.List(client, *opts)
 	if err != nil {
 		return nil, err
@@ -74,7 +77,8 @@ func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, er
 	return &n[0], nil
 }
 
-func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
+func (c *Controller) rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
+	c.logger.Debug("rdsGetById %s", rdsId)
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
 	}
@@ -93,7 +97,8 @@ func rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsIn
 	return &n.Instances[0], nil
 }
 
-func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
+func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
+	c.logger.Debug("rdsGetByName %s", rdsName)
 	listOpts := instances.ListRdsInstanceOpts{
 		Name: rdsName,
 	}
@@ -112,8 +117,9 @@ func rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.R
 	return &n.Instances[0], nil
 }
 
-func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
-	rdsCheck, err := rdsGetByName(client, newRds.Name)
+func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
+	c.logger.Debug("rdsCreate ", newRds.Name)
+	rdsCheck, err := c.rdsGetByName(client, newRds.Name)
 	if rdsCheck != nil {
 		err := fmt.Errorf("rds already exists %s", newRds.Name)
 		return err
@@ -123,19 +129,19 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		return err
 	}
 
-	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
+	g, err := c.secgroupGet(netclient2, &groups.ListOpts{Name: newRds.Spec.Securitygroup})
 	if err != nil {
 		err := fmt.Errorf("error getting secgroup state: %v", err)
 		return err
 	}
 
-	s, err := subnetGet(netclient1, &subnets.ListOpts{Name: newRds.Spec.Subnet})
+	s, err := c.subnetGet(netclient1, &subnets.ListOpts{Name: newRds.Spec.Subnet})
 	if err != nil {
 		err := fmt.Errorf("error getting subnet state: %v", err)
 		return err
 	}
 
-	v, err := vpcGet(netclient1, &vpcs.ListOpts{Name: newRds.Spec.Vpc})
+	v, err := c.vpcGet(netclient1, &vpcs.ListOpts{Name: newRds.Spec.Vpc})
 	if err != nil {
 		err := fmt.Errorf("error getting vpc state: %v", err)
 		return err
@@ -204,7 +210,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	}
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
-	if err := UpdateStatus(ctx, newRds); err != nil {
+	if err := c.UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
 	}
@@ -219,7 +225,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 		return err
 	}
 
-	rdsInstance, err := rdsGetById(client, r.Instance.Id)
+	rdsInstance, err := c.rdsGetById(client, r.Instance.Id)
 	if err != nil {
 		err := fmt.Errorf("error getting rds by id: %v", err)
 		return err
@@ -227,7 +233,7 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	newRds.Status.Id = rdsInstance.Id
 	newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	newRds.Status.Status = rdsInstance.Status
-	if err := UpdateStatus(ctx, newRds); err != nil {
+	if err := c.UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds status: %v", err)
 		return err
 	}
@@ -235,7 +241,8 @@ func rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclie
 	return nil
 }
 
-func rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
+	c.logger.Debug("rdsDelete ", newRds.Name)
 	if newRds.Status.Id != "" {
 		deleteResult := instances.Delete(client, newRds.Status.Id)
 		jobResponse, err := deleteResult.ExtractJobResponse()
@@ -264,6 +271,7 @@ func (opts myRDSRestartOpts) ToRestartRdsInstanceMap() (map[string]interface{}, 
 }
 
 func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
+	c.logger.Debug("rdsUpdate ", newRds.Name)
 	if newRds.Status.Id == "" {
 		err := fmt.Errorf("rdsUpdate failed, Rds.Status.Id is empty")
 		return err
@@ -271,7 +279,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	// remove the initial root password from spec
 	if newRds.Spec.Password != "" {
 		newRds.Spec.Password = ""
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -301,19 +309,20 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 
-		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
 		if err != nil {
 			err := fmt.Errorf("error getting rds by id: %v", err)
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
 	}
 	// Change Flavor here
 	if oldRds.Spec.Flavorref != newRds.Spec.Flavorref {
+		c.logger.Debug("rdsUpdate: change flavor")
 		resizeOpts := instances.ResizeFlavorOpts{
 			ResizeFlavor: &instances.SpecCode{
 				Speccode: newRds.Spec.Flavorref,
@@ -336,21 +345,22 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 
-		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
 		if err != nil {
 			err := fmt.Errorf("error getting rds by id: %v", err)
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
 	}
 	// Restart instance here
 	if newRds.Status.Reboot == true {
+		c.logger.Debug("rdsUpdate: restart instance")
 		newRds.Status.Reboot = false
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -365,13 +375,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 
-		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
 		if err != nil {
 			err := fmt.Errorf("error getting rds by id: %v", err)
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -384,7 +394,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 		newRds.Spec.Backuprestoretime = ""
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -406,13 +416,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			err := fmt.Errorf("rds restore failed: %v", err)
 			return err
 		}
-		rdsInstance, err := rdsGetById(client, newRds.Status.Id)
+		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
 		if err != nil {
 			err := fmt.Errorf("error getting rds by id: %v", err)
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -427,13 +437,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			err := fmt.Errorf("error rds restore job: %v", err)
 			return err
 		}
-		rdsInstance, err = rdsGetById(client, newRds.Status.Id)
+		rdsInstance, err = c.rdsGetById(client, newRds.Status.Id)
 		if err != nil {
 			err := fmt.Errorf("error getting rds by id: %v", err)
 			return err
 		}
 		newRds.Status.Status = rdsInstance.Status
-		if err := UpdateStatus(ctx, newRds); err != nil {
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
@@ -480,14 +490,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 	*/
-	/* What we have todo here:
-	* Backup PITR Restore https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/backups/requests.go#L217
-	 */
 	return nil
 }
 
-/*
-func rdsUpdateEvent(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	if newRds.Status.Id == "" {
 		err := fmt.Errorf("rdsUpdateStatus failed, Rds.Status.Id is empty")
 		return err
@@ -502,43 +508,7 @@ func rdsUpdateEvent(ctx context.Context, client *golangsdk.ServiceClient, newRds
 		err := fmt.Errorf("error creating rdsclientset: %v", err)
 		return err
 	}
-	k8sclientset, err := k8sclientset.NewForConfig(restConfig)
-	if err != nil {
-		err := fmt.Errorf("error creating k8sclientset: %v", err)
-		return err
-	}
-	//rdsGet, err := rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
-	if err != nil {
-		err := fmt.Errorf("error update rds: %v", err)
-		return err
-	}
-	// example: https://github.com/duanjiong/apiserver-example/blob/4d79b8d35d4289e1e74abe2d792996de7e519292/pkg/cmd/agent/agent.go
-	broadcaster := record.NewBroadcaster()
-	broadcaster.StartLogging(logrus.Infof)
-	broadcaster.StartRecordingToSink(&clientcorev1.EventSinkImpl{Interface: k8sclientset.CoreV1().Events("")})
-	recorder := broadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "rdsoperator"})
-	// recorder.Event(rdsGet, corev1.EventTypeWarning, "haha1", "haha1")
-	time.Sleep(time.Second * 100)
-	return nil
-}
-*/
-
-func rdsUpdateStatus(ctx context.Context, client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
-	if newRds.Status.Id == "" {
-		err := fmt.Errorf("rdsUpdateStatus failed, Rds.Status.Id is empty")
-		return err
-	}
-	restConfig, err := rest.InClusterConfig()
-	if err != nil {
-		err := fmt.Errorf("error init in-cluster config: %v", err)
-		return err
-	}
-	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
-	if err != nil {
-		err := fmt.Errorf("error creating rdsclientset: %v", err)
-		return err
-	}
-	rdsInstance, err := rdsGetByName(client, newRds.Name)
+	rdsInstance, err := c.rdsGetByName(client, newRds.Name)
 	if len(rdsInstance.PrivateIps) > 0 {
 		newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	} else {
@@ -593,7 +563,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 	return provider, nil
 }
 
-func Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -611,14 +581,14 @@ func Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsCreate(ctx, network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
+	c.rdsCreate(ctx, network1, network2, rdsapi, &instances.CreateRdsOpts{}, newRds)
 	if err != nil {
 		return fmt.Errorf("rds creating failed: %v", err)
 	}
 	return nil
 }
 
-func Delete(newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -628,7 +598,7 @@ func Delete(newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	err = rdsDelete(rdsapi, newRds)
+	err = c.rdsDelete(rdsapi, newRds)
 	if err != nil {
 		return fmt.Errorf("rds delete failed: %v", err)
 	}
@@ -653,7 +623,8 @@ func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds
 }
 
 // Update K8s RDS Resource
-func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
+	c.logger.Debug("UpdateStatus ", newRds.Name)
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -663,13 +634,9 @@ func UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsUpdateStatus(ctx, rdsapi, newRds)
+	c.rdsUpdateStatus(ctx, rdsapi, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update status failed: %v", err)
 	}
-	//rdsUpdateEvent(ctx, rdsapi, newRds)
-	//if err != nil {
-	//		return fmt.Errorf("rds update event failed: %v", err)
-	//}
 	return nil
 }
