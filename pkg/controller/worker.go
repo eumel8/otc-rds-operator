@@ -87,6 +87,8 @@ func (c *Controller) processUpdateRds(
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
 	err := Update(ctx, oldObj, newObj)
+	// recorder.Event(rdsGet, corev1.EventTypeWarning, "haha1", "haha1")
+	c.recorder.Eventf(oldObj, rdsv1alpha1.EventTypeWarning, "SelectingAll", "This deployment is selecting all pods. A non-empty selector is required.")
 	return err
 }
 

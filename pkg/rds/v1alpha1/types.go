@@ -6,6 +6,14 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +genclient:noStatus
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+const (
+	// Information only and will not cause any problems
+	EventTypeNormal string = "Normal"
+	// These events are to warn that something might go wrong
+	EventTypeWarning string = "Warning"
+)
+
 type Rds struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
