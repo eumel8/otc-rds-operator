@@ -289,7 +289,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		c.logger.Debug("rdsUpdate: enlarge volume")
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is enlarging.")
+		eventMsg := fmt.Sprint("This instance is enlarging to ", newRds.Spec.Volumesize)
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", string(eventMsg))
 		enlargeOpts := instances.EnlargeVolumeRdsOpts{
 			EnlargeVolume: &instances.EnlargeVolumeSize{
 				Size: newRds.Spec.Volumesize,
@@ -326,7 +327,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	// Change Flavor here
 	if oldRds.Spec.Flavorref != newRds.Spec.Flavorref {
 		c.logger.Debug("rdsUpdate: change flavor")
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is scaling to ", newRds.Spec.Flavorref)
+		eventMsg := fmt.Sprint("This instance is scaling to ", newRds.Spec.Flavorref)
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", string(eventMsg))
 		resizeOpts := instances.ResizeFlavorOpts{
 			ResizeFlavor: &instances.SpecCode{
 				Speccode: newRds.Spec.Flavorref,
@@ -397,7 +399,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	// Restore backup PITR
 	if newRds.Spec.Backuprestoretime != "" { // 2020-04-04T22:08:41+00:00
 		c.logger.Debug("rdsUpdate: restore instance")
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is restoring to ", newRds.Spec.Backuprestoretime)
+		eventMsg := fmt.Sprint("This instance is restoring to ", newRds.Spec.Backuprestoretime)
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", string(eventMsg))
 		rdsRestoredate, err := time.Parse(time.RFC3339, newRds.Spec.Backuprestoretime)
 		if err != nil {
 			err := fmt.Errorf("can't parse rds restore time: %v", err)
@@ -526,6 +529,9 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	}
 	if rdsInstance.Status != "" {
 		newRds.Status.Status = rdsInstance.Status
+	}
+	if newRds.Spec.Password != "" {
+		newRds.Spec.Password = ""
 	}
 	c.logger.Debug("UpdateStatus Detail doing", newRds.Status)
 	_, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
