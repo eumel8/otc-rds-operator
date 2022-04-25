@@ -33,6 +33,16 @@ rules:
       - watch
       - create
       - update
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs:
+    - create
+    - update
+    - get
+    - list
+    - watch
   {{ if .Values.ha.enabled }}
   - apiGroups:
       - coordination.k8s.io
