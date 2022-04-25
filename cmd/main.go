@@ -55,13 +55,10 @@ func main() {
 	}
 	eventBroadcaster := record.NewBroadcaster()
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "otc-rds-operator"})
-	// eventBroadcaster.StartStructuredLogging(0)
-	eventBroadcaster.StartLogging(logger.Infof)
-	klog.Infof("Sending events to api server.")
+	eventBroadcaster.StartStructuredLogging(0)
+	// eventBroadcaster.StartLogging(logger.Infof)
 	logger.Info("Sending events to apis")
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: kubeClientSet.CoreV1().Events("")})
-	klog.Infof("Sending events to api server 2.")
-	logger.Info("Sending events to apis 2")
 
 	ctrl := controller.New(
 		kubeClientSet,
