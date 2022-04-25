@@ -517,7 +517,8 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	if rdsInstance.Status != "" {
 		newRds.Status.Status = rdsInstance.Status
 	}
-	_, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
+	rdsstatus, err := rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
+	fmt.Println(rdsstatus)
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
@@ -634,6 +635,7 @@ func (c *Controller) UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) 
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
+	c.logger.Debug("UpdateStatus Detail", newRds.Status)
 	c.rdsUpdateStatus(ctx, rdsapi, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update status failed: %v", err)
