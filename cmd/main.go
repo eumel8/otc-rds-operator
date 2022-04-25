@@ -17,7 +17,8 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
+	// "k8s.io/client-go/kubernetes/scheme"
+	scheme "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned/scheme"
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"

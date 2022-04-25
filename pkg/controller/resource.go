@@ -263,7 +263,7 @@ func (opts myRDSRestartOpts) ToRestartRdsInstanceMap() (map[string]interface{}, 
 	return b, nil
 }
 
-func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	if newRds.Status.Id == "" {
 		err := fmt.Errorf("rdsUpdate failed, Rds.Status.Id is empty")
 		return err
@@ -278,6 +278,7 @@ func rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rds
 	}
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
+		c.logger.Debug("rdsUpdate: englarge volume")
 		enlargeOpts := instances.EnlargeVolumeRdsOpts{
 			EnlargeVolume: &instances.EnlargeVolumeSize{
 				Size: newRds.Spec.Volumesize,
@@ -634,7 +635,7 @@ func Delete(newRds *rdsv1alpha1.Rds) error {
 	return nil
 }
 
-func Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	provider, err := getProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
@@ -644,7 +645,7 @@ func Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rd
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	rdsUpdate(ctx, rdsapi, oldRds, newRds)
+	c.rdsUpdate(ctx, rdsapi, oldRds, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
 	}
