@@ -78,7 +78,7 @@ func (c *Controller) vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts
 }
 
 func (c *Controller) rdsGetById(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
-	c.logger.Debug("rdsGetById %s", rdsId)
+	c.logger.Debug("rdsGetById ", rdsId)
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
 	}
@@ -98,7 +98,7 @@ func (c *Controller) rdsGetById(client *golangsdk.ServiceClient, rdsId string) (
 }
 
 func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
-	c.logger.Debug("rdsGetByName %s", rdsName)
+	c.logger.Debug("rdsGetByName ", rdsName)
 	listOpts := instances.ListRdsInstanceOpts{
 		Name: rdsName,
 	}
@@ -288,7 +288,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	}
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
-		c.logger.Debug("rdsUpdate: englarge volume")
+		c.logger.Debug("rdsUpdate: enlarge volume")
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is enlarging.")
 		enlargeOpts := instances.EnlargeVolumeRdsOpts{
 			EnlargeVolume: &instances.EnlargeVolumeSize{
@@ -525,7 +525,9 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		newRds.Status.Status = rdsInstance.Status
 	}
 	c.logger.Debug("UpdateStatus Detail doing", newRds.Status)
-	_, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
+	// rdsStatus, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
+	rdsStatus, err = rdsclientset.McspsV1alpha1().Rdss("loadtest").Update(ctx, newRds, metav1.UpdateOptions{})
+	fmt.Println(rdsStatus)
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
