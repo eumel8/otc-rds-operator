@@ -326,7 +326,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	// Change Flavor here
 	if oldRds.Spec.Flavorref != newRds.Spec.Flavorref {
 		c.logger.Debug("rdsUpdate: change flavor")
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is scaling.")
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is scaling to ",newRds.Spec.Flavorref)
 		resizeOpts := instances.ResizeFlavorOpts{
 			ResizeFlavor: &instances.SpecCode{
 				Speccode: newRds.Spec.Flavorref,
@@ -394,7 +394,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 	// Restore backup PITR
 	if newRds.Spec.Backuprestoretime != "" { // 2020-04-04T22:08:41+00:00
 		c.logger.Debug("rdsUpdate: restore instance")
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is restoring.")
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is restoring to ",newRds.Spec.Backuprestoretime)
 		rdsRestoredate, err := time.Parse(time.RFC3339, newRds.Spec.Backuprestoretime)
 		if err != nil {
 			err := fmt.Errorf("can't parse rds restore time: %v", err)
@@ -525,9 +525,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		newRds.Status.Status = rdsInstance.Status
 	}
 	c.logger.Debug("UpdateStatus Detail doing", newRds.Status)
-	// rdsStatus, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
-	rdsStatus, err := rdsclientset.McspsV1alpha1().Rdss("loadtest").Update(ctx, newRds, metav1.UpdateOptions{})
-	fmt.Println(rdsStatus)
+	_, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
