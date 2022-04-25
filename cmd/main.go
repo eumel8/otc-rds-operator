@@ -57,7 +57,10 @@ func main() {
 	// eventBroadcaster.StartStructuredLogging(0)
 	eventBroadcaster.StartLogging(logger.Infof)
 	klog.Infof("Sending events to api server.")
+	c.logger.Info("Sending events to apis")
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: kubeClientSet.CoreV1().Events("")})
+	klog.Infof("Sending events to api server 2.")
+	c.logger.Info("Sending events to apis 2")
 
 	ctrl := controller.New(
 		kubeClientSet,
