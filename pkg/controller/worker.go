@@ -87,7 +87,7 @@ func (c *Controller) processUpdateRds(
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
 	err := Update(ctx, oldObj, newObj)
-	c.recorder.Eventf(oldObj, rdsv1alpha1.EventTypeInfo, "Update", "This instance is updating.")
+	c.recorder.Eventf(oldObj, rdsv1alpha1.EventTypeNormal, "Update", "This instance is updating.")
 	return err
 }
 
