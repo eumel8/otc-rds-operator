@@ -42,6 +42,7 @@ rules:
     - update
     - get
     - list
+    - patch
     - watch
   {{ if .Values.ha.enabled }}
   - apiGroups:
