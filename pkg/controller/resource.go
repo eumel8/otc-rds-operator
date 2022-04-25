@@ -279,13 +279,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		return err
 	}
 	// remove the initial root password from spec
-	if newRds.Spec.Password != "" {
-		newRds.Spec.Password = ""
-		if err := c.UpdateStatus(ctx, newRds); err != nil {
-			err := fmt.Errorf("error update rds status: %v", err)
-			return err
-		}
-	}
+	// 	if newRds.Spec.Password != "" {
+	// 		newRds.Spec.Password = ""
+	// 		if err := c.UpdateStatus(ctx, newRds); err != nil {
+	// 			err := fmt.Errorf("error update rds status: %v", err)
+	// 			return err
+	// 		}
+	// }
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		c.logger.Debug("rdsUpdate: enlarge volume")
