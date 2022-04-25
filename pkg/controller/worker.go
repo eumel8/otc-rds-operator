@@ -79,6 +79,7 @@ func (c *Controller) processUpdateRds(
 		err := fmt.Errorf("error update rds status from worker: %v", err)
 		return err
 	}
+	c.logger.Info("doing processUpdateRds %s", newRds.Name)
 	if !oldRds.HasChanged(newRds) {
 		c.logger.Debug("rds has not changed, skipping")
 		return nil
