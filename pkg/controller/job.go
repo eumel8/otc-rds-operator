@@ -46,7 +46,7 @@ func createJobSpec(name string, namespace string) batchv1.JobSpec {
 						Name:  name,
 						Image: image,
 						// Command:         []string{"/app/rdslogs", "-errorlog"},
-						Command:         []string{"env"},
+						Command:         []string{"sh", "-c", "env"},
 						ImagePullPolicy: "IfNotPresent",
 						SecurityContext: &corev1.SecurityContext{
 							AllowPrivilegeEscalation: &privledged,
