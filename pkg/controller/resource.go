@@ -365,26 +365,26 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is rebooting.")
-			restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
-			if err != nil {
-				err := fmt.Errorf("error rebooting rds: %v", err)
-				return err
-			}
-			if err := instances.WaitForJobCompleted(client, int(1800), restartResult.JobId); err != nil {
-				err := fmt.Errorf("error getting rds restart job: %v", err)
-				return err
-			}
+		restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
+		if err != nil {
+			err := fmt.Errorf("error rebooting rds: %v", err)
+			return err
+		}
+		if err := instances.WaitForJobCompleted(client, int(1800), restartResult.JobId); err != nil {
+			err := fmt.Errorf("error getting rds restart job: %v", err)
+			return err
+		}
 
-			rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
-			if err != nil {
-				err := fmt.Errorf("error getting rds by id: %v", err)
-				return err
-			}
-			newRds.Status.Status = rdsInstance.Status
-			if err := c.UpdateStatus(ctx, newRds); err != nil {
-				err := fmt.Errorf("error update rds status: %v", err)
-				return err
-			}
+		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
+		newRds.Status.Status = rdsInstance.Status
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
 	}
 	// Restore backup PITR
 	if newRds.Spec.Backuprestoretime != "" { // 2020-04-04T22:08:41+00:00

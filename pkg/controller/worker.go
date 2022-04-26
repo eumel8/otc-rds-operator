@@ -78,7 +78,7 @@ func (c *Controller) processUpdateRds(
 	// !!! caused overwrites status after updating, lets see how to live without them
 	if err := c.UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds status from worker: %v", err)
-	 	return err
+		return err
 	}
 	// c.logger.Info("doing processUpdateRds ", newRds.Name)
 	if !oldRds.HasChanged(newRds) {
