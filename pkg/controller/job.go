@@ -8,6 +8,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	image      = string("ghcr.io/eumel8/otcrdslogs:latest")
+	user       = int64(1000)
+	privledged = bool(false)
+	readonly   = bool(true)
+)
+
 func createJob(newRds *rdsv1alpha1.Rds, namespace string) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -37,9 +44,16 @@ func createJobSpec(name string, namespace string) batchv1.JobSpec {
 				Containers: []corev1.Container{
 					{
 						Name:            name,
-						Image:           "ghcr.io/eumel8/otcrdslogs:latest",
+						Image:           image,
 						Command:         []string{"/app/rdslogs", "-errorlogs"},
 						ImagePullPolicy: "IfNotPresent",
+						SecurityContext: &corev1.SecurityContext{
+							AllowPrivilegeEscalation: &privledged,
+							Privileged:               &privledged,
+							ReadOnlyRootFilesystem:   &readonly,
+							RunAsGroup:               &user,
+							RunAsUser:                &user,
+						},
 						Env: []corev1.EnvVar{
 							{
 								Name:  "RDS_NAME",
