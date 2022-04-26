@@ -524,7 +524,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		newRds.Status.Status = rdsInstance.Status
 	}
 	returnRds, err := rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
-	if returnRds.Status == false {
+	if returnRds.Status != newRds.Status {
 		err := fmt.Errorf("error update rds, result empty")
 		return err
 	}
