@@ -452,6 +452,17 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
+	if newRds.Status.Errorlogs == true {
+		c.logger.Debug("rdsUpdate: instance errorlogs")
+		newRds.Status.Errorlogs = false
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
+			err := fmt.Errorf("error update rds status: %v", err)
+			return err
+		}
+
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch errorlogs.")
+		createJob(newRds, c.namespace)
+	}
 	/*
 		// Implementation of errorlog/slowquerylog
 		// can be very long (+500 events)
