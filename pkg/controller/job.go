@@ -43,10 +43,9 @@ func createJobSpec(name string, namespace string) batchv1.JobSpec {
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
-						Name:  name,
-						Image: image,
-						// Command:         []string{"/app/rdslogs", "-errorlog"},
-						Command:         []string{"sh", "-c", "env"},
+						Name:            name,
+						Image:           image,
+						Command:         []string{"/app/rdslogs", "-errorlog"},
 						ImagePullPolicy: "IfNotPresent",
 						SecurityContext: &corev1.SecurityContext{
 							AllowPrivilegeEscalation: &privledged,
