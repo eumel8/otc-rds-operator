@@ -464,7 +464,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		job := createJob(newRds, c.namespace)
 
 		fmt.Println("doing job")
-		fmt.Println(job)
+		fmt.Println(ctx)
 		jobReturn, err := c.kubeClientSet.BatchV1().
 			Jobs(c.namespace).
 			Create(ctx, job, metav1.CreateOptions{})
@@ -663,7 +663,6 @@ func (c *Controller) UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) 
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	c.logger.Debug("UpdateStatus Detail", newRds.Status)
 	c.rdsUpdateStatus(ctx, rdsapi, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update status failed: %v", err)

@@ -74,20 +74,16 @@ func (c *Controller) processUpdateRds(
 	ctx context.Context,
 	oldRds, newRds *rdsv1alpha1.Rds,
 ) error {
-	// refreshing state of otc resource
-	// !!! caused overwrites status after updating, lets see how to live without them
 	if err := c.UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds status from worker: %v", err)
 		return err
 	}
-	// c.logger.Info("doing processUpdateRds ", newRds.Name)
 	if !oldRds.HasChanged(newRds) {
 		c.logger.Debug("rds has not changed, skipping")
 		return nil
 	}
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
-	c.logger.Debug("rds changed", oldRds.Status, newRds.Status)
 	err := c.Update(ctx, oldObj, newObj)
 	return err
 }
