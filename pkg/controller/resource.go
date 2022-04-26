@@ -461,7 +461,15 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch errorlogs.")
-		createJob(newRds, c.namespace)
+		job := createJob(newRds, c.namespace)
+
+		_, err := c.kubeClientSet.BatchV1().
+			Jobs(c.namespace).
+			Create(ctx, job, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("error creating job  %v", err)
+		}
+
 	}
 	/*
 		// Implementation of errorlog/slowquerylog
