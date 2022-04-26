@@ -534,7 +534,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		newRds.Spec.Password = ""
 	}
 	c.logger.Debug("UpdateStatus Detail doing", newRds.Status)
-	returnRds, err = rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
+	returnRds, err := rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
 	c.logger.Debug("UpdateStatus Detail done", returnRds.Status)
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
