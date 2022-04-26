@@ -365,8 +365,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is rebooting.")
-		return nil
-		/*
 			restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
 			if err != nil {
 				err := fmt.Errorf("error rebooting rds: %v", err)
@@ -387,7 +385,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 				err := fmt.Errorf("error update rds status: %v", err)
 				return err
 			}
-		*/
 	}
 	// Restore backup PITR
 	if newRds.Spec.Backuprestoretime != "" { // 2020-04-04T22:08:41+00:00
