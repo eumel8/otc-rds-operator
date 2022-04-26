@@ -110,6 +110,63 @@ spec:
   backuprestoretime: "2022-04-20T22:08:41+00:00"
 ```
 
+### Import/Export
+
+#### Import
+
+If you want to migrate an unmanaged RDS instance into the operator, create a resource
+and apply to the cluster. Operator care about existing instances and do not create it twice
+
+1. Lookup for the unmanaged instance
+
+```bash
+openstack rds instance list
+
++--------------------------------------+-------------------+----------------+-------------------+--------+------------------------+--------+------+--------+
+| ID                                   | Name              | Datastore Type | Datastore Version | Status | Flavor_ref             | Type   | Size | Region |
++--------------------------------------+-------------------+----------------+-------------------+--------+------------------------+--------+------+--------+
+| 6780320f1c1249d6922e0c4573a697a0in01 | my-rds-ha2        | MySQL          | 8.0               | ACTIVE | rds.mysql.c2.medium.ha | Ha     |  100 | eu-de  |
+```
+
+2. Create manifest:
+
+```yaml
+apiVersion: otc.mcsps.de/v1alpha1
+kind: Rds
+metadata:
+  name: my-rds-ha2
+spec:
+  datastoretype: "MySQL"
+  datastoreversion: "8.0"
+  volumetype: "COMMON"
+  volumesize: 100
+  hamode: "Ha"
+  hareplicationmode: "semisync"
+  port: "3306"
+  password: "A12345678+"
+  backupstarttime: "01:00-02:00"
+  backupkeepdays: 10
+  flavorref: "rds.mysql.c2.medium.ha"
+  region: "eu-de"
+  availabilityzone: "eu-de-01,eu-de-02"
+  vpc: "golang"
+  subnet: "golang"
+  securitygroup: "golang"
+```
+
+3. Apply to the target namespace in the cluster. No you can operate all supported usecases
+
+#### Export
+
+Remove the `Id` from the Rds resource
+
+```yaml
+Status:
+  Id:      8a725142698e4d0a9ed606d97905a77din01
+```
+
+After that the instance in OTC is unmanaged and you can safely delete Rds in Kubernetes Cluster.
+
 ## Developement
 
 Using `make` in the doc root:
