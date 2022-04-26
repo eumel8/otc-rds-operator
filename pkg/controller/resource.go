@@ -209,6 +209,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 		err := fmt.Errorf("error creating rds instance: %v", err)
 		return err
 	}
+	newRds.Spec.Password = "xxxxxxxxxx"
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 	if err := c.UpdateStatus(ctx, newRds); err != nil {
@@ -278,14 +279,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		err := fmt.Errorf("rdsUpdate failed, Rds.Status.Id is empty")
 		return err
 	}
-	// remove the initial root password from spec
-	// 	if newRds.Spec.Password != "" {
-	// 		newRds.Spec.Password = ""
-	// 		if err := c.UpdateStatus(ctx, newRds); err != nil {
-	// 			err := fmt.Errorf("error update rds status: %v", err)
-	// 			return err
-	// 		}
-	// }
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		c.logger.Debug("rdsUpdate: enlarge volume")
@@ -525,17 +518,16 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	if len(rdsInstance.PrivateIps) > 0 {
 		newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	} else {
-		newRds.Status.Ip = ""
+		newRds.Status.Ip = "0.0.0.0"
 	}
 	if rdsInstance.Status != "" {
 		newRds.Status.Status = rdsInstance.Status
 	}
-	// if newRds.Spec.Password != "" {
-	// 	newRds.Spec.Password = ""
-	// }
-	c.logger.Debug("UpdateStatus Detail doing", newRds.Status)
 	returnRds, err := rdsclientset.McspsV1alpha1().Rdss(newRds.Namespace).Update(ctx, newRds, metav1.UpdateOptions{})
-	c.logger.Debug("UpdateStatus Detail done", returnRds.Status)
+	if returnRds.Status == false {
+		err := fmt.Errorf("error update rds, result empty")
+		return err
+	}
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
