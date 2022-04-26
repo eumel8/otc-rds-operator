@@ -463,6 +463,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch errorlogs.")
 		job := createJob(newRds, c.namespace)
 
+		fmt.Println("doing job")
+		fmt.Println(job)
 		_, err := c.kubeClientSet.BatchV1().
 			Jobs(c.namespace).
 			Create(ctx, job, metav1.CreateOptions{})
