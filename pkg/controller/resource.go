@@ -465,9 +465,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		fmt.Println("doing job")
 		fmt.Println(job)
-		_, err := c.kubeClientSet.BatchV1().
+		jobReturn, err := c.kubeClientSet.BatchV1().
 			Jobs(c.namespace).
 			Create(ctx, job, metav1.CreateOptions{})
+		fmt.Println(jobReturn)
 		if err != nil {
 			return fmt.Errorf("error creating job  %v", err)
 		}
