@@ -452,15 +452,15 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
-	if newRds.Status.Errorlogs == true {
+	if newRds.Status.Logs == true {
 		c.logger.Debug("rdsUpdate: instance errorlogs")
-		newRds.Status.Errorlogs = false
+		newRds.Status.Logs = false
 		if err := c.UpdateStatus(ctx, newRds); err != nil {
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
 
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch errorlogs.")
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch logs.")
 		opts, err := openstack.AuthOptionsFromEnv()
 		job := createJob(newRds, opts)
 
@@ -470,53 +470,11 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
-		// fmt.Println(job)
 		if err != nil {
 			return fmt.Errorf("error creating job  %v", err)
 		}
 
 	}
-	/*
-		// Implementation of errorlog/slowquerylog
-		// can be very long (+500 events)
-		// structured data https://pkg.go.dev/github.com/opentelekomcloud/gophertelekomcloud@v0.5.9/openstack/rds/v3/instances#ErrorLogResp.ErrorLogList
-		// needs the implementaion of event log handler
-		// https://github.com/kubernetes/client-go/blob/master/tools/record/event.go
-		// examples:
-		// https://github.com/gaulzhw/learning_k8s/blob/3bab7e22958a30684bd464b0f174b3ac38d5b891/code/pkg/controllers/informer_controller.go
-		// https://github.com/kaidotdev/events-logger/blob/master/main.go
-		//  Error Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L302
-		// Slow Logs https://github.com/opentelekomcloud/gophertelekomcloud/blob/devel/openstack/rds/v3/instances/requests.go#L375
-
-		fmt.Println("doing errorlog catchup")
-		sd := time.Now().AddDate(0, -1, 0)
-		ed := time.Now()
-		start_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
-			sd.Year(), sd.Month(), sd.Day(),
-			sd.Hour(), sd.Minute(), sd.Second())
-		end_date := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d+0000",
-			ed.Year(), ed.Month(), ed.Day(),
-			ed.Hour(), ed.Minute(), ed.Second())
-
-		errorLogOpts := instances.DbErrorlogOpts{StartDate: start_date, EndDate: end_date}
-		allPages, err := instances.ListErrorLog(client, errorLogOpts, newRds.Status.Id).AllPages()
-		if err != nil {
-			err := fmt.Errorf("error getting rds pages: %v", err)
-			return err
-		}
-		errorLogs, err := instances.ExtractErrorLog(allPages)
-		if err != nil {
-			err := fmt.Errorf("error getting rds errorlog: %v", err)
-			return err
-		}
-
-		copier.Copy(&newRds.Events.Errorlog, &errorLogs.ErrorLogList)
-		fmt.Println(newRds.Events)
-		if err := UpdateStatus(ctx, newRds); err != nil {
-			err := fmt.Errorf("error update rds error log events: %v", err)
-			return err
-		}
-	*/
 	return nil
 }
 

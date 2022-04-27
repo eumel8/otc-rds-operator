@@ -49,9 +49,48 @@ func createJobSpec(name string, namespace string, opts golangsdk.AuthOptions) ba
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
-						Name:            name,
+						Name:            "errorlog",
 						Image:           image,
 						Command:         []string{"/app/rdslogs", "-errorlog"},
+						ImagePullPolicy: "IfNotPresent",
+						SecurityContext: &corev1.SecurityContext{
+							AllowPrivilegeEscalation: &privledged,
+							Privileged:               &privledged,
+							ReadOnlyRootFilesystem:   &readonly,
+							RunAsGroup:               &user,
+							RunAsUser:                &user,
+						},
+						Env: []corev1.EnvVar{
+							{
+								Name:  "RDS_NAME",
+								Value: name,
+							},
+							{
+								Name:  "OS_USERNAME",
+								Value: opts.Username,
+							},
+							{
+								Name:  "OS_PASSWORD",
+								Value: opts.Password,
+							},
+							{
+								Name:  "OS_AUTH_URL",
+								Value: opts.IdentityEndpoint,
+							},
+							{
+								Name:  "OS_USER_DOMAIN_NAME",
+								Value: opts.DomainName,
+							},
+							{
+								Name:  "OS_PROJECT_NAME",
+								Value: opts.TenantName,
+							},
+						},
+					},
+					{
+						Name:            "slowlog",
+						Image:           image,
+						Command:         []string{"/app/rdslogs", "-slowlog"},
 						ImagePullPolicy: "IfNotPresent",
 						SecurityContext: &corev1.SecurityContext{
 							AllowPrivilegeEscalation: &privledged,

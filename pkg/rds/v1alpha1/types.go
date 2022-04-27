@@ -40,11 +40,11 @@ type RdsSpec struct {
 }
 
 type RdsStatus struct {
-	Id        string `json:"id"`
-	Ip        string `json:"ip"`
-	Errorlogs bool   `json:"errorlogs"`
-	Reboot    bool   `json:"reboot"`
-	Status    string `json:"status"`
+	Id     string `json:"id"`
+	Ip     string `json:"ip"`
+	Logs   bool   `json:"logs"`
+	Reboot bool   `json:"reboot"`
+	Status string `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
