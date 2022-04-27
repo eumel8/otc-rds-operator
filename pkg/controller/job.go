@@ -15,11 +15,11 @@ var (
 	readonly   = bool(true)
 )
 
-func createJob(newRds *rdsv1alpha1.Rds, namespace string) *batchv1.Job {
+func createJob(newRds *rdsv1alpha1.Rds) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      newRds.ObjectMeta.Name,
-			Namespace: namespace,
+			Namespace: newRds.Namespace,
 			Labels:    make(map[string]string),
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(
@@ -28,7 +28,7 @@ func createJob(newRds *rdsv1alpha1.Rds, namespace string) *batchv1.Job {
 				),
 			},
 		},
-		Spec: createJobSpec(newRds.Name, namespace),
+		Spec: createJobSpec(newRds.Name, newRds.Namespace),
 	}
 }
 
