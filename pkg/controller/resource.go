@@ -468,7 +468,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		if err != nil {
 			return fmt.Errorf("error getting auth from env  %v", err)
 		}
-		fmt.Println("opts
+		fmt.Println("opts")
 		fmt.Println(opts)
 		jobReturn, err := c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
