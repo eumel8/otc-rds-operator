@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	// "github.com/jinzhu/copier"
 	"net/http"
 	"os"
 	"time"
@@ -460,21 +459,16 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
-
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch logs.")
 		opts, err := openstack.AuthOptionsFromEnv()
 		job := createJob(newRds, opts)
 
-		if err != nil {
-			return fmt.Errorf("error getting auth from env  %v", err)
-		}
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("error creating job  %v", err)
 		}
-
 	}
 	return nil
 }
