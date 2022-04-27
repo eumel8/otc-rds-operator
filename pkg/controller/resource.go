@@ -212,6 +212,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 	newRds.Spec.Password = "xxxxxxxxxx"
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
+
 	if err := c.UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
