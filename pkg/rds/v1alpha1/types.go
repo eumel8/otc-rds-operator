@@ -6,6 +6,12 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +genclient:noStatus
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+const (
+	EventTypeNormal  string = "Normal"
+	EventTypeWarning string = "Warning"
+)
+
 type Rds struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -36,6 +42,7 @@ type RdsSpec struct {
 type RdsStatus struct {
 	Id     string `json:"id"`
 	Ip     string `json:"ip"`
+	Logs   bool   `json:"logs"`
 	Reboot bool   `json:"reboot"`
 	Status string `json:"status"`
 }

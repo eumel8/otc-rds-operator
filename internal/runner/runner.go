@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	"k8s.io/client-go/tools/record"
 )
 
 type Runner struct {
@@ -17,6 +18,7 @@ type Runner struct {
 	clientset *kubernetes.Clientset
 	config    config.Config
 	logger    log.Logger
+	recorder  record.EventRecorder
 }
 
 func (r *Runner) Start(ctx context.Context) {
@@ -80,11 +82,13 @@ func NewRunner(
 	clientset *kubernetes.Clientset,
 	config config.Config,
 	logger log.Logger,
+	recorder record.EventRecorder,
 ) *Runner {
 	return &Runner{
 		ctrl:      ctrl,
 		clientset: clientset,
 		config:    config,
 		logger:    logger,
+		recorder:  recorder,
 	}
 }

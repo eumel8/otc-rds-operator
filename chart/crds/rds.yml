@@ -118,13 +118,31 @@ spec:
                 - subnet
                 - securitygroup
             status:
-              type: object
               properties:
+                logs:
+                  default: false
+                  description: Trigger to fetch RDS logs and provide job output
+                  type: boolean
                 id:
+                  description: RDS Instance ID
                   type: string
                 ip:
+                  description: RDS ip-address (internal)
                   type: string
                 reboot:
+                  default: false
+                  description: Trigger to reboot RDS instance
                   type: boolean
                 status:
+                  description: Status of RDS instance
                   type: string
+                type: object
+                properties:
+                  id:
+                    type: string
+                  ip:
+                    type: string
+                  reboot:
+                    type: boolean
+                  status:
+                    type: string

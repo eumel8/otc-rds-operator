@@ -15,20 +15,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 )
 
 type Controller struct {
 	kubeClientSet kubernetes.Interface
-
-	rdsInformer cache.SharedIndexInformer
-	//jobInformer cache.SharedIndexInformer
-
-	queue workqueue.RateLimitingInterface
-
-	namespace string
-
-	logger log.Logger
+	rdsInformer   cache.SharedIndexInformer
+	queue         workqueue.RateLimitingInterface
+	namespace     string
+	logger        log.Logger
+	recorder      record.EventRecorder
 }
 
 func (c *Controller) Run(ctx context.Context, numWorkers int) error {
@@ -40,7 +37,6 @@ func (c *Controller) Run(ctx context.Context, numWorkers int) error {
 	c.logger.Info("starting informers")
 	for _, i := range []cache.SharedIndexInformer{
 		c.rdsInformer,
-		//c.jobInformer,
 	} {
 		go i.Run(ctx.Done())
 	}
@@ -48,7 +44,6 @@ func (c *Controller) Run(ctx context.Context, numWorkers int) error {
 	c.logger.Info("waiting for informer caches to sync")
 	if !cache.WaitForCacheSync(ctx.Done(), []cache.InformerSynced{
 		c.rdsInformer.HasSynced,
-		//c.jobInformer.HasSynced,
 	}...) {
 		err := errors.New("failed to wait for informers caches to sync")
 		utilruntime.HandleError(err)
@@ -96,7 +91,7 @@ func (c *Controller) delRds(obj interface{}) {
 }
 
 func (c *Controller) updateRds(oldObj, newObj interface{}) {
-	c.logger.Debug("updating rds")
+	// c.logger.Debug("updating rds")
 	oldRds, ok := oldObj.(*rdsv1alpha1.Rds)
 	if !ok {
 		c.logger.Errorf("unexpected new object %v", newObj)
@@ -119,6 +114,7 @@ func New(
 	rdsClientSet rdsv1alpha1clientset.Interface,
 	namespace string,
 	logger log.Logger,
+	recorder record.EventRecorder,
 ) *Controller {
 
 	rdsInformerFactory := rdsinformers.NewSharedInformerFactory(
@@ -127,22 +123,15 @@ func New(
 	)
 	rdsInformer := rdsInformerFactory.Mcsps().V1alpha1().Rdss().Informer()
 
-	//kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClientSet, 10*time.Second)
-	//jobInformer := kubeInformerFactory.Batch().V1().Jobs().Informer()
-
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	ctrl := &Controller{
 		kubeClientSet: kubeClientSet,
-
-		rdsInformer: rdsInformer,
-		//jobInformer: jobInformer,
-
-		queue: queue,
-
-		namespace: namespace,
-
-		logger: logger,
+		rdsInformer:   rdsInformer,
+		queue:         queue,
+		namespace:     namespace,
+		logger:        logger,
+		recorder:      recorder,
 	}
 
 	rdsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{

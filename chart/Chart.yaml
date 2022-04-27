@@ -3,7 +3,7 @@ appVersion: 0.0.6
 description: Kubernetes Operator for OTC RDS
 name: otc-rds-operator
 type: application
-version: 0.0.12
+version: 0.1.0
 sources:
   - https://github.com/eumel8/otc-rds-operator
 maintainers:
