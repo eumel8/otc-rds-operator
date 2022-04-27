@@ -67,27 +67,23 @@ func createJobSpec(name string, namespace string, opts golangsdk.AuthOptions) ba
 							},
 							{
 								Name:  "OS_USERNAME",
-								Value: "opts.Username",
+								Value: opts.Username,
 							},
 							{
 								Name:  "OS_PASSWORD",
-								Value: "opts.Password",
+								Value: opts.Password,
 							},
 							{
 								Name:  "OS_AUTH_URL",
-								Value: "opts.IdentityEndpoint",
+								Value: opts.IdentityEndpoint,
 							},
 							{
 								Name:  "OS_USER_DOMAIN_NAME",
-								Value: "opts.DomainName",
+								Value: opts.DomainName,
 							},
 							{
 								Name:  "OS_PROJECT_NAME",
-								Value: "opts.TenantName",
-							},
-							{
-								Name:  "OS_REGION_NAME",
-								Value: "opts.RegionName",
+								Value: opts.TenantName,
 							},
 						},
 					},
