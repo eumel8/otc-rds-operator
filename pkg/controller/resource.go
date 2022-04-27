@@ -461,15 +461,12 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch errorlogs.")
-		job := createJob(newRds)
-
-		fmt.Println("doing job")
 		opts, err := openstack.AuthOptionsFromEnv()
+		job := createJob(newRds, opts)
+
 		if err != nil {
 			return fmt.Errorf("error getting auth from env  %v", err)
 		}
-		fmt.Println("opts")
-		fmt.Println(opts)
 		jobReturn, err := c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})

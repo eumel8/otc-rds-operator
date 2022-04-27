@@ -1,6 +1,10 @@
 package controller
 
 import (
+	// "github.com/opentelekomcloud/gophertelekomcloud/openstack"
+	"github.com/davecgh/go-spew/spew"
+	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
+
 	rds "github.com/eumel8/otc-rds-operator/pkg/rds"
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -15,7 +19,8 @@ var (
 	readonly   = bool(true)
 )
 
-func createJob(newRds *rdsv1alpha1.Rds) *batchv1.Job {
+// func createJob(newRds *rdsv1alpha1.Rds, opts *openstack.AuthOptionsFromEnv) *batchv1.Job {
+func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      newRds.ObjectMeta.Name,
@@ -28,11 +33,12 @@ func createJob(newRds *rdsv1alpha1.Rds) *batchv1.Job {
 				),
 			},
 		},
-		Spec: createJobSpec(newRds.Name, newRds.Namespace),
+		Spec: createJobSpec(newRds.Name, newRds.Namespace, opts),
 	}
 }
 
-func createJobSpec(name string, namespace string) batchv1.JobSpec {
+func createJobSpec(name string, namespace string, opts golangsdk.AuthOptions) batchv1.JobSpec {
+	spew.Dump(opts)
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -58,6 +64,30 @@ func createJobSpec(name string, namespace string) batchv1.JobSpec {
 							{
 								Name:  "RDS_NAME",
 								Value: name,
+							},
+							{
+								Name:  "OS_USERNAME",
+								Value: "opts.Username",
+							},
+							{
+								Name:  "OS_PASSWORD",
+								Value: "opts.Password",
+							},
+							{
+								Name:  "OS_AUTH_URL",
+								Value: "opts.IdentityEndpoint",
+							},
+							{
+								Name:  "OS_USER_DOMAIN_NAME",
+								Value: "opts.DomainName",
+							},
+							{
+								Name:  "OS_PROJECT_NAME",
+								Value: "opts.TenantName",
+							},
+							{
+								Name:  "OS_REGION_NAME",
+								Value: "opts.RegionName",
 							},
 						},
 					},
