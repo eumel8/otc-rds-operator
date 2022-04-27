@@ -119,16 +119,16 @@ spec:
                 - securitygroup
             status:
               properties:
-                logs:
-                  default: false
-                  description: Trigger to fetch RDS logs and provide job output
-                  type: boolean
                 id:
                   description: RDS Instance ID
                   type: string
                 ip:
                   description: RDS ip-address (internal)
                   type: string
+                logs:
+                  default: false
+                  description: Trigger to fetch RDS logs and provide job output
+                  type: boolean
                 reboot:
                   default: false
                   description: Trigger to reboot RDS instance
@@ -136,13 +136,4 @@ spec:
                 status:
                   description: Status of RDS instance
                   type: string
-                type: object
-                properties:
-                  id:
-                    type: string
-                  ip:
-                    type: string
-                  reboot:
-                    type: boolean
-                  status:
-                    type: string
+              type: object
