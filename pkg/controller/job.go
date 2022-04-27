@@ -1,8 +1,8 @@
 package controller
 
 import (
-	// "github.com/opentelekomcloud/gophertelekomcloud/openstack"
-	"github.com/davecgh/go-spew/spew"
+	// "github.com/davecgh/go-spew/spew"
+	// dump structs with spew.Dump(opts)
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 
 	rds "github.com/eumel8/otc-rds-operator/pkg/rds"
@@ -19,7 +19,6 @@ var (
 	readonly   = bool(true)
 )
 
-// func createJob(newRds *rdsv1alpha1.Rds, opts *openstack.AuthOptionsFromEnv) *batchv1.Job {
 func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -38,7 +37,6 @@ func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job
 }
 
 func createJobSpec(name string, namespace string, opts golangsdk.AuthOptions) batchv1.JobSpec {
-	spew.Dump(opts)
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
