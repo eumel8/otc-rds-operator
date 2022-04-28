@@ -3,7 +3,6 @@ package controller
 import (
 	// "github.com/davecgh/go-spew/spew"
 	// dump structs with spew.Dump(opts)
-	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 
 	rds "github.com/eumel8/otc-rds-operator/pkg/rds"
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
@@ -19,7 +18,8 @@ var (
 	readonly   = bool(true)
 )
 
-func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job {
+func createJob(newRds *rdsv1alpha1.Rds, endpoint string, token string) *batchv1.Job {
+	// func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      newRds.ObjectMeta.Name,
@@ -32,11 +32,11 @@ func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job
 				),
 			},
 		},
-		Spec: createJobSpec(newRds.Name, newRds.Namespace, opts),
+		Spec: createJobSpec(newRds.Name, newRds.Namespace, endpoint, token),
 	}
 }
 
-func createJobSpec(name string, namespace string, opts golangsdk.AuthOptions) batchv1.JobSpec {
+func createJobSpec(name string, namespace string, endpoint string, token string) batchv1.JobSpec {
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -64,24 +64,12 @@ func createJobSpec(name string, namespace string, opts golangsdk.AuthOptions) ba
 								Value: name,
 							},
 							{
-								Name:  "OS_USERNAME",
-								Value: opts.Username,
-							},
-							{
-								Name:  "OS_PASSWORD",
-								Value: opts.Password,
+								Name:  "OS_TOKEN",
+								Value: token,
 							},
 							{
 								Name:  "OS_AUTH_URL",
-								Value: opts.IdentityEndpoint,
-							},
-							{
-								Name:  "OS_USER_DOMAIN_NAME",
-								Value: opts.DomainName,
-							},
-							{
-								Name:  "OS_PROJECT_NAME",
-								Value: opts.TenantName,
+								Value: endpoint,
 							},
 						},
 					},
@@ -103,24 +91,12 @@ func createJobSpec(name string, namespace string, opts golangsdk.AuthOptions) ba
 								Value: name,
 							},
 							{
-								Name:  "OS_USERNAME",
-								Value: opts.Username,
-							},
-							{
-								Name:  "OS_PASSWORD",
-								Value: opts.Password,
+								Name:  "OS_TOKEN",
+								Value: token,
 							},
 							{
 								Name:  "OS_AUTH_URL",
-								Value: opts.IdentityEndpoint,
-							},
-							{
-								Name:  "OS_USER_DOMAIN_NAME",
-								Value: opts.DomainName,
-							},
-							{
-								Name:  "OS_PROJECT_NAME",
-								Value: opts.TenantName,
+								Value: endpoint,
 							},
 						},
 					},

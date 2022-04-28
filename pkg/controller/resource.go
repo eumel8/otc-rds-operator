@@ -14,6 +14,7 @@ import (
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/identity/v3/tokens"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
@@ -25,6 +26,10 @@ import (
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var (
+	projectID = string("7c3ec0b3db5f476990043258670caf82")
 )
 
 // workaround https://github.com/opentelekomcloud/gophertelekomcloud/issues/342
@@ -461,14 +466,43 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch logs.")
 		opts, err := openstack.AuthOptionsFromEnv()
-		job := createJob(newRds, opts)
+		if err != nil {
+			err := fmt.Errorf("error getting auth from env in logfetch: %v", err)
+			return err
+		}
+		provider, err := openstack.AuthenticatedClient(opts)
+		client, _ := openstack.NewIdentityV3(provider, golangsdk.EndpointOpts{})
+
+		if os.Getenv("OS_PROJEKT_ID") != "" {
+			projectID = os.Getenv("OS_PROJECT_ID")
+		}
+
+		authOptions := tokens.AuthOptions{
+			IdentityEndpoint: opts.IdentityEndpoint,
+			Username:         opts.Username,
+			Password:         opts.Password,
+			Scope:            tokens.Scope{ProjectID: projectID},
+			DomainName:       opts.DomainName,
+		}
+
+		token, err := tokens.Create(client, &authOptions).ExtractToken()
+		if err != nil {
+			err := fmt.Errorf("error getting token in logfetch: %v", err)
+			return err
+		}
+
+		job := createJob(newRds, opts.IdentityEndpoint, token.ID)
 
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
+
+		_ = tokens.Revoke(client, token.ID)
+
 		if err != nil {
 			return fmt.Errorf("error creating job  %v", err)
 		}
+
 	}
 	return nil
 }
