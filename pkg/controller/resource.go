@@ -497,7 +497,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
 
-		_, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{Watch: true, LabelSelector: newRds.Name})
+		labelSelect := "job-name=" + newRds.Name
+		_, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{Watch: true, LabelSelector: labelSelect})
 		_ = tokens.Revoke(client, token.ID)
 
 		if err != nil {
