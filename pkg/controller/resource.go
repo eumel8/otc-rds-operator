@@ -21,6 +21,7 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 
+	batch "k8s.io/api/batch/v1"
 	"k8s.io/client-go/rest"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
@@ -497,14 +498,56 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
 
-		labelSelect := "job-name=" + newRds.Name
-		_, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{Watch: true, LabelSelector: labelSelect})
-		_ = tokens.Revoke(client, token.ID)
-
+		// labelSelect := "job-name=" + newRds.Name
+		// _, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{Watch: true, LabelSelector: labelSelect})
+		// here watch for job
+		watch, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{LabelSelector: "job-name=" + newRds.Name})
 		if err != nil {
-			return fmt.Errorf("error creating job  %v", err)
+			err := fmt.Errorf("error create watcher for logfetch job: %v", err)
+			return err
 		}
 
+		logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, newRds.Name, metav1.GetOptions{})
+		if err != nil {
+			err := fmt.Errorf("error getting logfetch job for watch: %v", err)
+			return err
+		}
+
+		if logjob == nil {
+			err := fmt.Errorf("error finding logfetch job for watch: %v", err)
+			return err
+		}
+
+		events := watch.ResultChan()
+		for {
+			select {
+			case event := <-events:
+				if event.Object == nil {
+					err := fmt.Errorf("error on result channel logfetch job: %v", err)
+					return err
+				}
+				k8sJob, ok := event.Object.(*batch.Job)
+				if !ok {
+					err := fmt.Errorf("error on object logfetch job: %v", err)
+					return err
+				}
+				conditions := k8sJob.Status.Conditions
+				for _, condition := range conditions {
+					if condition.Type == batch.JobComplete {
+						// revoke OTC Auth Token for job
+						_ = tokens.Revoke(client, token.ID)
+						return nil
+					} else if condition.Type == batch.JobFailed {
+						err := fmt.Errorf("logfetch job for %s failed", newRds.Name)
+						return err
+					}
+				}
+			case <-ctx.Done():
+				_ = tokens.Revoke(client, token.ID)
+				err := fmt.Errorf("logfetch job %s cancelled", newRds.Name)
+				return err
+			}
+		}
 	}
 	return nil
 }
