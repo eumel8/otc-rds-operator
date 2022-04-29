@@ -519,22 +519,24 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		for {
 			select {
 			case event := <-events:
-				// revoke OTC Auth Token for job
-				_ = tokens.Revoke(client, token.ID)
 				if event.Object == nil {
+					_ = tokens.Revoke(client, token.ID)
 					err := fmt.Errorf("error on result channel logfetch job: %v", err)
 					return err
 				}
 				k8sJob, ok := event.Object.(*batch.Job)
 				if !ok {
+					_ = tokens.Revoke(client, token.ID)
 					err := fmt.Errorf("error on object logfetch job: %v", err)
 					return err
 				}
 				conditions := k8sJob.Status.Conditions
 				for _, condition := range conditions {
 					if condition.Type == batch.JobComplete {
+						_ = tokens.Revoke(client, token.ID)
 						return nil
 					} else if condition.Type == batch.JobFailed {
+						_ = tokens.Revoke(client, token.ID)
 						err := fmt.Errorf("logfetch job for %s failed", newRds.Name)
 						return err
 					}
