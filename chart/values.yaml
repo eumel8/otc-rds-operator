@@ -29,6 +29,7 @@ otc: {}
 #   api_version: "3"
 #   region: eu-de
 #   project_name: eu-de
+#   project_id: 7c3ec0b3db5f476990043258670caf82
 #   domain_name: OTC-EU-DE-000000000010000000001
 #   username: user
 #   password: password

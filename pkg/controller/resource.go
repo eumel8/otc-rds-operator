@@ -14,17 +14,23 @@ import (
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/identity/v3/tokens"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 
+	batch "k8s.io/api/batch/v1"
 	"k8s.io/client-go/rest"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var (
+	projectID = string("7c3ec0b3db5f476990043258670caf82")
 )
 
 // workaround https://github.com/opentelekomcloud/gophertelekomcloud/issues/342
@@ -461,13 +467,86 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance fetch logs.")
 		opts, err := openstack.AuthOptionsFromEnv()
-		job := createJob(newRds, opts)
+		if err != nil {
+			err := fmt.Errorf("error getting auth from env in logfetch: %v", err)
+			return err
+		}
+		provider, err := openstack.AuthenticatedClient(opts)
+		client, _ := openstack.NewIdentityV3(provider, golangsdk.EndpointOpts{})
+
+		if os.Getenv("OS_PROJEKT_ID") != "" {
+			projectID = os.Getenv("OS_PROJECT_ID")
+		}
+
+		authOptions := tokens.AuthOptions{
+			IdentityEndpoint: opts.IdentityEndpoint,
+			Username:         opts.Username,
+			Password:         opts.Password,
+			Scope:            tokens.Scope{ProjectID: projectID},
+			DomainName:       opts.DomainName,
+		}
+
+		token, err := tokens.Create(client, &authOptions).ExtractToken()
+		if err != nil {
+			err := fmt.Errorf("error getting token in logfetch: %v", err)
+			return err
+		}
+
+		job := createJob(newRds, opts.IdentityEndpoint, token.ID)
 
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
+
+		watch, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{LabelSelector: "job-name=" + newRds.Name})
 		if err != nil {
-			return fmt.Errorf("error creating job  %v", err)
+			err := fmt.Errorf("error create watcher for logfetch job: %v", err)
+			return err
+		}
+
+		logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, newRds.Name, metav1.GetOptions{})
+		if err != nil {
+			err := fmt.Errorf("error getting logfetch job for watch: %v", err)
+			return err
+		}
+
+		if logjob == nil {
+			err := fmt.Errorf("error finding logfetch job for watch: %v", err)
+			return err
+		}
+
+		events := watch.ResultChan()
+		for {
+			select {
+			case event := <-events:
+				if event.Object == nil {
+					_ = tokens.Revoke(client, token.ID)
+					err := fmt.Errorf("error on result channel logfetch job: %v", err)
+					return err
+				}
+				k8sJob, ok := event.Object.(*batch.Job)
+				if !ok {
+					_ = tokens.Revoke(client, token.ID)
+					err := fmt.Errorf("error on object logfetch job: %v", err)
+					return err
+				}
+				conditions := k8sJob.Status.Conditions
+				for _, condition := range conditions {
+					if condition.Type == batch.JobComplete {
+						_ = tokens.Revoke(client, token.ID)
+						return nil
+					} else if condition.Type == batch.JobFailed {
+						_ = tokens.Revoke(client, token.ID)
+						err := fmt.Errorf("logfetch job for %s failed", newRds.Name)
+						return err
+					}
+				}
+			case <-ctx.Done():
+				// revoke OTC Auth Token for job
+				_ = tokens.Revoke(client, token.ID)
+				err := fmt.Errorf("logfetch job %s cancelled", newRds.Name)
+				return err
+			}
 		}
 	}
 	return nil
