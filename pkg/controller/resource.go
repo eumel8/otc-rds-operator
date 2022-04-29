@@ -498,9 +498,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
 
-		// labelSelect := "job-name=" + newRds.Name
-		// _, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{Watch: true, LabelSelector: labelSelect})
-		// here watch for job
 		watch, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{LabelSelector: "job-name=" + newRds.Name})
 		if err != nil {
 			err := fmt.Errorf("error create watcher for logfetch job: %v", err)
@@ -519,6 +516,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		events := watch.ResultChan()
+		// revoke OTC Auth Token for job
+		_ = tokens.Revoke(client, token.ID)
 		for {
 			select {
 			case event := <-events:
@@ -534,8 +533,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 				conditions := k8sJob.Status.Conditions
 				for _, condition := range conditions {
 					if condition.Type == batch.JobComplete {
-						// revoke OTC Auth Token for job
-						_ = tokens.Revoke(client, token.ID)
 						return nil
 					} else if condition.Type == batch.JobFailed {
 						err := fmt.Errorf("logfetch job for %s failed", newRds.Name)
@@ -543,7 +540,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 					}
 				}
 			case <-ctx.Done():
-				_ = tokens.Revoke(client, token.ID)
 				err := fmt.Errorf("logfetch job %s cancelled", newRds.Name)
 				return err
 			}
