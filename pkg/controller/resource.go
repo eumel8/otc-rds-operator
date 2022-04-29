@@ -516,11 +516,11 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		events := watch.ResultChan()
-		// revoke OTC Auth Token for job
-		_ = tokens.Revoke(client, token.ID)
 		for {
 			select {
 			case event := <-events:
+				// revoke OTC Auth Token for job
+				_ = tokens.Revoke(client, token.ID)
 				if event.Object == nil {
 					err := fmt.Errorf("error on result channel logfetch job: %v", err)
 					return err
@@ -540,6 +540,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 					}
 				}
 			case <-ctx.Done():
+				// revoke OTC Auth Token for job
+				_ = tokens.Revoke(client, token.ID)
 				err := fmt.Errorf("logfetch job %s cancelled", newRds.Name)
 				return err
 			}
