@@ -18,6 +18,12 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 	for _, su := range *newRds.Spec.Users {
 		fmt.Println("SQL")
 		fmt.Println(su.Name)
+		for u, pr := range su.Privileges {
+			fmt.Println("PRIV")
+			fmt.Println(u)
+			fmt.Println(pr)
+
+		}
 	}
 
 	/*
