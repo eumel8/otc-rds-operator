@@ -44,7 +44,7 @@ spec:
                   maximum: 732
                   type: integer
                 databases:
-                  description: Database Schema to create
+                  description: List of database schema to create
                   items:
                     type: string
                   type: array
@@ -98,12 +98,16 @@ spec:
                   items:
                     properties:
                       name:
+                        description: Name of the database user
                         type: string
                       host:
+                        description: Allowed host/network to connect for this user
                         type: string
                       password:
+                        description: Password of this user
                         type: string
                       privileges:
+                              description: List of privileges in the form: GRANT ALL ON project1.* TO 'app1'@'%'
                         items:
                           type: string
                         type: array
@@ -112,7 +116,9 @@ spec:
                 volumetype:
                   description: Specifies the volume type. Its value can be any of the following and is case-sensitive- COMMON - indicates the SATA type.  ULTRAHIGH - indicates the SSD type.
                   default: "COMMON"
-                  pattern: "^(COMMON|ULTRAHIGH)$"
+                  enum:
+                    - COMMON
+                    - ULTRAHIGH
                   type: string
                 volumesize:
                   default: 40
