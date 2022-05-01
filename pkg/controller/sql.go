@@ -14,10 +14,11 @@ import (
 
 // func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 
-func createSqlUser(newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) createSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 	if newRds.Spec.Datastoretype == "MySQL" {
 
+		c.logger.Debug("connecting database")
 		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql")
 		defer db.Close()
 
@@ -27,6 +28,7 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 		}
 
 		for _, su := range *newRds.Spec.Users {
+
 			res, err := db.Query("SELECT user FROM user where user = '" + su.Name + "'")
 
 			if err != nil {
@@ -35,12 +37,12 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 			}
 
 			if res != nil {
-				fmt.Println("grant access here and create user")
+				c.logger.Debug("create sql user ", su.Name)
 				_, err := db.Query("CREATE USER '" + su.Name + "'@'" + su.Host + "' IDENTIFIED BY '" + su.Password + "'")
 				fmt.Printf("error creating user: %v\n", err)
 
 				for _, pr := range su.Privileges {
-					fmt.Println("PRIV")
+					c.logger.Debug("create privileges user ", su.Name)
 					// this query must be validated against sql injection
 					_, err := db.Query(pr)
 					if err != nil {
@@ -57,6 +59,7 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 		}
 
 		for _, ds := range *&newRds.Spec.Databases {
+			c.logger.Debug("query existing database ", ds)
 			res, err := db.Query("SELECT schema_name FROM information_schema.schemata WHERE schema_name='" + ds + "'")
 			if err != nil {
 				err := fmt.Errorf("error query user: %v\n", err)
@@ -64,8 +67,8 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 			}
 
 			if res != nil {
-				fmt.Println("create database")
-				_, err := db.Query("CREATE DATABASE '" + ds + "")
+				c.logger.Debug("create database ", ds)
+				_, err := db.Query("CREATE DATABASE " + ds)
 				if err != nil {
 					fmt.Printf("error creating database: %v\n", err)
 				}
