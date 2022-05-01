@@ -3,19 +3,34 @@ kind: Rds
 metadata:
   name: my-rds-ha
 spec:
+  availabilityzone: "eu-de-01,eu-de-02"
+  backupstarttime: "01:00-02:00"
+  backupkeepdays: 10
+  databases:
+  - project1
+  - project2
   datastoretype: "MySQL"
   datastoreversion: "8.0"
-  volumetype: "COMMON"
-  volumesize: 40
+  flavorref: "rds.mysql.c2.medium.ha"
   hamode: "Ha"
   hareplicationmode: "semisync"
   port: "3306"
   password: "A12345678+"
-  backupstarttime: "01:00-02:00"
-  backupkeepdays: 10
-  flavorref: "rds.mysql.c2.medium.ha"
   region: "eu-de"
-  availabilityzone: "eu-de-01,eu-de-02"
-  vpc: "golang"
   subnet: "golang"
   securitygroup: "golang"
+  users:
+  - host: 10.9.3.%
+    name: app1
+    password: app1+Mond
+    privileges:
+    - GRANT ALL ON project1.* TO 'app1'@'10.9.3.%'
+    - GRANT SELECT ON project2.* TO 'app1'@'10.9.3.%'
+  - host: 10.9.3.%
+    name: app2
+    password: app2+Tues
+    privileges:
+    - GRANT SELECT ON project2.* TO 'app2'@'10.9.3.%'
+  volumetype: "COMMON"
+  volumesize: 40
+  vpc: "golang"
