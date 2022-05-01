@@ -286,7 +286,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		return err
 	}
 	// Enlarge volume here
-	err := createSqlUser(newRds)
+	err := c.CreateSqlUser(newRds)
 	if err != nil {
 		err := fmt.Errorf("error createSqlUser: %v", err)
 		return err

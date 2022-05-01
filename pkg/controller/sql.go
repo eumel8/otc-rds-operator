@@ -10,11 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// type UserList map[string]rdsv1alpha1.Users
-
-// func createSqlUser(newRds *rdsv1alpha1.Rds) error {
-
-func (c *Controller) createSqlUser(newRds *rdsv1alpha1.Rds) error {
+func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 	if newRds.Spec.Datastoretype == "MySQL" {
 
@@ -30,7 +26,6 @@ func (c *Controller) createSqlUser(newRds *rdsv1alpha1.Rds) error {
 		for _, su := range *newRds.Spec.Users {
 
 			res, err := db.Query("SELECT user FROM user where user = '" + su.Name + "'")
-
 			if err != nil {
 				err := fmt.Errorf("error query user: %v", err)
 				return err
