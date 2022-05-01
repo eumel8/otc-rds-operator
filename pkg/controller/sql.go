@@ -39,26 +39,42 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 				return err
 			}
 
-			fmt.Println("for next")
-			for res.Next() {
+			if res != nil {
+				fmt.Println("grant access here and create user")
+				_, err := db.Query("CREATE USER '" + su.Name + "'@'%' IDENTIFIED BY '" + su.Password + "'")
+				err = fmt.Errorf("error creating user: %v", err)
 
-				fmt.Println("in next")
-				err := res.Scan(&su.Name)
-				if err != nil {
-					fmt.Println("grant access here and create user")
-					_, err := db.Query("CREATE USER '" + su.Name + "'@'%' IDENTIFIED BY '" + su.Password + "'")
-					err = fmt.Errorf("error creating user: %v", err)
-
-					for _, pr := range su.Privileges {
-						fmt.Println("PRIV")
-						// this query must be validated against sql injection
-						_, err := db.Query(pr)
-						err = fmt.Errorf("error creating privileges: %v", err)
-						return err
-					}
+				for _, pr := range su.Privileges {
+					fmt.Println("PRIV")
+					// this query must be validated against sql injection
+					_, err := db.Query(pr + ";FLUSH PRIVILEGES")
+					err = fmt.Errorf("error creating privileges: %v", err)
+					return err
 				}
-				fmt.Println("next")
+
 			}
+			/*
+				fmt.Println("for next")
+				for res.Next() {
+
+					fmt.Println("in next")
+					err := res.Scan(&su.Name)
+					if err != nil {
+						fmt.Println("grant access here and create user")
+						_, err := db.Query("CREATE USER '" + su.Name + "'@'%' IDENTIFIED BY '" + su.Password + "'")
+						err = fmt.Errorf("error creating user: %v", err)
+
+						for _, pr := range su.Privileges {
+							fmt.Println("PRIV")
+							// this query must be validated against sql injection
+							_, err := db.Query(pr)
+							err = fmt.Errorf("error creating privileges: %v", err)
+							return err
+						}
+					}
+					fmt.Println("next")
+				}
+			*/
 		}
 	} else {
 		return fmt.Errorf("unsupported database type for user management")
