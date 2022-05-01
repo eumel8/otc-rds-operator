@@ -37,7 +37,10 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 				return err
 			}
 
+			fmt.Println("for next")
 			for res.Next() {
+
+				fmt.Println("in next")
 				err := res.Scan(&su.Name)
 				if err != nil {
 					fmt.Println("grant access here and create user")
