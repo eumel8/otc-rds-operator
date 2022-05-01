@@ -23,7 +23,7 @@ to use a functional version.
 * Restart Instance
 * Backup restore PITR
 * Log handling
-* (User handling)
+* User/Schema handling
 
 ## Versioning 
 
@@ -57,6 +57,8 @@ Kind: Rds
  
 ## Usage
 
+### Creating Database
+
 Install a MySQL Single Instance:
 
 ```bash
@@ -70,6 +72,35 @@ kubectl apply -f ./manifests/examples/my-rds-ha.yml
 ```
 
 hint: The root password will be deleted in the resource spec after creating RDS.
+
+### Creating User/Schema
+
+To create database schema, add the names as a list in the RDS spec:
+
+```yaml
+spec:
+  databases:
+  - project1
+  - project2
+```
+
+To create user, add a user object with name, host, password, and privileges in the RDS spec:
+
+```yaml
+spec:
+  users:
+  - host: 10.9.3.%
+    name: app1
+    password: app1+Mond
+    privileges:
+    - GRANT ALL ON project1.* TO 'app1'@'10.9.3.%'
+```
+
+hint: `host` is the allowed host/network to connect to the database for this user. Must equal
+with the host defintion in `privileges` list.
+
+Databases/Users/Privileges will created but not deleted within the Controller. If the database or
+user is missing, the Controller will recreate it.
 
 ## Operation
 
