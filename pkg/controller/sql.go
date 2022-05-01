@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"database/sql"
 	"fmt"
 
 	// "reflect"
@@ -12,42 +11,52 @@ import (
 
 // type UserList map[string]rdsv1alpha1.Users
 
+// func createSqlUser(newRds *rdsv1alpha1.Rds) error {
+
 func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 
-	if newRds.Spec.Datastoretype == "MySQL" {
+	for _, su := range *newRds.Spec.Users {
+		fmt.Println("SQL")
+		fmt.Println(su.Name)
+	}
 
-		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql")
-		defer db.Close()
+	/*
+		// hosts map[string][]host.Name)
+		if newRds.Spec.Datastoretype == "MySQL" {
 
-		if err != nil {
-			err := fmt.Errorf("error connecting database: %v", err)
-			return err
-		}
-
-		for _, su := range *newRds.Spec.Users {
-
-			fmt.Println("SQL")
-			fmt.Println(su.Name)
-
-			res, err := db.Query("SELECT user FROM users where user == " + su.Name)
+			db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql")
+			defer db.Close()
 
 			if err != nil {
-				err := fmt.Errorf("error query user: %v", err)
+				err := fmt.Errorf("error connecting database: %v", err)
 				return err
 			}
 
-			for res.Next() {
-				err := res.Scan(&su.Name)
-				if err != nil {
-					fmt.Println("grant access here and create user")
-					continue
-				}
-				fmt.Println("next")
-			}
-		}
+			for _, su := range *newRds.Spec.Users {
 
-	} else {
-		return fmt.Errorf("unsupported database type for user management")
-	}
+				fmt.Println("SQL")
+				fmt.Println(su.Name)
+
+				res, err := db.Query("SELECT user FROM users where user == " + su.Name)
+
+				if err != nil {
+					err := fmt.Errorf("error query user: %v", err)
+					return err
+				}
+
+				for res.Next() {
+					err := res.Scan(&su.Name)
+					if err != nil {
+						fmt.Println("grant access here and create user")
+						continue
+					}
+					fmt.Println("next")
+				}
+			}
+
+		} else {
+			return fmt.Errorf("unsupported database type for user management")
+		}
+	*/
 	return nil
 }
