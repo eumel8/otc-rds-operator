@@ -46,6 +46,8 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 						if err != nil {
 							fmt.Printf("error flush privileges: %v\n", err)
 						}
+					} else {
+						fmt.Printf("privileges contains no ALTER: %s\n", pr)
 					}
 
 				}

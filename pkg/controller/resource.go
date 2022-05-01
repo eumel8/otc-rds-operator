@@ -286,11 +286,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		return err
 	}
 	// Enlarge volume here
-	err := c.CreateSqlUser(newRds)
-	if err != nil {
-		err := fmt.Errorf("error createSqlUser: %v", err)
-		return err
-	}
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		c.logger.Debug("rdsUpdate: enlarge volume")
 		eventMsg := fmt.Sprint("This instance is enlarging to ", newRds.Spec.Volumesize)
@@ -554,6 +549,17 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			}
 		}
 	}
+	// sql user handling
+	if len(oldRds.Spec.Databases) != len(newRds.Spec.Databases) || oldRds.Spec.Users != newRds.Spec.Users {
+		c.logger.Debug("rdsUpdate: change sql user")
+
+		err := c.CreateSqlUser(newRds)
+		if err != nil {
+			err := fmt.Errorf("error CreateSqlUser: %v", err)
+			return err
+		}
+	}
+
 	return nil
 }
 
