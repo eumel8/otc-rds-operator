@@ -24,9 +24,7 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 			return err
 		}
 
-		//p := newRds.Spec
-
-		for _, su := range newRds.Spec.Users {
+		for _, su := range *newRds.Spec.Users {
 
 			fmt.Println("SQL")
 			fmt.Println(su.Name)

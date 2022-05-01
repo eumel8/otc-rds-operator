@@ -103,8 +103,10 @@ spec:
                       password:
                         type: string
                       privileges:
-                        type: string
-                    type: object
+                        items:
+                          type: string
+                        type: array
+                      type: object
                   type: array
                 volumetype:
                   description: Specifies the volume type. Its value can be any of the following and is case-sensitive- COMMON - indicates the SATA type.  ULTRAHIGH - indicates the SSD type.
