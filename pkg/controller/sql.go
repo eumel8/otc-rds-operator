@@ -3,8 +3,7 @@ package controller
 import (
 	"database/sql"
 	"fmt"
-
-	// "reflect"
+	"strings"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	_ "github.com/go-sql-driver/mysql"
@@ -38,14 +37,15 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				for _, pr := range su.Privileges {
 					c.logger.Debug("create privileges user ", su.Name)
 					// this query must be validated against sql injection
-					_, err := db.Query(pr)
-					if err != nil {
-						fmt.Printf("error creating privileges: %v\n", err)
-					}
-					_, err = db.Query("FLUSH PRIVILEGES")
-
-					if err != nil {
-						fmt.Printf("error flush privileges: %v\n", err)
+					if strings.Contains(pr, "ALTER") {
+						_, err := db.Query(pr)
+						if err != nil {
+							fmt.Printf("error creating privileges: %v\n", err)
+						}
+						_, err = db.Query("FLUSH PRIVILEGES")
+						if err != nil {
+							fmt.Printf("error flush privileges: %v\n", err)
+						}
 					}
 
 				}
