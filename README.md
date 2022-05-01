@@ -100,7 +100,7 @@ hint: `host` is the allowed host/network to connect to the database for this use
 with the host defintion in `privileges` list.
 
 Databases/Users/Privileges will created but not deleted within the Controller. If the database or
-user is missing, the Controller will recreate it.
+user is missing, the Controller will recreate it. Privileges will not adjust if the user exists.
 
 ## Operation
 
