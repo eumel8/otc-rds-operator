@@ -30,7 +30,7 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 			fmt.Println("SQL")
 			fmt.Println(su.Name)
 
-			res, err := db.Query("SELECT user FROM users where user == '" + su.Name + "'")
+			res, err := db.Query("SELECT user FROM user where user = '" + su.Name + "'")
 			fmt.Println(res)
 			fmt.Println(err)
 
