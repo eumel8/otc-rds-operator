@@ -27,12 +27,7 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 		}
 
 		for _, su := range *newRds.Spec.Users {
-			fmt.Println("SQL")
-			fmt.Println(su.Name)
-
 			res, err := db.Query("SELECT user FROM user where user = '" + su.Name + "'")
-			fmt.Println(res)
-			fmt.Println(err)
 
 			if err != nil {
 				err := fmt.Errorf("error query user: %v", err)
@@ -41,41 +36,34 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if res != nil {
 				fmt.Println("grant access here and create user")
-				_, err := db.Query("CREATE USER '" + su.Name + "'@'%' IDENTIFIED BY '" + su.Password + "'")
-				err = fmt.Errorf("error creating user: %v", err)
+				_, err := db.Query("CREATE USER '" + su.Name + "'@'" + su.Host + "' IDENTIFIED BY '" + su.Password + "'")
+				fmt.Printf("error creating user: %v", err)
 
 				for _, pr := range su.Privileges {
 					fmt.Println("PRIV")
 					// this query must be validated against sql injection
 					_, err := db.Query(pr + ";FLUSH PRIVILEGES")
-					err = fmt.Errorf("error creating privileges: %v", err)
-					return err
+					fmt.Printf("error creating privileges: %v", err)
 				}
+			}
+		}
+
+		for _, ds := range *&newRds.Spec.Databases {
+			res, err := db.Query("SELECT schema_name FROM information_schema.schemata WHERE schema_name='" + ds + "'")
+
+			if err != nil {
+				err := fmt.Errorf("error query user: %v", err)
+				return err
+			}
+
+			if res != nil {
+				fmt.Println("create database")
+				_, err := db.Query("CREATE DATABASE '" + ds + "")
+				fmt.Printf("error creating database: %v", err)
 
 			}
-			/*
-				fmt.Println("for next")
-				for res.Next() {
-
-					fmt.Println("in next")
-					err := res.Scan(&su.Name)
-					if err != nil {
-						fmt.Println("grant access here and create user")
-						_, err := db.Query("CREATE USER '" + su.Name + "'@'%' IDENTIFIED BY '" + su.Password + "'")
-						err = fmt.Errorf("error creating user: %v", err)
-
-						for _, pr := range su.Privileges {
-							fmt.Println("PRIV")
-							// this query must be validated against sql injection
-							_, err := db.Query(pr)
-							err = fmt.Errorf("error creating privileges: %v", err)
-							return err
-						}
-					}
-					fmt.Println("next")
-				}
-			*/
 		}
+
 	} else {
 		return fmt.Errorf("unsupported database type for user management")
 	}

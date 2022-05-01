@@ -44,11 +44,10 @@ spec:
                   maximum: 732
                   type: integer
                 databases:
-                  description: Database Schema
-                  type: object
-                  properties:
-                    name:
-                      type: string
+                  description: Database Schema to create
+                  items:
+                    type: string
+                  type: array
                 datastoretype:
                   description: Specifies the DB engine.
                   default: "MySQL"
@@ -99,6 +98,8 @@ spec:
                   items:
                     properties:
                       name:
+                        type: string
+                      host:
                         type: string
                       password:
                         type: string
