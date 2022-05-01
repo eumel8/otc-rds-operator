@@ -42,8 +42,9 @@ func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 				err := res.Scan(&su.Name)
 				if err != nil {
 					fmt.Println("grant access here and create user")
+					continue
 				}
-				//fmt.Printf("%v\n", city)
+				fmt.Println("next")
 			}
 		}
 
