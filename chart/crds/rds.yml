@@ -96,14 +96,16 @@ spec:
                   type: string
                 users:
                   description: Database Users
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    password:
-                      type: string
-                    privileges:
-                      type: string
+                  items:
+                    properties:
+                      name:
+                        type: string
+                      password:
+                        type: string
+                      privileges:
+                        type: string
+                    type: object
+                  type: array
                 volumetype:
                   description: Specifies the volume type. Its value can be any of the following and is case-sensitive- COMMON - indicates the SATA type.  ULTRAHIGH - indicates the SSD type.
                   default: "COMMON"

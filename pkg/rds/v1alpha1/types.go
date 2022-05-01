@@ -39,7 +39,7 @@ type RdsSpec struct {
 	Region            string     `json:"region"`
 	Subnet            string     `json:"subnet"`
 	Securitygroup     string     `json:"securitygroup"`
-	Users             []Users    `json:"users"`
+	Users             Users      `json:"users"`
 	Volumetype        string     `json:"volumetype"`
 	Volumesize        int        `json:"volumesize"`
 	Vpc               string     `json:"vpc"`
@@ -48,7 +48,7 @@ type RdsSpec struct {
 type Users struct {
 	Name       string   `json:"name"`
 	Password   string   `json:"password"`
-	Privileges []string `json:"privileges"`
+	Privileges []string `json:"privileges,omitempty"`
 }
 
 type Databases struct {
