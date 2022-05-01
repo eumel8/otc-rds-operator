@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"fmt"
 
 	// "reflect"
@@ -15,54 +16,47 @@ import (
 
 func createSqlUser(newRds *rdsv1alpha1.Rds) error {
 
-	for _, su := range *newRds.Spec.Users {
-		fmt.Println("SQL")
-		fmt.Println(su.Name)
-		for u, pr := range su.Privileges {
-			fmt.Println("PRIV")
-			fmt.Println(u)
-			fmt.Println(pr)
+	if newRds.Spec.Datastoretype == "MySQL" {
 
+		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql")
+		defer db.Close()
+
+		if err != nil {
+			err := fmt.Errorf("error connecting database: %v", err)
+			return err
 		}
-	}
 
-	/*
-		// hosts map[string][]host.Name)
-		if newRds.Spec.Datastoretype == "MySQL" {
+		for _, su := range *newRds.Spec.Users {
+			fmt.Println("SQL")
+			fmt.Println(su.Name)
 
-			db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql")
-			defer db.Close()
+			res, err := db.Query("SELECT user FROM users where user == " + su.Name)
 
 			if err != nil {
-				err := fmt.Errorf("error connecting database: %v", err)
+				err := fmt.Errorf("error query user: %v", err)
 				return err
 			}
 
-			for _, su := range *newRds.Spec.Users {
-
-				fmt.Println("SQL")
-				fmt.Println(su.Name)
-
-				res, err := db.Query("SELECT user FROM users where user == " + su.Name)
-
+			for res.Next() {
+				err := res.Scan(&su.Name)
 				if err != nil {
-					err := fmt.Errorf("error query user: %v", err)
-					return err
-				}
+					fmt.Println("grant access here and create user")
+					_, err := db.Query("CREATE USER '" + su.Name + "'@'%' IDENTIFIED BY '" + su.Password + "'")
+					err = fmt.Errorf("error creating user: %v", err)
 
-				for res.Next() {
-					err := res.Scan(&su.Name)
-					if err != nil {
-						fmt.Println("grant access here and create user")
-						continue
+					for _, pr := range su.Privileges {
+						fmt.Println("PRIV")
+						// this query must be validated against sql injection
+						_, err := db.Query(pr)
+						err = fmt.Errorf("error creating privileges: %v", err)
+						return err
 					}
-					fmt.Println("next")
 				}
+				fmt.Println("next")
 			}
-
-		} else {
-			return fmt.Errorf("unsupported database type for user management")
 		}
-	*/
+	} else {
+		return fmt.Errorf("unsupported database type for user management")
+	}
 	return nil
 }
