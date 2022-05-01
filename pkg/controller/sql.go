@@ -30,8 +30,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				fmt.Printf("error query user: %v", err)
 			}
 
-			fmt.Println(res)
-			if res != nil {
+			if !res.Next() {
 				c.logger.Debug("create sql user ", su.Name)
 				_, err := db.Query("CREATE USER '" + su.Name + "'@'" + su.Host + "' IDENTIFIED BY '" + su.Password + "'")
 				fmt.Printf("error creating user: %v\n", err)
@@ -61,8 +60,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				return err
 			}
 
-			fmt.Println(res)
-			if res != nil {
+			if !res.Next() {
 				c.logger.Debug("create database ", ds)
 				_, err := db.Query("CREATE DATABASE " + ds)
 				if err != nil {
