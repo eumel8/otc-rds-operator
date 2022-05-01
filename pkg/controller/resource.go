@@ -286,6 +286,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		return err
 	}
 	// Enlarge volume here
+	createSqlUser(newRds)
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		c.logger.Debug("rdsUpdate: enlarge volume")
 		eventMsg := fmt.Sprint("This instance is enlarging to ", newRds.Spec.Volumesize)
