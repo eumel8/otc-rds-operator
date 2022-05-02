@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const maxRetries = 3
+const maxRetries = 300
 
 func (c *Controller) runWorker(ctx context.Context) {
 	for c.processNextItem(ctx) {
