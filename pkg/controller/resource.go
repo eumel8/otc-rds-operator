@@ -297,6 +297,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 		enlargeResult := instances.EnlargeVolume(client, enlargeOpts, newRds.Status.Id)
 		_, err := enlargeResult.Extract()
+		if enlargeResult.Err != nil {
+			err := fmt.Errorf("error rds api for enlarge: %v", enlargeResult.Err)
+			return err
+		}
 		if err != nil {
 			err := fmt.Errorf("error enlarge rds: %v", err)
 			return err
@@ -335,10 +339,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 		resizeResult := instances.Resize(client, resizeOpts, newRds.Status.Id)
 		_, err := resizeResult.Extract()
-		fmt.Println("RESIZE RETURN: HEAD,BODY,ERR")
-		fmt.Println(resizeResult.Header)
-		fmt.Println(resizeResult.Body)
-		fmt.Println(resizeResult.Err)
+		if resizeResult.Err != nil {
+			err := fmt.Errorf("error rds api for resize: %v", resizeResult.Err)
+			return err
+		}
 		if err != nil {
 			err := fmt.Errorf("error resizing rds: %v", err)
 			return err
@@ -424,9 +428,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		restoreResult := backups.RestorePITR(client, restoreOpts)
-		// restoredRds, err := restoreResult.Extract()
-		if err != nil {
-			err := fmt.Errorf("rds restore failed: %v", err)
+		if restoreResult.Err != nil {
+			err := fmt.Errorf("rds restore failed: %v", restoreResult.Err)
 			return err
 		}
 		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
@@ -439,13 +442,11 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			err := fmt.Errorf("error update rds status: %v", err)
 			return err
 		}
-
 		jobResponse, err := restoreResult.ExtractJobResponse()
 		if err != nil {
 			err := fmt.Errorf("can't get rds restore job: %v", err)
 			return err
 		}
-
 		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
 			err := fmt.Errorf("error rds restore job: %v", err)
 			return err
