@@ -338,7 +338,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			},
 		}
 		resizeResult := instances.Resize(client, resizeOpts, newRds.Status.Id)
-		fmt.Println(resizeResult.Err)
 		if resizeResult.Err != nil {
 			err := fmt.Errorf("error rds api for resize: %v", resizeResult.Err)
 			return err
@@ -695,7 +694,7 @@ func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
 
-	c.rdsUpdate(ctx, rdsapi, oldRds, newRds)
+	err = c.rdsUpdate(ctx, rdsapi, oldRds, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
 	}
