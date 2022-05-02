@@ -84,6 +84,10 @@ func (c *Controller) processUpdateRds(
 	}
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
+	if newObj.Status.Status != "ACTIVE" {
+		err := fmt.Errorf("rds not in ACTIVE state, requeueing %s\n", newObj.Name)
+		return err
+	}
 	err := c.Update(ctx, oldObj, newObj)
 	return err
 }
