@@ -4,6 +4,6 @@ metadata:
   name: my-rds-single
 spec:
   password: "A12345678+"
-  vpc: "frank-test"
-  subnet: "frank-test"
+  vpc: "golang"
+  subnet: "golang"
   securitygroup: "golang"
