@@ -335,6 +335,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 		resizeResult := instances.Resize(client, resizeOpts, newRds.Status.Id)
 		_, err := resizeResult.Extract()
+		fmt.Println("RESIZE RETURN: HEAD,BODY,ERR")
+		fmt.Println(resizeResult.Header)
+		fmt.Println(resizeResult.Body)
+		fmt.Println(resizeResult.Err)
 		if err != nil {
 			err := fmt.Errorf("error resizing rds: %v", err)
 			return err
