@@ -88,9 +88,10 @@ func (c *Controller) processUpdateRds(
 	if newObj.Status.Status != "ACTIVE" {
 		// c.logger.Debug("rds not in ACTIVE state", newObj.Name)
 		time.Sleep(30 * time.Second)
-		err := fmt.Errorf("rds not in ACTIVE state %v", newObj.Name)
+		err := fmt.Errorf("rds %v not in ACTIVE state", newObj.Name)
 		return err
 	}
+	fmt.Println("DOING Update ", newObj.Spec)
 	err := c.Update(ctx, oldObj, newObj)
 	return err
 }
