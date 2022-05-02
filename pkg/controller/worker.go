@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -85,7 +86,9 @@ func (c *Controller) processUpdateRds(
 	oldObj := oldRds.DeepCopy()
 	newObj := newRds.DeepCopy()
 	if newObj.Status.Status != "ACTIVE" {
-		err := fmt.Errorf("rds not in ACTIVE state, requeueing %s\n", newObj.Name)
+		// c.logger.Debug("rds not in ACTIVE state", newObj.Name)
+		time.Sleep(30 * time.Second)
+		err := fmt.Errorf("rds not in ACTIVE state %v", newObj.Name)
 		return err
 	}
 	err := c.Update(ctx, oldObj, newObj)
