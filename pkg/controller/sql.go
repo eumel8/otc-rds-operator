@@ -21,6 +21,12 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 			return err
 		}
 
+		err = db.Ping()
+		if err != nil {
+			err := fmt.Errorf("error connecting database as root: %v", err)
+			return err
+		}
+
 		defer db.Close()
 
 		for _, su := range *newRds.Spec.Users {
