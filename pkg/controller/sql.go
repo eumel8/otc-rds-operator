@@ -15,12 +15,19 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 		c.logger.Debug("connecting database")
 		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql")
-		defer db.Close()
 
 		if err != nil {
 			err := fmt.Errorf("error connecting database: %v", err)
 			return err
 		}
+
+		err = db.Ping()
+		if err != nil {
+			err := fmt.Errorf("error connecting database as root: %v", err)
+			return err
+		}
+
+		defer db.Close()
 
 		for _, su := range *newRds.Spec.Users {
 
