@@ -91,8 +91,6 @@ func (c *Controller) processUpdateRds(
 		err := fmt.Errorf("rds %v not in ACTIVE state", newObj.Name)
 		return err
 	}
-	fmt.Println("DOING Update ", oldObj.Spec)
-	fmt.Println("DOING Update ", newObj.Spec)
 	err := c.Update(ctx, oldObj, newObj)
 	return err
 }

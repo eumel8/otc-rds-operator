@@ -285,6 +285,14 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		err := fmt.Errorf("rdsUpdate failed, Rds.Status.Id is empty")
 		return err
 	}
+	// re-check real rds spec on otc
+	rdsInstance, err := c.rdsGetByName(client, newRds.Name)
+	if err != nil {
+		err := fmt.Errorf("error getting rdsGetByName: %v", err)
+		return err
+	}
+	oldRds.Spec.Volumesize = rdsInstance.Volume.Size
+	oldRds.Spec.Flavorref = rdsInstance.FlavorRef
 	// Enlarge volume here
 	if oldRds.Spec.Volumesize < newRds.Spec.Volumesize {
 		c.logger.Debug("rdsUpdate: enlarge volume")
@@ -584,6 +592,10 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		return err
 	}
 	rdsInstance, err := c.rdsGetByName(client, newRds.Name)
+	if err != nil {
+		err := fmt.Errorf("error getting rdsGetByName: %v", err)
+		return err
+	}
 	if len(rdsInstance.PrivateIps) > 0 {
 		newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	} else {
