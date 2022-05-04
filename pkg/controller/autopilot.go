@@ -11,11 +11,14 @@ func SmnReceiver() error {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
+			r := r.Body
+			fmt.Println(r)
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			// _, _ = fmt.Fprint(w, ProviderGetResponse)
 		case "POST":
-			w.Header().Add("X-Subject-Token", "dG9rZW46IDEyMzQK")
+			r := r.Body
+			fmt.Println(r)
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			// _, _ = fmt.Fprint(w, ProviderPostResponse)
@@ -24,10 +27,14 @@ func SmnReceiver() error {
 	mux.HandleFunc("/notify", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
+			r := r.Body
+			fmt.Println(r)
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			// _, _ = fmt.Fprint(w, ProviderGetResponse)
 		case "POST":
+			r := r.Body
+			fmt.Println(r)
 			w.Header().Add("X-Subject-Token", "dG9rZW46IDEyMzQK")
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
@@ -39,7 +46,7 @@ func SmnReceiver() error {
 	var retries int = 3
 
 	for retries > 0 {
-		err := http.ListenAndServe("0.0.0.0:5000", mux)
+		err := http.ListenAndServe("0.0.0.0:8080", mux)
 		if err != nil {
 			fmt.Println("Restart http server ... ", err)
 			retries -= 1
