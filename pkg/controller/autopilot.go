@@ -53,6 +53,18 @@ func SmnReceiver() error {
 				fmt.Println(err)
 			}
 			fmt.Printf("server: request body / POST: %s\n", req)
+			err = json.Unmarshal([]byte(req), &subscriber)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(subscriber.Subscribeurl)
+			if subscriber.Subscribeurl != "" {
+
+				_, err = http.Get(subscriber.Subscribeurl)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			// _, _ = fmt.Fprint(w, ProviderPostResponse)
