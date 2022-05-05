@@ -31,7 +31,7 @@ func SmnReceiver() error {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("server: request body: %s\n", req)
+			fmt.Printf("server: request body / GET: %s\n", req)
 			err = json.Unmarshal([]byte(req), &subscriber)
 			if err != nil {
 				fmt.Println(err)
@@ -52,7 +52,7 @@ func SmnReceiver() error {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("server: request body: %s\n", req)
+			fmt.Printf("server: request body / POST: %s\n", req)
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			// _, _ = fmt.Fprint(w, ProviderPostResponse)
@@ -65,7 +65,7 @@ func SmnReceiver() error {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("server: request body: %s\n", req)
+			fmt.Printf("server: request body /notify GET: %s\n", req)
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			// _, _ = fmt.Fprint(w, ProviderGetResponse)
@@ -74,8 +74,7 @@ func SmnReceiver() error {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("server: request body: %s\n", req)
-			w.Header().Add("X-Subject-Token", "dG9rZW46IDEyMzQK")
+			fmt.Printf("server: request body /notify GET: %s\n", req)
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			// _, _ = fmt.Fprint(w, ProviderPostResponse)
