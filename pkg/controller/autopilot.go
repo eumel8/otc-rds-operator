@@ -36,8 +36,9 @@ func SmnReceiver() error {
 			if err != nil {
 				fmt.Println(err)
 			}
+			fmt.Println(subscriber.Subscribeurl)
 			if subscriber.Subscribeurl != "" {
-				fmt.Println(subscriber.Subscribeurl)
+
 				_, err = http.Get(subscriber.Subscribeurl)
 				if err != nil {
 					fmt.Println(err)
