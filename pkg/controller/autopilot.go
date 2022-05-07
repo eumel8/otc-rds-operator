@@ -51,7 +51,7 @@ func (c *Controller) SmnReceiver() error {
 					if err != nil {
 						fmt.Println(err)
 					}
-					fmt.Println(sm)
+					fmt.Printf("%s", string(sm))
 
 				}
 			}
