@@ -47,11 +47,13 @@ func (c *Controller) SmnReceiver() error {
 			}
 			// action on events
 			if subscriber.Signature != "" {
-				sm, err := http.Get(subscriber.Message)
-				if err != nil {
-					fmt.Println(err)
+				for _, sm := range subscriber.Message {
+					if err != nil {
+						fmt.Println(err)
+					}
+					fmt.Println(sm)
+
 				}
-				fmt.Println(sm)
 			}
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
