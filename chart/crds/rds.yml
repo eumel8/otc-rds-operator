@@ -146,6 +146,10 @@ spec:
                 - securitygroup
             status:
               properties:
+                autopilot:
+                  default: false
+                  description: Trigger to operate RDS in autopilot
+                  type: boolean
                 id:
                   description: RDS Instance ID
                   type: string

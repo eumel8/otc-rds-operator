@@ -58,7 +58,7 @@ func (c *Controller) Run(ctx context.Context, numWorkers int) error {
 	}
 	c.logger.Info("controller ready")
 	// start smn receiver if config param autopilot =true
-	err := SmnReceiver()
+	err := c.SmnReceiver()
 	if err != nil {
 		return err
 	}

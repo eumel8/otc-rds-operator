@@ -573,6 +573,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
+	if newRds.Status.Autopilot == true {
+		// autopilot logic here
+		return nil
+	}
 	return nil
 }
 

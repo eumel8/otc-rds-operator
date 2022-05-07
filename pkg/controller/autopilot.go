@@ -19,34 +19,15 @@ type Subscriber struct {
 	Timestamp        string `json:"timestamp"`
 }
 
-func SmnReceiver() error {
+func (c *Controller) SmnReceiver() error {
 	var subscriber Subscriber
 
 	mux := http.NewServeMux()
-
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			req, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				fmt.Println(err)
-			}
-			fmt.Printf("server: request body / GET: %s\n", req)
-			err = json.Unmarshal([]byte(req), &subscriber)
-			if err != nil {
-				fmt.Println(err)
-			}
-			fmt.Println(subscriber.Subscribeurl)
-			if subscriber.Subscribeurl != "" {
-
-				_, err = http.Get(subscriber.Subscribeurl)
-				if err != nil {
-					fmt.Println(err)
-				}
-			}
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			// _, _ = fmt.Fprint(w, ProviderGetResponse)
 		case "POST":
 			req, err := ioutil.ReadAll(r.Body)
 			if err != nil {
@@ -57,49 +38,36 @@ func SmnReceiver() error {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Println(subscriber.Subscribeurl)
+			// subscribe to smn topic
 			if subscriber.Subscribeurl != "" {
-
 				_, err = http.Get(subscriber.Subscribeurl)
 				if err != nil {
 					fmt.Println(err)
 				}
 			}
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
-			// _, _ = fmt.Fprint(w, ProviderPostResponse)
-		}
-	})
-	mux.HandleFunc("/notify", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			req, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				fmt.Println(err)
+			// action on events
+			if subscriber.Signature != "" {
+				sm, err := http.Get(subscriber.Message)
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println(sm)
 			}
-			fmt.Printf("server: request body /notify GET: %s\n", req)
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			// _, _ = fmt.Fprint(w, ProviderGetResponse)
-		case "POST":
-			req, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				fmt.Println(err)
-			}
-			fmt.Printf("server: request body /notify GET: %s\n", req)
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
+			// w.WriteHeader(http.StatusCreated)
 			// _, _ = fmt.Fprint(w, ProviderPostResponse)
 		}
 	})
-	fmt.Println("Listening...")
+
+	c.logger.Info("starting smn listener")
 
 	var retries int = 3
 
 	for retries > 0 {
 		err := http.ListenAndServe("0.0.0.0:8080", mux)
 		if err != nil {
-			fmt.Println("Restart http server ... ", err)
+			c.logger.Info("restart smn listener", err)
 			retries -= 1
 		} else {
 			break
