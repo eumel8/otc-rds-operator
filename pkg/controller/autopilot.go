@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 )
@@ -107,6 +108,8 @@ func (c *Controller) SmnReceiver() error {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 
+				cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)
+				fmt.Println(cleanMessage)
 				fmt.Println("dump full subscriber")
 				spew.Dump(subscriber)
 				/*
