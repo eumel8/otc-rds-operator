@@ -40,7 +40,7 @@ func (c *Controller) SmnReceiver() error {
 			}
 			// subscribe to smn topic
 			if subscriber.Subscribeurl != "" {
-				c.logger.Info("Subscriber request", subscriber.Topicurn)
+				c.logger.Info("Subscriber request: ", subscriber.Topicurn)
 				_, err = http.Get(subscriber.Subscribeurl)
 				if err != nil {
 					fmt.Println(err)
@@ -48,7 +48,8 @@ func (c *Controller) SmnReceiver() error {
 			}
 			// action on events
 			if subscriber.Signature != "" {
-				c.logger.Info("Event request", subscriber.Topicurn)
+				c.logger.Info("Event request: ", subscriber.Topicurn)
+				c.logger.Info("Event message: ", subscriber.Message)
 				for _, sm := range subscriber.Message {
 					if err != nil {
 						fmt.Println(err)
