@@ -107,8 +107,8 @@ func (c *Controller) SmnReceiver() error {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 
-				fmt.Println("split message 0")
-				spew.Dump(subscriber.Message)
+				fmt.Println("dump full subscriber")
+				spew.Dump(subscriber)
 				/*
 					for _, sm := range subscriber.Message {
 						if err != nil {
