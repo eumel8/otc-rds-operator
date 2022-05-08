@@ -102,9 +102,19 @@ func (c *Controller) SmnReceiver() error {
 			if subscriber.Signature != "" {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
+				rdsName := strings.Split(subscriber.Topicurn, ":")[1]
+				if strings.Contains(subscriber.Message, "rds039_disk_util") {
+					fmt.Println("rds039_disk_util alarm ", rdsName)
+				}
+				if strings.Contains(subscriber.Message, "rds001_cpu_util") {
+					fmt.Println("rds001_cpu_util alarm  ", rdsName)
+				}
+				if strings.Contains(subscriber.Message, "rds002_mem_util") {
+					fmt.Println("rds002_mem_util alarm  ", rdsName)
+				}
+				//cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)
+				//fmt.Println("cleanmessage :", cleanMessage)
 
-				cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)
-				fmt.Println("cleanmessage :", cleanMessage)
 				/*
 					var mySubscriberMessage SubscriberMessage
 					err := json.Unmarshal([]byte(cleanMessage), &mySubscriberMessage)
