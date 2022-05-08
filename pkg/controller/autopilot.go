@@ -6,8 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
 )
 
 type Subscriber struct {
@@ -110,8 +109,15 @@ func (c *Controller) SmnReceiver() error {
 
 				cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)
 				fmt.Println(cleanMessage)
-				fmt.Println("dump full subscriber")
-				spew.Dump(subscriber)
+				var mySubscriberMessage SubscriberMessage
+				err := json.Unmarshal([]byte(cleanMessage), &mySubscriberMessage)
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println("AlarmName")
+				fmt.Println(mySubscriberMessage.AlarmName)
+
+				//spew.Dump(subscriber)
 				/*
 					for _, sm := range subscriber.Message {
 						if err != nil {
