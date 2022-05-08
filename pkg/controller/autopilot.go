@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type Subscriber struct {
@@ -51,14 +52,17 @@ func (c *Controller) SmnReceiver() error {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 
-				for si, sm := range subscriber.Message {
-					if err != nil {
-						fmt.Println(err)
+				fmt.Println("split message 0")
+				fmt.Println(strings.Split(subscriber.Message[0], ","))
+				/*
+					for si, sm := range subscriber.Message {
+						if err != nil {
+							fmt.Println(err)
+						}
+						fmt.Printf("event range: %d - %s", int(si), string(sm))
+						// fmt.Printf("event alarm_name: %s", string(sm.AlarmName))
 					}
-					fmt.Printf("event range: %d - %s", int(si), string(sm))
-					// fmt.Printf("event alarm_name: %s", string(sm.AlarmName))
-				}
-
+				*/
 				/*
 					{"message_type":"alarm","alarm_id":"al1651967846367MVO1yKvWy","alarm_name":"my-rds-ha-disc-util","alarm_status":"alarm","time":1651998061184,"namespace":"SYS.RDS","metric_name":"rds039_disk_util","dimension":"rds_instance_id:9a22c728f48142f88339dc5bfa06d592no01","period":300,"filter":"average","comparison_operator":"\u003e=","value":12,"unit":"","count":1,"alarmValue":[{"time":1651998000000,"value":19.96}],"sms_content":"[eu-de][Major Alarm]Dear customer: The Storage Space Usage of Relational Database Service-MySQL Instances \"my-rds-ha_node0\" (ID: 9a22c728f48142f88339dc5bfa06d592no01) Avg. \u003e= 12.00% for 1 consecutive periods of 5 minutes, at 05 08, 2022 10:21:01 GMT+02:00 triggered an alarm, You can log in to the Cloud Eye console to view details.","template_variable":{"AccountName":"customer","Namespace":"Relational Database Service","DimensionName":"MySQL Instances","ResourceName":"my-rds-ha_node0","MetricName":"Storage Space Usage","IsAlarm":true,"IsCycleTrigger":false,"AlarmLevel":"Major","Region":"eu-de","ResourceId":"9a22c728f48142f88339dc5bfa06d592no01","AlarmRule":"","CurrentData":"19.96%","AlarmTime":"05 08, 2022 10:21:01 GMT+02:00","DataPoint":{"05 08, 2022 10:20:00 GMT+02:00":"19.96%"},"DataPointTime":["05 08, 2022 10:20:00 GMT+02:00"],"AlarmRuleName":"my-rds-ha-disc-util","AlarmId":"al1651967846367MVO1yKvWy","AlarmDesc":"RDS Operator Autopilot","MonitoringRange":"Specific resources","IsOriginalValue":false,"Period":"5 minutes","Filter":"Avg.","ComparisonOperator":"\u003e=","Value":"12.00%","Unit":"%","Count":1,"EventContent":"","IsIEC":false}}{"level":"info","msg":"Event request: urn:smn:eu-de:7c3ec0b3db5f476990043258670caf82:my-rds-ha","node":"otc-rds-operator-c76687d8b-x69mg","service":"otc-rds-operator","time":"2022-05-08T08:26:26Z","type":"controller"}
 				*/
