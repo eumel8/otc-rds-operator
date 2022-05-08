@@ -104,14 +104,15 @@ func (c *Controller) SmnReceiver() error {
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 
 				cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)
-				fmt.Println(cleanMessage)
-				var mySubscriberMessage SubscriberMessage
-				err := json.Unmarshal([]byte(cleanMessage), &mySubscriberMessage)
-				if err != nil {
-					fmt.Println(err)
-				}
-				fmt.Println("AlarmName: ", mySubscriberMessage.AlarmName)
-
+				fmt.Println("cleanmessage :", cleanMessage)
+				/*
+					var mySubscriberMessage SubscriberMessage
+					err := json.Unmarshal([]byte(cleanMessage), &mySubscriberMessage)
+					if err != nil {
+						fmt.Println(err)
+					}
+					fmt.Println("AlarmName: ", mySubscriberMessage.AlarmName)
+				*/
 				//spew.Dump(subscriber)
 				/*
 					for _, sm := range subscriber.Message {
