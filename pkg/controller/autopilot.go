@@ -102,7 +102,7 @@ func (c *Controller) SmnReceiver() error {
 			if subscriber.Signature != "" {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
-				rdsName := strings.Split(subscriber.Topicurn, ":")[1]
+				rdsName := strings.Split(subscriber.Topicurn, ":")[4]
 				if strings.Contains(subscriber.Message, "rds039_disk_util") {
 					fmt.Println("rds039_disk_util alarm ", rdsName)
 				}
