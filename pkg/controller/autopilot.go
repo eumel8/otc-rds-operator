@@ -56,7 +56,7 @@ func (c *Controller) SmnReceiver() error {
 					if err != nil {
 						fmt.Println(err)
 					}
-					fmt.Printf("event range: %s - %s", string(si), string(sm))
+					fmt.Printf("event range: %d - %s", int(si), string(sm))
 					// fmt.Printf("event alarm_name: %s", string(sm.AlarmName))
 				}
 
