@@ -10,15 +10,15 @@ import (
 )
 
 type Subscriber struct {
-	Subscribeurl     string   `json:"subscribe_url"`
-	Signature        string   `json:"signature"`
-	Topicurn         string   `json:"topic_urn"`
-	Messageid        string   `json:"message_id"`
-	Signatureversion string   `json:"signature_version"`
-	Type             string   `json:"type"`
-	Message          []string `json:"message"`
-	Signaturecerturl string   `json:"signing_cert_url"`
-	Timestamp        string   `json:"timestamp"`
+	Subscribeurl     string `json:"subscribe_url"`
+	Signature        string `json:"signature"`
+	Topicurn         string `json:"topic_urn"`
+	Messageid        string `json:"message_id"`
+	Signatureversion string `json:"signature_version"`
+	Type             string `json:"type"`
+	Message          string `json:"message"`
+	Signaturecerturl string `json:"signing_cert_url"`
+	Timestamp        string `json:"timestamp"`
 }
 
 type SubscriberMessage struct {
