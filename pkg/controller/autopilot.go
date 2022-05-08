@@ -22,58 +22,54 @@ type Subscriber struct {
 }
 
 type SubscriberMessage struct {
-	MessageType        string       `json:"message_type"`
-	AlarmId            string       `json:"alarm_id"`
-	AlarmName          string       `json:"alarm_name"`
-	AlarmStatus        string       `json:"alarm_status"`
-	Time               int64        `json:"time"`
-	Namespace          string       `json:"namespace"`
-	MetriyName         string       `json:"metric_name"`
-	Dimension          string       `json:"dimension"`
-	Period             int          `json:"period"`
-	Filter             string       `json:"filter"`
-	ComparisonOperator string       `json:"comparison_operator"`
-	Value              int          `json:"value"`
-	Unit               string       `json:"unit"`
-	Count              int          `json:"count"`
-	AlarmValue         []AlarmValue `json:"alarmValue"`
-	SmSContent         string       `json:"sms_content"`
+	MessageType        string           `json:"message_type"`
+	AlarmId            string           `json:"alarm_id"`
+	AlarmName          string           `json:"alarm_name"`
+	AlarmStatus        string           `json:"alarm_status"`
+	Time               int64            `json:"time"`
+	Namespace          string           `json:"namespace"`
+	MetriyName         string           `json:"metric_name"`
+	Dimension          string           `json:"dimension"`
+	Period             int              `json:"period"`
+	Filter             string           `json:"filter"`
+	ComparisonOperator string           `json:"comparison_operator"`
+	Value              int              `json:"value"`
+	Unit               string           `json:"unit"`
+	Count              int              `json:"count"`
+	AlarmValue         []AlarmValue     `json:"alarmValue"`
+	SmSContent         string           `json:"sms_content"`
+	TemplateVariable   TemplateVariable `json:"template_variable"`
 }
 type AlarmValue struct {
 	Time  int64   `json:"time"`
 	Value float64 `json:"value"`
 }
 
-/* sms_content struct
-IsAlarm bool `json:"IsAlarm"`
-	IsCycleTrigger bool `json:"IsCycleTrigger"`
-	AlarmLevel string `json:"AlarmLevel"`
-	Region string `json:"Region"`
-	ResourceId string `json:"ResourceId"`
-	AlarmRule string `json:"AlarmRule"`
-	CurrentDate string `json:"CurrentData"`
-	AlarmTime string `json:"AlarmTime"`
-	DataPoint string `json:"DataPoint"`
-	DataPointTime string `json:"DataPointTime"`
-	AlarmRuleName string `json:"AlarmRuleName"`
-	AlarmId: string `json:"AlarmId"`
-	AlarmDesc: string `json:"AlarmDesc"`
-	MonitoringRange: string `json:"MonitoringRange"`
-	IsOriginalValue: bool `json:"IsOriginalValue"`
-	Period: string `json:"Period"`
-	Filter: string `json:"Filter"`
-	ComparionOperator: string `json:"ComparisonOperator"`
-	Value":"12.00%","
-	Unit":"%","
-	Count":1,"
-	EventContent":"","
-	IsIEC":false}}{"level":"info","msg":"
-	Event request: urn:smn:eu-de:7c3ec0b3db5f476990043258670caf82:my-rds-ha",
-	"node":"otc-rds-operator-c76687d8b-x69mg",
-	"service":"otc-rds-operator",
-	"time":"2022-05-08T08:26:26Z",
-	"type":"controller"}
-*/
+type TemplateVariable struct {
+	IsAlarm           bool   `json:"IsAlarm"`
+	IsCycleTrigger    bool   `json:"IsCycleTrigger"`
+	AlarmLevel        string `json:"AlarmLevel"`
+	Region            string `json:"Region"`
+	ResourceId        string `json:"ResourceId"`
+	AlarmRule         string `json:"AlarmRule"`
+	CurrentDate       string `json:"CurrentData"`
+	AlarmTime         string `json:"AlarmTime"`
+	DataPoint         string `json:"DataPoint"`
+	DataPointTime     string `json:"DataPointTime"`
+	AlarmRuleName     string `json:"AlarmRuleName"`
+	AlarmId           string `json:"AlarmId"`
+	AlarmDesc         string `json:"AlarmDesc"`
+	MonitoringRange   string `json:"MonitoringRange"`
+	IsOriginalValue   bool   `json:"IsOriginalValue"`
+	Period            string `json:"Period"`
+	Filter            string `json:"Filter"`
+	ComparionOperator string `json:"ComparisonOperator"`
+	Value             string `json:"Value"`
+	Unit              string `json:"Unit"`
+	Count             int    `json:"Count"`
+	EventContent      string `json:"EventComntent"`
+	IsIEC             bool   `json:"IsIEC"`
+}
 
 func (c *Controller) SmnReceiver() error {
 	var subscriber Subscriber
@@ -114,8 +110,7 @@ func (c *Controller) SmnReceiver() error {
 				if err != nil {
 					fmt.Println(err)
 				}
-				fmt.Println("AlarmName")
-				fmt.Println(mySubscriberMessage.AlarmName)
+				fmt.Println("AlarmName: ", mySubscriberMessage.AlarmName)
 
 				//spew.Dump(subscriber)
 				/*
