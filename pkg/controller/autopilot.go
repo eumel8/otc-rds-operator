@@ -33,13 +33,14 @@ func (c *Controller) SmnReceiver() error {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Printf("server: request body / POST: %s\n", req)
+			// fmt.Printf("server: request body / POST: %s\n", req)
 			err = json.Unmarshal([]byte(req), &subscriber)
 			if err != nil {
 				fmt.Println(err)
 			}
 			// subscribe to smn topic
 			if subscriber.Subscribeurl != "" {
+				c.logger.Info("Subscriber request", subscriber.Topicurn)
 				_, err = http.Get(subscriber.Subscribeurl)
 				if err != nil {
 					fmt.Println(err)
@@ -47,12 +48,12 @@ func (c *Controller) SmnReceiver() error {
 			}
 			// action on events
 			if subscriber.Signature != "" {
+				c.logger.Info("Event request", subscriber.Topicurn)
 				for _, sm := range subscriber.Message {
 					if err != nil {
 						fmt.Println(err)
 					}
 					fmt.Printf("%s", string(sm))
-
 				}
 			}
 			w.Header().Add("Content-Type", "application/json")
