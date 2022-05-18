@@ -101,6 +101,7 @@ func CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespac
 		return fmt.Errorf("unable to get topic list: %v", err)
 	}
 	for _, tc := range tl {
+		fmt.Println("TOPICLIST: ", tc.Name)
 		if tc.Name == nsRds {
 			return fmt.Errorf("topic exists for %s", nsRds)
 		}
