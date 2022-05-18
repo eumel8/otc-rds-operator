@@ -110,9 +110,10 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 				rdsNsName := strings.Split(subscriber.Topicurn, ":")[4]
-				namespace := rdsNsName[strings.LastIndex(rdsNsName, "-")+1:]
-				rdsName := rdsNsName[strings.LastIndex(rdsNsName, "-")+2:]
+				namespace := strings.Split(rdsNsName, "_")[1]
+				rdsName := strings.Split(rdsNsName, "_")[2]
 
+				fmt.Println("NAMESPACE:", namespace, "rdsName:", rdsName)
 				restConfig, err := rest.InClusterConfig()
 				if err != nil {
 					err := fmt.Errorf("error init in-cluster config: %v", err)
@@ -125,7 +126,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 				}
 				returnRds, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Get(ctx, rdsName, metav1.GetOptions{})
 
-				fmt.Println("returnRds GET ", returnRds)
+				fmt.Println("returnRds GET ", returnRds.Spec.Volumesize)
 				if err != nil {
 					err := fmt.Errorf("autopilot returnRds error: %v", err)
 					fmt.Println(err)

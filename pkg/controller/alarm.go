@@ -78,7 +78,7 @@ func ExtractAlarmRulesInto(r pagination.Page, v interface{}) error {
 }
 
 func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespace string) error {
-	nsRds := namespace + "-" + rdsName
+	nsRds := namespace + "_" + rdsName
 	// initial provider
 	provider, err := getProvider()
 	if err != nil {
@@ -102,7 +102,7 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	}
 	for _, tc := range tl {
 		if tc.Name == nsRds {
-			c.logger.Debug("topic exists for %s", nsRds)
+			c.logger.Debug("topic exists for ", nsRds)
 			return nil
 		}
 	}
@@ -240,19 +240,19 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 
 	alarmDiscUtilResult, err := alarmrule.Create(ces, alarmDiscUtil).Extract()
 	if err != nil {
-		return fmt.Errorf("error creating alarmrule: %v", err)
+		return fmt.Errorf("error creating alarmrule alarmDiscUtil: %v", err)
 	}
 	fmt.Println(alarmDiscUtilResult.AlarmID)
 
 	alarmCpuUtilResult, err := alarmrule.Create(ces, alarmCpuUtil).Extract()
 	if err != nil {
-		return fmt.Errorf("error creating alarmrule: %v", err)
+		return fmt.Errorf("error creating alarmrule alarmCpuUtil: %v", err)
 	}
 	fmt.Println(alarmCpuUtilResult.AlarmID)
 
 	alarmMemUtilResult, err := alarmrule.Create(ces, alarmMemUtil).Extract()
 	if err != nil {
-		return fmt.Errorf("error creating alarmrule: %v", err)
+		return fmt.Errorf("error creating alarmrule alarmMemUtil: %v", err)
 	}
 	fmt.Println(alarmMemUtilResult.AlarmID)
 	return nil
