@@ -587,8 +587,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			err := fmt.Errorf("error getting rds by id: %v", err)
 			return err
 		}
-		fmt.Println("enter CreateAlarm while autopilot")
-		err = CreateAlarm(rdsInstance.Nodes[0].Id, newRds.Spec.Endpoint, newRds.Name, newRds.Namespace)
+		err = c.CreateAlarm(rdsInstance.Nodes[0].Id, newRds.Spec.Endpoint, newRds.Name, newRds.Namespace)
 		if err != nil {
 			err := fmt.Errorf("error creating alarm: %v", err)
 			return err

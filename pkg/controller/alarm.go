@@ -77,7 +77,7 @@ func ExtractAlarmRulesInto(r pagination.Page, v interface{}) error {
 	return r.(AlarmRulePage).Result.ExtractIntoSlicePtr(v, "metric_alarms")
 }
 
-func CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespace string) error {
+func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespace string) error {
 	nsRds := namespace + "-" + rdsName
 	// initial provider
 	provider, err := getProvider()
@@ -101,10 +101,9 @@ func CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespac
 		return fmt.Errorf("unable to get topic list: %v", err)
 	}
 	for _, tc := range tl {
-		fmt.Printf("TOPICLIST:%s.", tc.Name)
-		fmt.Printf("nsRDS:%s.", nsRds)
 		if tc.Name == nsRds {
-			return fmt.Errorf("topic exists for %s", nsRds)
+			c.logger.Debug("topic exists for %s", nsRds)
+			return nil
 		}
 	}
 
