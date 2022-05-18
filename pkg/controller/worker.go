@@ -7,7 +7,7 @@ import (
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	// "k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/cache"
 )
 
 const maxRetries = 300
@@ -95,7 +95,6 @@ func (c *Controller) processUpdateRds(
 	return err
 }
 
-/* this is unused?
 func resourceExists(obj interface{}, indexer cache.Indexer) (bool, error) {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
@@ -104,4 +103,3 @@ func resourceExists(obj interface{}, indexer cache.Indexer) (bool, error) {
 	_, exists, err := indexer.GetByKey(key)
 	return exists, err
 }
-*/
