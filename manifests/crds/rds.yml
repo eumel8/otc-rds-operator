@@ -3,7 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   name: rdss.otc.mcsps.de
   finalizers:
-  - otc.mcsps.de/rds
+  - rdss.otc.mcsps.de/rds
 spec:
   group: otc.mcsps.de
   names:
@@ -110,11 +110,11 @@ spec:
                         description: Password of this user
                         type: string
                       privileges:
-                              description: List of privileges in the form: GRANT ALL ON project1.* TO 'app1'@'%'
+                        description: List of privileges in the form GRANT ALL ON project1.* TO 'app1'@'%'
                         items:
                           type: string
                         type: array
-                      type: object
+                    type: object
                   type: array
                 volumetype:
                   description: Specifies the volume type. Its value can be any of the following and is case-sensitive- COMMON - indicates the SATA type.  ULTRAHIGH - indicates the SSD type.
@@ -149,6 +149,10 @@ spec:
                 - securitygroup
             status:
               properties:
+                autopilot:
+                  default: false
+                  description: Trigger to operate RDS in autopilot
+                  type: boolean
                 id:
                   description: RDS Instance ID
                   type: string
