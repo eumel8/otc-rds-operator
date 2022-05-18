@@ -110,9 +110,8 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 				rdsNsName := strings.Split(subscriber.Topicurn, ":")[4]
-				namespace := strings.Split(rdsNsName, "-")[0]
-				rdsName := strings.Split(rdsNsName, "-")[1]
-				// prepare query rds api
+				namespace := rdsNsName[strings.LastIndex(rdsNsName, "-")+1:]
+				rdsName := rdsNsName[strings.LastIndex(rdsNsName, "-")+2:]
 
 				restConfig, err := rest.InClusterConfig()
 				if err != nil {
