@@ -106,14 +106,12 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 			}
 			// action on events
 			if subscriber.Signature != "" {
-
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 				rdsNsName := strings.Split(subscriber.Topicurn, ":")[4]
 				namespace := strings.Split(rdsNsName, "_")[0]
 				rdsName := strings.Split(rdsNsName, "_")[1]
 
-				fmt.Println("NAMESPACE:", namespace, "rdsName:", rdsName)
 				restConfig, err := rest.InClusterConfig()
 				if err != nil {
 					err := fmt.Errorf("error init in-cluster config: %v", err)
@@ -133,7 +131,19 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 				}
 
 				if strings.Contains(subscriber.Message, "rds039_disk_util") {
-					fmt.Println("rds039_disk_util alarm ", rdsName, namespace)
+					c.logger.Info("rds039_disk_util alarm ", rdsName, namespace)
+					returnRds.Spec.Volumesize = returnRds.Spec.Volumesize + 10
+					returnNewRds, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, returnRds, metav1.UpdateOptions{})
+					if returnRds.Spec.Volumesize != returnNewRds.Spec.Volumesize {
+						err := fmt.Errorf("error update rds, result empty")
+						fmt.Println(err)
+
+					}
+					if err != nil {
+						err := fmt.Errorf("error update rds: %v", err)
+						fmt.Println(err)
+					}
+
 				}
 				if strings.Contains(subscriber.Message, "rds001_cpu_util") {
 					fmt.Println("rds001_cpu_util alarm  ", rdsName, namespace)
