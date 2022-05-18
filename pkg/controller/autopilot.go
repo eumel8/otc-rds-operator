@@ -128,7 +128,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 
 				fmt.Println("returnRds GET ", returnRds)
 				if err != nil {
-					err := fmt.Errorf("error update rds: %v", err)
+					err := fmt.Errorf("autopilot returnRds error: %v", err)
 					fmt.Println(err)
 				}
 
