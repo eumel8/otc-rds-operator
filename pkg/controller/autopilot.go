@@ -110,8 +110,8 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 				rdsNsName := strings.Split(subscriber.Topicurn, ":")[4]
-				namespace := strings.Split(rdsNsName, "_")[1]
-				rdsName := strings.Split(rdsNsName, "_")[2]
+				namespace := strings.Split(rdsNsName, "_")[0]
+				rdsName := strings.Split(rdsNsName, "_")[1]
 
 				fmt.Println("NAMESPACE:", namespace, "rdsName:", rdsName)
 				restConfig, err := rest.InClusterConfig()
