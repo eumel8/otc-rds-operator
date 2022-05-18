@@ -31,6 +31,7 @@ type RdsSpec struct {
 	Databases         []string `json:"databases"`
 	Datastoretype     string   `json:"datastoretype"`
 	Datastoreversion  string   `json:"datastoreversion"`
+	Endpoint          string   `json:"endpoint"`
 	Flavorref         string   `json:"flavorref"`
 	Hamode            string   `json:"hamode,omitempty"`
 	Hareplicationmode string   `json:"hareplicationmode,omitempty"`

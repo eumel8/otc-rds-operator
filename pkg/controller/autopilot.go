@@ -1,12 +1,18 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
 	//"github.com/davecgh/go-spew/spew"
+
+	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 )
 
 type Subscriber struct {
@@ -71,7 +77,7 @@ type TemplateVariable struct {
 	IsIEC             bool   `json:"IsIEC"`
 }
 
-func (c *Controller) SmnReceiver() error {
+func (c *Controller) SmnReceiver(ctx context.Context) error {
 	var subscriber Subscriber
 
 	mux := http.NewServeMux()
@@ -100,17 +106,40 @@ func (c *Controller) SmnReceiver() error {
 			}
 			// action on events
 			if subscriber.Signature != "" {
+
 				c.logger.Info("Event request: ", subscriber.Topicurn)
 				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
-				rdsName := strings.Split(subscriber.Topicurn, ":")[4]
+				rdsNsName := strings.Split(subscriber.Topicurn, ":")[4]
+				namespace := strings.Split(rdsNsName, "-")[0]
+				rdsName := strings.Split(rdsNsName, "-")[1]
+				// prepare query rds api
+
+				restConfig, err := rest.InClusterConfig()
+				if err != nil {
+					err := fmt.Errorf("error init in-cluster config: %v", err)
+					fmt.Println(err)
+				}
+				rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
+				if err != nil {
+					err := fmt.Errorf("error creating rdsclientset: %v", err)
+					fmt.Println(err)
+				}
+				returnRds, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Get(ctx, rdsName, metav1.GetOptions{})
+
+				fmt.Println("returnRds GET ", returnRds)
+				if err != nil {
+					err := fmt.Errorf("error update rds: %v", err)
+					fmt.Println(err)
+				}
+
 				if strings.Contains(subscriber.Message, "rds039_disk_util") {
-					fmt.Println("rds039_disk_util alarm ", rdsName)
+					fmt.Println("rds039_disk_util alarm ", rdsName, namespace)
 				}
 				if strings.Contains(subscriber.Message, "rds001_cpu_util") {
-					fmt.Println("rds001_cpu_util alarm  ", rdsName)
+					fmt.Println("rds001_cpu_util alarm  ", rdsName, namespace)
 				}
 				if strings.Contains(subscriber.Message, "rds002_mem_util") {
-					fmt.Println("rds002_mem_util alarm  ", rdsName)
+					fmt.Println("rds002_mem_util alarm  ", rdsName, namespace)
 				}
 				//cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)
 				//fmt.Println("cleanmessage :", cleanMessage)

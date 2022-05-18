@@ -44,7 +44,7 @@ func (c *Controller) secgroupGet(client *golangsdk.ServiceClient, opts *groups.L
 	if err != nil {
 		return nil, err
 	}
-	n, err := groups.ExtractGroups(pages)
+	n, _ := groups.ExtractGroups(pages)
 	if len(n) == 0 {
 		err := errors.New("no secgroup found")
 		return nil, err
@@ -378,7 +378,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 	// Restart instance here
-	if newRds.Status.Reboot == true {
+	if newRds.Status.Reboot {
 		c.logger.Debug("rdsUpdate: restart instance")
 		newRds.Status.Reboot = false
 		if err := c.UpdateStatus(ctx, newRds); err != nil {
@@ -471,7 +471,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
-	if newRds.Status.Logs == true {
+	if newRds.Status.Logs {
 		c.logger.Debug("rdsUpdate: instance errorlogs")
 		newRds.Status.Logs = false
 		if err := c.UpdateStatus(ctx, newRds); err != nil {
@@ -485,6 +485,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 		provider, err := openstack.AuthenticatedClient(opts)
+		if err != nil {
+			err := fmt.Errorf("error building auth client: %v", err)
+			return err
+		}
 		client, _ := openstack.NewIdentityV3(provider, golangsdk.EndpointOpts{})
 
 		if os.Getenv("OS_PROJEKT_ID") != "" {
@@ -510,6 +514,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
+		if err != nil {
+			err := fmt.Errorf("error creating logfetch job: %v", err)
+			return err
+		}
 
 		watch, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{LabelSelector: "job-name=" + newRds.Name})
 		if err != nil {
@@ -573,7 +581,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
-	if newRds.Status.Autopilot == true {
+	if newRds.Status.Autopilot {
+		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
+		CreateAlarm(rdsInstance.Nodes[0].Id, newRds.Spec.Endpoint, newRds.Name, newRds.Namespace)
 		// autopilot logic here
 		return nil
 	}

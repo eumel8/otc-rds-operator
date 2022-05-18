@@ -58,6 +58,9 @@ spec:
                   default: "8.0"
                   pattern: "^(5.6|5.7|8.0|9.5|9.6|10|11|12|2014 SE|2016 SE|2016 EE|2017 SE|2017 EE)$"
                   type: string
+                endpoint:
+                  description: Endpoint of notification service if autopilot is enabled
+                  type: string
                 flavorref:
                   description: Specifies the specification code. The value cannot be empty.
                   default: "rds.mysql.c2.medium"
