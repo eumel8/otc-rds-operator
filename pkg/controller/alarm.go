@@ -92,7 +92,7 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 
 	smn, err := openstack.NewSMNV2(provider, golangsdk.EndpointOpts{})
 	if err != nil {
-		return fmt.Errorf("unable to initialize ces client: %v", err)
+		return fmt.Errorf("unable to initialize smn client: %v", err)
 	}
 
 	// check if topic for rds exists
@@ -124,19 +124,19 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	}
 	for _, sl := range smnList {
 		if sl.Endpoint == smnEndpoint {
-			return fmt.Errorf("subscription exists for %s", nsRds)
+			c.logger.Error("subscription exists for ", nsRds)
+		} else {
+			// create smn subscription
+			newSmn := subscriptions.CreateOpts{
+				Endpoint: smnEndpoint,
+				Protocol: "https",
+				Remark:   "RDS Operator",
+			}
+			_, err = subscriptions.Create(smn, newSmn, topic.TopicUrn).Extract()
+			if err != nil {
+				return fmt.Errorf("error create subscription: %v", err)
+			}
 		}
-	}
-
-	// create smn subscription
-	newSmn := subscriptions.CreateOpts{
-		Endpoint: smnEndpoint,
-		Protocol: "https",
-		Remark:   "RDS Operator",
-	}
-	_, err = subscriptions.Create(smn, newSmn, topic.TopicUrn).Extract()
-	if err != nil {
-		return fmt.Errorf("error create subscription: %v", err)
 	}
 
 	// list all alarmrules

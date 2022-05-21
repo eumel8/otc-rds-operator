@@ -603,7 +603,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			err := fmt.Errorf("error creating alarm: %v", err)
 			return err
 		}
-		// autopilot logic here
 		return nil
 	}
 	return nil
