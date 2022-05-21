@@ -79,7 +79,6 @@ type TemplateVariable struct {
 
 func (c *Controller) SmnReceiver(ctx context.Context) error {
 	var subscriber Subscriber
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -140,15 +139,29 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 
 					}
 					if err != nil {
-						err := fmt.Errorf("error update rds: %v", err)
+						err := fmt.Errorf("error update rds rds039_disk_util alarm: %v", err)
 						fmt.Println(err)
 					}
 
 				}
 				if strings.Contains(subscriber.Message, "rds001_cpu_util") {
+					c.logger.Info("rds001_cpu_util alarm for ", rdsName, namespace)
+					newFlavor, err := c.RdsFlavorLookup(returnRds, "cpu")
+					if err != nil {
+						err := fmt.Errorf("error lookup next flavor rds001_cpu_util alarm: %v", err)
+						c.logger.Error(err)
+					} else {
+						returnRds.Spec.Flavorref = newFlavor
+						_, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, returnRds, metav1.UpdateOptions{})
+						if err != nil {
+							err := fmt.Errorf("error update rds for rds001_cpu_util alarm: %v", err)
+							c.logger.Error(err)
+						}
+					}
 					fmt.Println("rds001_cpu_util alarm  ", rdsName, namespace)
 				}
 				if strings.Contains(subscriber.Message, "rds002_mem_util") {
+					c.logger.Info("rds002_mem_util ", rdsName, namespace)
 					fmt.Println("rds002_mem_util alarm  ", rdsName, namespace)
 				}
 				//cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)

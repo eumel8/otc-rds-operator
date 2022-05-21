@@ -6,6 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strconv"
+	"strings"
 
 	"net/http"
 	"os"
@@ -19,10 +22,12 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/flavors"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
@@ -36,6 +41,12 @@ var (
 // workaround https://github.com/opentelekomcloud/gophertelekomcloud/issues/342
 type myRDSRestartOpts struct {
 	Restart struct{} `json:"restart"`
+}
+
+type posflavor []struct {
+	VCPUs int
+	RAM   int
+	Spec  string
 }
 
 func (c *Controller) secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
@@ -638,7 +649,128 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	return nil
 }
 
-func getProvider() (*golangsdk.ProviderClient, error) {
+func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) (string, error) {
+	provider, err := GetProvider()
+	if err != nil {
+		return "", err
+	}
+	client, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		return "", err
+	}
+
+	azs := strings.Split(newRds.Spec.Availabilityzone, ",")
+	var (
+		az1 string
+		az2 string
+	)
+	az1 = string(azs[0])
+	if len(azs) > 1 {
+		az2 = string(azs[1])
+	} else {
+		az2 = ""
+	}
+	curCpu := "0"
+	curMem := 0
+	posflavor := posflavor{}
+
+	listOpts := flavors.ListOpts{
+		VersionName: newRds.Spec.Datastoreversion,
+	}
+	allFlavorPages, err := flavors.List(client, listOpts, newRds.Spec.Datastoretype).AllPages()
+	if err != nil {
+		klog.Exitf("unable to list flavor: %v", err)
+		return "", err
+	}
+
+	rdsFlavors, err := flavors.ExtractDbFlavors(allFlavorPages)
+	if err != nil {
+		klog.Exitf("unable to extract flavor: %v", err)
+		return "", err
+	}
+
+	for _, rds := range rdsFlavors {
+		if rds.SpecCode == newRds.Spec.Flavorref {
+			curCpu = rds.VCPUs
+			curMem = rds.RAM
+		}
+	}
+	switch raisetype {
+	case "cpu":
+		for _, rds := range rdsFlavors {
+			for n, az := range rds.AzStatus {
+				if n == az1 && az == "normal" {
+					for l, az := range rds.AzStatus {
+						if az2 == "" || l == az2 && az == "normal" {
+							if strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && strings.HasSuffix(rds.SpecCode, ".ha") && rds.VCPUs > curCpu {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+						}
+					}
+				}
+			}
+		}
+		sort.Slice(posflavor, func(i, j int) bool {
+			return posflavor[i].VCPUs < posflavor[j].VCPUs
+		})
+		if len(posflavor) > 0 {
+			return posflavor[0].Spec, nil
+		}
+
+	case "mem":
+		for _, rds := range rdsFlavors {
+			for n, az := range rds.AzStatus {
+				if n == az1 && az == "normal" {
+					for l, az := range rds.AzStatus {
+						if az2 == "" || l == az2 && az == "normal" {
+							if strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && strings.HasSuffix(rds.SpecCode, ".ha") && rds.RAM > curMem {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") && rds.RAM > curMem {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+						}
+
+					}
+
+				}
+
+			}
+		}
+		sort.SliceStable(posflavor, func(i, j int) bool {
+			return posflavor[i].RAM < posflavor[j].RAM
+		})
+		if len(posflavor) > 0 {
+			return posflavor[0].Spec, nil
+		}
+	}
+	return "", fmt.Errorf("no flavor found")
+}
+
+func GetProvider() (*golangsdk.ProviderClient, error) {
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
 	}
@@ -677,7 +809,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 }
 
 func (c *Controller) Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
@@ -702,7 +834,7 @@ func (c *Controller) Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error 
 }
 
 func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
@@ -719,7 +851,7 @@ func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
 }
 
 func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
@@ -727,7 +859,6 @@ func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds
 	if err != nil {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
-
 	err = c.rdsUpdate(ctx, rdsapi, oldRds, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
@@ -738,7 +869,7 @@ func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds
 // Update K8s RDS Resource
 func (c *Controller) UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("UpdateStatus ", newRds.Name)
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}

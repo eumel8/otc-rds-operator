@@ -80,7 +80,7 @@ func ExtractAlarmRulesInto(r pagination.Page, v interface{}) error {
 func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespace string) error {
 	nsRds := namespace + "_" + rdsName
 	// initial provider
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
