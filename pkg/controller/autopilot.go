@@ -88,25 +88,23 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 		case "POST":
 			req, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				fmt.Println(err)
+				c.logger.Error(err)
 			}
-			// fmt.Printf("server: request body / POST: %s\n", req)
 			err = json.Unmarshal([]byte(req), &subscriber)
 			if err != nil {
-				fmt.Println(err)
+				c.logger.Error(err)
 			}
 			// subscribe to smn topic
 			if subscriber.Subscribeurl != "" {
 				c.logger.Info("Subscriber request: ", subscriber.Topicurn)
 				_, err = http.Get(subscriber.Subscribeurl)
 				if err != nil {
-					fmt.Println(err)
+					c.logger.Error(err)
 				}
 			}
 			// action on events
 			if subscriber.Signature != "" {
 				c.logger.Info("Event request: ", subscriber.Topicurn)
-				//c.logger.Info("Event message: ", strings.Split(subscriber.Message, ","))
 				rdsNsName := strings.Split(subscriber.Topicurn, ":")[4]
 				namespace := strings.Split(rdsNsName, "_")[0]
 				rdsName := strings.Split(rdsNsName, "_")[1]
@@ -114,19 +112,17 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 				restConfig, err := rest.InClusterConfig()
 				if err != nil {
 					err := fmt.Errorf("error init in-cluster config: %v", err)
-					fmt.Println(err)
+					c.logger.Error(err)
 				}
 				rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 				if err != nil {
 					err := fmt.Errorf("error creating rdsclientset: %v", err)
-					fmt.Println(err)
+					c.logger.Error(err)
 				}
 				returnRds, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Get(ctx, rdsName, metav1.GetOptions{})
-
-				fmt.Println("returnRds GET ", returnRds.Spec.Volumesize)
 				if err != nil {
 					err := fmt.Errorf("autopilot returnRds error: %v", err)
-					fmt.Println(err)
+					c.logger.Error(err)
 				}
 
 				if strings.Contains(subscriber.Message, "rds039_disk_util") {
@@ -135,12 +131,11 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 					returnNewRds, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, returnRds, metav1.UpdateOptions{})
 					if returnRds.Spec.Volumesize != returnNewRds.Spec.Volumesize {
 						err := fmt.Errorf("error update rds, result empty")
-						fmt.Println(err)
-
+						c.logger.Error(err)
 					}
 					if err != nil {
 						err := fmt.Errorf("error update rds rds039_disk_util alarm: %v", err)
-						fmt.Println(err)
+						c.logger.Error(err)
 					}
 
 				}
@@ -158,41 +153,25 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 							c.logger.Error(err)
 						}
 					}
-					fmt.Println("rds001_cpu_util alarm  ", rdsName, namespace)
 				}
 				if strings.Contains(subscriber.Message, "rds002_mem_util") {
-					c.logger.Info("rds002_mem_util ", rdsName, namespace)
-					fmt.Println("rds002_mem_util alarm  ", rdsName, namespace)
-				}
-				//cleanMessage := strings.Replace(subscriber.Message, "\\", "", -1)
-				//fmt.Println("cleanmessage :", cleanMessage)
-
-				/*
-					var mySubscriberMessage SubscriberMessage
-					err := json.Unmarshal([]byte(cleanMessage), &mySubscriberMessage)
+					c.logger.Info("rds002_mem_util alarm for", rdsName, namespace)
+					newFlavor, err := c.RdsFlavorLookup(returnRds, "mem")
 					if err != nil {
-						fmt.Println(err)
-					}
-					fmt.Println("AlarmName: ", mySubscriberMessage.AlarmName)
-				*/
-				//spew.Dump(subscriber)
-				/*
-					for _, sm := range subscriber.Message {
+						err := fmt.Errorf("error lookup next flavor rds002_mem_util alarm: %v", err)
+						c.logger.Error(err)
+					} else {
+						returnRds.Spec.Flavorref = newFlavor
+						_, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, returnRds, metav1.UpdateOptions{})
 						if err != nil {
-							fmt.Println(err)
+							err := fmt.Errorf("error update rds for rds002_mem_util alarm: %v", err)
+							c.logger.Error(err)
 						}
-						fmt.Printf("message range: %s", sm.AlarmName)
-						// fmt.Printf("event alarm_name: %s", string(sm.AlarmName))
 					}
-				*/
-				/*
-					{"message_type":"alarm","alarm_id":"al1651967846367MVO1yKvWy","alarm_name":"my-rds-ha-disc-util","alarm_status":"alarm","time":1651998061184,"namespace":"SYS.RDS","metric_name":"rds039_disk_util","dimension":"rds_instance_id:9a22c728f48142f88339dc5bfa06d592no01","period":300,"filter":"average","comparison_operator":"\u003e=","value":12,"unit":"","count":1,"alarmValue":[{"time":1651998000000,"value":19.96}],"sms_content":"[eu-de][Major Alarm]Dear customer: The Storage Space Usage of Relational Database Service-MySQL Instances \"my-rds-ha_node0\" (ID: 9a22c728f48142f88339dc5bfa06d592no01) Avg. \u003e= 12.00% for 1 consecutive periods of 5 minutes, at 05 08, 2022 10:21:01 GMT+02:00 triggered an alarm, You can log in to the Cloud Eye console to view details.","template_variable":{"AccountName":"customer","Namespace":"Relational Database Service","DimensionName":"MySQL Instances","ResourceName":"my-rds-ha_node0","MetricName":"Storage Space Usage","IsAlarm":true,"IsCycleTrigger":false,"AlarmLevel":"Major","Region":"eu-de","ResourceId":"9a22c728f48142f88339dc5bfa06d592no01","AlarmRule":"","CurrentData":"19.96%","AlarmTime":"05 08, 2022 10:21:01 GMT+02:00","DataPoint":{"05 08, 2022 10:20:00 GMT+02:00":"19.96%"},"DataPointTime":["05 08, 2022 10:20:00 GMT+02:00"],"AlarmRuleName":"my-rds-ha-disc-util","AlarmId":"al1651967846367MVO1yKvWy","AlarmDesc":"RDS Operator Autopilot","MonitoringRange":"Specific resources","IsOriginalValue":false,"Period":"5 minutes","Filter":"Avg.","ComparisonOperator":"\u003e=","Value":"12.00%","Unit":"%","Count":1,"EventContent":"","IsIEC":false}}{"level":"info","msg":"Event request: urn:smn:eu-de:7c3ec0b3db5f476990043258670caf82:my-rds-ha","node":"otc-rds-operator-c76687d8b-x69mg","service":"otc-rds-operator","time":"2022-05-08T08:26:26Z","type":"controller"}
-				*/
+				}
 			}
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			// w.WriteHeader(http.StatusCreated)
-			// _, _ = fmt.Fprint(w, ProviderPostResponse)
 		}
 	})
 
