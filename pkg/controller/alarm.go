@@ -103,157 +103,158 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	for _, tc := range tl {
 		if tc.Name == nsRds {
 			c.logger.Debug("topic exists for ", nsRds)
-			return nil
-		}
-	}
 
-	// create topic
-	newTopic := topics.CreateOps{
-		Name:        nsRds,
-		DisplayName: nsRds,
-	}
-	topic, err := topics.Create(smn, newTopic).Extract()
-	if err != nil {
-		return fmt.Errorf("unable to create topic: %v", err)
-	}
-
-	// check of subscription exists for rds
-	smnList, err := subscriptions.List(smn).Extract()
-	if err != nil {
-		return fmt.Errorf("error extracting subscription list: %v", err)
-	}
-	for _, sl := range smnList {
-		if sl.Endpoint == smnEndpoint {
-			c.logger.Error("subscription exists for ", nsRds)
 		} else {
-			// create smn subscription
-			newSmn := subscriptions.CreateOpts{
-				Endpoint: smnEndpoint,
-				Protocol: "https",
-				Remark:   "RDS Operator",
+			// create topic
+			newTopic := topics.CreateOps{
+				Name:        nsRds,
+				DisplayName: nsRds,
 			}
-			_, err = subscriptions.Create(smn, newSmn, topic.TopicUrn).Extract()
+			topic, err := topics.Create(smn, newTopic).Extract()
 			if err != nil {
-				return fmt.Errorf("error create subscription: %v", err)
+				return fmt.Errorf("unable to create topic: %v", err)
 			}
+
+			// check of subscription exists for rds
+			smnList, err := subscriptions.List(smn).Extract()
+			if err != nil {
+				return fmt.Errorf("error extracting subscription list: %v", err)
+			}
+			for _, sl := range smnList {
+				if sl.Endpoint == smnEndpoint {
+					c.logger.Error("subscription exists for ", nsRds)
+				} else {
+					// create smn subscription
+					newSmn := subscriptions.CreateOpts{
+						Endpoint: smnEndpoint,
+						Protocol: "https",
+						Remark:   "RDS Operator",
+					}
+					_, err = subscriptions.Create(smn, newSmn, topic.TopicUrn).Extract()
+					if err != nil {
+						return fmt.Errorf("error create subscription: %v", err)
+					}
+				}
+			}
+
+			// list all alarmrules
+			pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
+			if err != nil {
+				return fmt.Errorf("ces list failed allpages: %v", err)
+			}
+			alarms, err := ExtractAlarmRules(pages)
+			if err != nil {
+				return fmt.Errorf("ces list extract failed: %v", err)
+			}
+			for _, alarm := range alarms {
+				if alarm.AlarmName == nsRds+"-disc-util" {
+					return fmt.Errorf("alarmrule exists for %s", nsRds)
+				}
+			}
+
+			alarmDiscUtil := alarmrule.CreateOpts{
+				AlarmName:        nsRds + "-disc-util",
+				AlarmDescription: "RDS Operator Autopilot",
+				AlarmLevel:       2,
+				Metric: alarmrule.MetricOpts{
+					Namespace:  "SYS.RDS",
+					MetricName: "rds039_disk_util",
+					Dimensions: []alarmrule.DimensionOpts{{
+						Name:  "rds_instance_id",
+						Value: instanceId,
+					}},
+				},
+				Condition: alarmrule.ConditionOpts{
+					Period:             300,
+					Filter:             "average",
+					ComparisonOperator: ">=",
+					Value:              12,
+					Unit:               "",
+					Count:              3,
+				},
+				AlarmActions: []alarmrule.ActionOpts{{
+					Type:             "notification",
+					NotificationList: []string{topic.TopicUrn},
+				}},
+				AlarmEnabled:       true,
+				AlarmActionEnabled: true,
+			}
+
+			alarmCpuUtil := alarmrule.CreateOpts{
+				AlarmName:        nsRds + "-cpu-util",
+				AlarmDescription: "RDS Operator Autopilot",
+				AlarmLevel:       2,
+				Metric: alarmrule.MetricOpts{
+					Namespace:  "SYS.RDS",
+					MetricName: "rds001_cpu_util",
+					Dimensions: []alarmrule.DimensionOpts{{
+						Name:  "rds_instance_id",
+						Value: instanceId,
+					}},
+				},
+				Condition: alarmrule.ConditionOpts{
+					Period:             300,
+					Filter:             "average",
+					ComparisonOperator: ">=",
+					Value:              90,
+					Unit:               "",
+					Count:              3,
+				},
+				AlarmActions: []alarmrule.ActionOpts{{
+					Type:             "notification",
+					NotificationList: []string{topic.TopicUrn},
+				}},
+				AlarmEnabled:       true,
+				AlarmActionEnabled: true,
+			}
+
+			alarmMemUtil := alarmrule.CreateOpts{
+				AlarmName:        nsRds + "-mem-util",
+				AlarmDescription: "RDS Operator Autopilot",
+				AlarmLevel:       2,
+				Metric: alarmrule.MetricOpts{
+					Namespace:  "SYS.RDS",
+					MetricName: "rds002_mem_util",
+					Dimensions: []alarmrule.DimensionOpts{{
+						Name:  "rds_instance_id",
+						Value: instanceId,
+					}},
+				},
+				Condition: alarmrule.ConditionOpts{
+					Period:             300,
+					Filter:             "average",
+					ComparisonOperator: ">=",
+					Value:              90,
+					Unit:               "",
+					Count:              3,
+				},
+				AlarmActions: []alarmrule.ActionOpts{{
+					Type:             "notification",
+					NotificationList: []string{topic.TopicUrn},
+				}},
+				AlarmEnabled:       true,
+				AlarmActionEnabled: true,
+			}
+
+			alarmDiscUtilResult, err := alarmrule.Create(ces, alarmDiscUtil).Extract()
+			if err != nil {
+				return fmt.Errorf("error creating alarmrule alarmDiscUtil: %v", err)
+			}
+			fmt.Println(alarmDiscUtilResult.AlarmID)
+
+			alarmCpuUtilResult, err := alarmrule.Create(ces, alarmCpuUtil).Extract()
+			if err != nil {
+				return fmt.Errorf("error creating alarmrule alarmCpuUtil: %v", err)
+			}
+			fmt.Println(alarmCpuUtilResult.AlarmID)
+
+			alarmMemUtilResult, err := alarmrule.Create(ces, alarmMemUtil).Extract()
+			if err != nil {
+				return fmt.Errorf("error creating alarmrule alarmMemUtil: %v", err)
+			}
+			c.logger.Info(alarmMemUtilResult.AlarmID)
 		}
 	}
 
-	// list all alarmrules
-	pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
-	if err != nil {
-		return fmt.Errorf("ces list failed allpages: %v", err)
-	}
-	alarms, err := ExtractAlarmRules(pages)
-	if err != nil {
-		return fmt.Errorf("ces list extract failed: %v", err)
-	}
-	for _, alarm := range alarms {
-		if alarm.AlarmName == nsRds+"-disc-util" {
-			return fmt.Errorf("alarmrule exists for %s", nsRds)
-		}
-	}
-
-	alarmDiscUtil := alarmrule.CreateOpts{
-		AlarmName:        nsRds + "-disc-util",
-		AlarmDescription: "RDS Operator Autopilot",
-		AlarmLevel:       2,
-		Metric: alarmrule.MetricOpts{
-			Namespace:  "SYS.RDS",
-			MetricName: "rds039_disk_util",
-			Dimensions: []alarmrule.DimensionOpts{{
-				Name:  "rds_instance_id",
-				Value: instanceId,
-			}},
-		},
-		Condition: alarmrule.ConditionOpts{
-			Period:             300,
-			Filter:             "average",
-			ComparisonOperator: ">=",
-			Value:              12,
-			Unit:               "",
-			Count:              3,
-		},
-		AlarmActions: []alarmrule.ActionOpts{{
-			Type:             "notification",
-			NotificationList: []string{topic.TopicUrn},
-		}},
-		AlarmEnabled:       true,
-		AlarmActionEnabled: true,
-	}
-
-	alarmCpuUtil := alarmrule.CreateOpts{
-		AlarmName:        nsRds + "-cpu-util",
-		AlarmDescription: "RDS Operator Autopilot",
-		AlarmLevel:       2,
-		Metric: alarmrule.MetricOpts{
-			Namespace:  "SYS.RDS",
-			MetricName: "rds001_cpu_util",
-			Dimensions: []alarmrule.DimensionOpts{{
-				Name:  "rds_instance_id",
-				Value: instanceId,
-			}},
-		},
-		Condition: alarmrule.ConditionOpts{
-			Period:             300,
-			Filter:             "average",
-			ComparisonOperator: ">=",
-			Value:              90,
-			Unit:               "",
-			Count:              3,
-		},
-		AlarmActions: []alarmrule.ActionOpts{{
-			Type:             "notification",
-			NotificationList: []string{topic.TopicUrn},
-		}},
-		AlarmEnabled:       true,
-		AlarmActionEnabled: true,
-	}
-
-	alarmMemUtil := alarmrule.CreateOpts{
-		AlarmName:        nsRds + "-mem-util",
-		AlarmDescription: "RDS Operator Autopilot",
-		AlarmLevel:       2,
-		Metric: alarmrule.MetricOpts{
-			Namespace:  "SYS.RDS",
-			MetricName: "rds002_mem_util",
-			Dimensions: []alarmrule.DimensionOpts{{
-				Name:  "rds_instance_id",
-				Value: instanceId,
-			}},
-		},
-		Condition: alarmrule.ConditionOpts{
-			Period:             300,
-			Filter:             "average",
-			ComparisonOperator: ">=",
-			Value:              90,
-			Unit:               "",
-			Count:              3,
-		},
-		AlarmActions: []alarmrule.ActionOpts{{
-			Type:             "notification",
-			NotificationList: []string{topic.TopicUrn},
-		}},
-		AlarmEnabled:       true,
-		AlarmActionEnabled: true,
-	}
-
-	alarmDiscUtilResult, err := alarmrule.Create(ces, alarmDiscUtil).Extract()
-	if err != nil {
-		return fmt.Errorf("error creating alarmrule alarmDiscUtil: %v", err)
-	}
-	fmt.Println(alarmDiscUtilResult.AlarmID)
-
-	alarmCpuUtilResult, err := alarmrule.Create(ces, alarmCpuUtil).Extract()
-	if err != nil {
-		return fmt.Errorf("error creating alarmrule alarmCpuUtil: %v", err)
-	}
-	fmt.Println(alarmCpuUtilResult.AlarmID)
-
-	alarmMemUtilResult, err := alarmrule.Create(ces, alarmMemUtil).Extract()
-	if err != nil {
-		return fmt.Errorf("error creating alarmrule alarmMemUtil: %v", err)
-	}
-	fmt.Println(alarmMemUtilResult.AlarmID)
 	return nil
 }
