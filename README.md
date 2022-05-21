@@ -24,6 +24,7 @@ to use a functional version.
 * Backup restore PITR
 * Log handling
 * User/Schema handling
+* Autopilot (automatically resource handling of mem, cpu, disc)
 
 ## Versioning 
 
@@ -127,6 +128,7 @@ Example:
 
 ```yaml
 status:
+  autopilot: false
   id: 59ce9eca5ef543e2a643fea393b2cfbcin01
   ip: 192.168.0.71
   logs: false
@@ -152,6 +154,7 @@ Example:
 
 ```yaml
 status:
+  autopilot: false
   id: 59ce9eca5ef543e2a643fea393b2cfbcin01
   ip: 192.168.0.71
   logs: true
@@ -168,6 +171,28 @@ $ kubectl -n rds2 logs -ljob-name=my-rds-ha -c errorlog
     "content": "[MY-011070] [Server] \u0026#39;Disabling symbolic links using --skip-symbolic-links (or equivalent) is the default. Consider not using this option as it\u0026#39; is deprecated and will be removed in a future release."
   },
 ]
+```
+
+### Autopilot
+
+Autopilot is level 5 approach of Kubernetes Operator. This means, the Operator care about health
+status based on metrics cpu, memory, and disc size.
+Autopilot will create 3 alert rules on OTC and a Simple Messaging Services for notification handling.
+OTC fires a HTTPS webhook to a target service. For this it's required to setup Ingress, where the
+Operator can receive alert notification and take action into account. Disc size will increase +10GB,
+for cpu/memory alert the next bigger flavor will search and scale up the instance automatically,
+while the cpu/mem metric is lower then 90%.
+CloudEye will observe the load every 5 minutes and take action after 3 measurements (15 min), so
+it takes some time before scale up the flavor.
+For the moment there is no downsizing of flavors, and downsizing disc is always impossible.
+
+Example:
+
+```yaml
+spec:
+  endpoint: https://rdsoperator.example.com/
+status:
+  autopilot: true
 ```
 
 ### Import/Export
