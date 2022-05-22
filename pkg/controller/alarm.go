@@ -163,7 +163,6 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	}
 
 	// check of subscription exists for rds
-
 	smnList, err := subscriptions.List(smn).Extract()
 	if err != nil {
 		return fmt.Errorf("error extracting subscription list: %v", err)
@@ -317,13 +316,13 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	if err != nil {
 		return fmt.Errorf("unable to initialize ces client: %v", err)
 	}
-	/*
-		smn, err := openstack.NewSMNV2(provider, golangsdk.EndpointOpts{})
-		if err != nil {
-			return fmt.Errorf("unable to initialize smn client: %v", err)
-		}
-	*/
-	// we delete only alarm rules, not the ces/smn instance
+
+	smn, err := openstack.NewSMNV2(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		return fmt.Errorf("unable to initialize smn client: %v", err)
+	}
+
+	// delete alarm rules
 	pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
 	if err != nil {
 		return fmt.Errorf("ces list failed allpages: %v", err)
@@ -335,7 +334,22 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	for _, alarm := range alarms {
 		if strings.Contains(alarm.AlarmName, nsRds) {
 			alarmDeleteResult := alarmrule.Delete(ces, alarm.AlarmID)
-			fmt.Println("ALARM Rule Delete", alarmDeleteResult)
+			c.logger.Debug("ALARM Rule Delete: ", alarmDeleteResult)
+		}
+	}
+
+	// delete topic/smn
+	tl, err := topics.List(smn).Extract()
+	if err != nil {
+		return fmt.Errorf("unable to get topic list: %v", err)
+	}
+	for _, tc := range tl {
+		if tc.Name == nsRds {
+			smnDeleteResult := subscriptions.Delete(smn, tc.TopicUrn)
+			topicDeleteResult := topics.Delete(smn, tc.TopicUrn)
+			c.logger.Debug("ALARM Topic Delete: ", topicDeleteResult)
+			c.logger.Debug("ALARM SMN Delete: ", smnDeleteResult)
+			//c.logger.Debug("topic exists for ", nsRds)
 		}
 	}
 	return nil
