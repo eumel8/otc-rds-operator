@@ -345,10 +345,13 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	}
 	for _, tc := range tl {
 		if tc.Name == nsRds {
-			smnDeleteResult := subscriptions.Delete(smn, tc.TopicUrn)
-			topicDeleteResult := topics.Delete(smn, tc.TopicUrn)
+			// smnDeleteResult,err := subscriptions.Delete(smn, tc.TopicUrn).ExtractJobResponse()
+			topicDeleteResult, err := topics.Delete(smn, tc.TopicUrn).ExtractJobResponse()
+			if err != nil {
+				return fmt.Errorf("unable to delete topic: %v", err)
+			}
 			c.logger.Debug("ALARM Topic Delete: ", topicDeleteResult)
-			c.logger.Debug("ALARM SMN Delete: ", smnDeleteResult)
+			// c.logger.Debug("ALARM SMN Delete: ", smnDeleteResult)
 			//c.logger.Debug("topic exists for ", nsRds)
 		}
 	}
