@@ -854,7 +854,7 @@ func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
 	if newRds.Status.Autopilot {
 		err = c.DeleteAlarm(newRds.Name, newRds.Namespace)
 		if err != nil {
-			err := fmt.Errorf("error creating alarm: %v", err)
+			err := fmt.Errorf("error deleting alarm: %v", err)
 			return err
 		}
 	}
