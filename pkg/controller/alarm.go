@@ -334,7 +334,7 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	for _, alarm := range alarms {
 		if strings.Contains(alarm.AlarmName, nsRds) {
 			alarmDeleteResult := alarmrule.Delete(ces, alarm.AlarmID)
-			c.logger.Debug("ALARM Rule Delete: ", alarmDeleteResult.Result)
+			c.logger.Debug("ALARM Rule Delete: ", alarmDeleteResult.ErrResult)
 		}
 	}
 
@@ -347,7 +347,7 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 		if tc.Name == nsRds {
 			// smnDeleteResult,err := subscriptions.Delete(smn, tc.TopicUrn).ExtractJobResponse()
 			topicDeleteResult := topics.Delete(smn, tc.TopicUrn)
-			c.logger.Debug("ALARM Topic Delete: ", topicDeleteResult.Result)
+			c.logger.Debug("ALARM Topic Delete: ", topicDeleteResult.ErrResult)
 			// c.logger.Debug("ALARM SMN Delete: ", smnDeleteResult)
 			//c.logger.Debug("topic exists for ", nsRds)
 		}
