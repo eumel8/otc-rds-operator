@@ -592,7 +592,14 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
-	if newRds.Status.Autopilot {
+	if newRds.Spec.Endpoint != "" && !newRds.Status.Autopilot {
+		c.logger.Debug("rdsUpdate: autopilot")
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance set autopilot.")
+		newRds.Status.Autopilot = true
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
+			err := fmt.Errorf("error update rds status for autopilot: %v", err)
+			return err
+		}
 		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
 		if err != nil {
 			err := fmt.Errorf("error getting rds by id: %v", err)

@@ -80,10 +80,13 @@ kubectl -n rds describe rds my-rds-single
 
 # set autopilot
 kubectl -n rds patch rds my-rds-single --type=json -p='[{"op": "replace", "path": "/spec/endpoint", "value": "https://rdsoperator.example.com/"}]'
-kubectl -n rds patch rds my-rds-single --type=json -p='[{"op": "replace", "path": "/status/autopilot", "value": "true"}]'
 kubectl -n rds describe rds my-rds-single
 # generate some traffic for cpu/mem/disc scaling test 
 # https://gist.github.com/eumel8/0226e518722fed3bc187eb89cca4d8a8
+
+# remove autopilot
+kubectl -n rds patch rds my-rds-single --type=json -p='[{"op": "replace", "path": "/status/autopilot", "value": "false"}]'
+kubectl -n rds describe rds my-rds-single
 
 # additional checkin background if cloud credentials available
 openstack rds instance list

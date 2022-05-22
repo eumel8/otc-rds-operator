@@ -191,8 +191,6 @@ Example:
 ```yaml
 spec:
   endpoint: https://rdsoperator.example.com/
-status:
-  autopilot: true
 ```
 
 ### Import/Export
