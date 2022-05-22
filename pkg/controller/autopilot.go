@@ -125,6 +125,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 					c.logger.Error(err)
 				}
 
+				c.logger.Debug("SMN received message: ", subscriber.Message)
 				if strings.Contains(subscriber.Message, "rds039_disk_util") {
 					c.logger.Info("rds039_disk_util alarm ", rdsName, namespace)
 					returnRds.Spec.Volumesize = returnRds.Spec.Volumesize + 10

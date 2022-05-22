@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"strings"
 
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
@@ -242,22 +243,59 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 		AlarmActionEnabled: true,
 	}
 	alarmDiscUtilResult, err := alarmrule.Create(ces, alarmDiscUtil).Extract()
+	c.logger.Info(alarmDiscUtilResult.AlarmID)
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmDiscUtil: %v", err)
 		// return fmt.Errorf("error creating alarmrule alarmDiscUtil: %v", err)
 	}
-	fmt.Println(alarmDiscUtilResult.AlarmID)
 	alarmCpuUtilResult, err := alarmrule.Create(ces, alarmCpuUtil).Extract()
+	c.logger.Info(alarmCpuUtilResult.AlarmID)
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmCpuUtil: %v", err)
 		// return fmt.Errorf("error creating alarmrule alarmCpuUtil: %v", err)
 	}
-	fmt.Println(alarmCpuUtilResult.AlarmID)
+
 	alarmMemUtilResult, err := alarmrule.Create(ces, alarmMemUtil).Extract()
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmMemUtil: %v", err)
 		// return fmt.Errorf("error creating alarmrule alarmMemUtil: %v", err)
 	}
 	c.logger.Info(alarmMemUtilResult.AlarmID)
+	return nil
+}
+
+func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
+	nsRds := namespace + "_" + rdsName
+	// initial provider
+	provider, err := GetProvider()
+	if err != nil {
+		return fmt.Errorf("unable to initialize provider: %v", err)
+	}
+	// inital service clients for CES and SMN
+	ces, err := openstack.NewCESClient(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		return fmt.Errorf("unable to initialize ces client: %v", err)
+	}
+	/*
+		smn, err := openstack.NewSMNV2(provider, golangsdk.EndpointOpts{})
+		if err != nil {
+			return fmt.Errorf("unable to initialize smn client: %v", err)
+		}
+	*/
+	// we delete only alarm rules, not the ces/smn instance
+	pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
+	if err != nil {
+		return fmt.Errorf("ces list failed allpages: %v", err)
+	}
+	alarms, err := ExtractAlarmRules(pages)
+	if err != nil {
+		return fmt.Errorf("ces list extract failed: %v", err)
+	}
+	for _, alarm := range alarms {
+		if strings.Contains(alarm.AlarmName, nsRds) {
+			alarmDeleteResult := alarmrule.Delete(ces, alarm.AlarmName)
+			fmt.Println("ALARM Rule Delete", alarmDeleteResult)
+		}
+	}
 	return nil
 }

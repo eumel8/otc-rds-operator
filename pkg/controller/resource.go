@@ -842,7 +842,7 @@ func (c *Controller) Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error 
 }
 
 func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
-	provider, err := GetProvider()
+	/*provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
@@ -850,12 +850,20 @@ func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
 	if err != nil {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
-
-	err = c.rdsDelete(rdsapi, newRds)
+	*/
+	err := c.DeleteAlarm(newRds.Name, newRds.Namespace)
 	if err != nil {
-		return fmt.Errorf("rds delete failed: %v", err)
+		err := fmt.Errorf("error creating alarm: %v", err)
+		return err
 	}
 	return nil
+	/*
+		err = c.rdsDelete(rdsapi, newRds)
+		if err != nil {
+			return fmt.Errorf("rds delete failed: %v", err)
+		}
+		return nil
+	*/
 }
 
 func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
