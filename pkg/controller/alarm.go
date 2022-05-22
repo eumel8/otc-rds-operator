@@ -175,7 +175,7 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 			Period:             300,
 			Filter:             "average",
 			ComparisonOperator: ">=",
-			Value:              12,
+			Value:              90,
 			Unit:               "",
 			Count:              3,
 		},

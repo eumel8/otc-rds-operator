@@ -166,7 +166,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 	createOpts := instances.CreateRdsOpts{}
 	if newRds.Spec.Hamode == "Ha" {
 		createOpts = instances.CreateRdsOpts{
-			Name: newRds.Name,
+			Name: newRds.Namespace + "_" + newRds.Name,
 			Datastore: &instances.Datastore{
 				Type:    newRds.Spec.Datastoretype,
 				Version: newRds.Spec.Datastoreversion,
@@ -194,7 +194,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 		}
 	} else {
 		createOpts = instances.CreateRdsOpts{
-			Name: newRds.Name,
+			Name: newRds.Namespace + "_" + newRds.Name,
 			Datastore: &instances.Datastore{
 				Type:    newRds.Spec.Datastoretype,
 				Version: newRds.Spec.Datastoreversion,
