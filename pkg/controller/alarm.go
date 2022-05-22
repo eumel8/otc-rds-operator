@@ -20,6 +20,48 @@ func rootURL(c *golangsdk.ServiceClient) string {
 	return c.ServiceURL(rootPath)
 }
 
+type AlarmRule struct {
+	AlarmName               string        `json:"alarm_name"`
+	AlarmID                 string        `json:"alarm_id"`
+	AlarmDescription        string        `json:"alarm_description"`
+	AlarmType               string        `json:"alarm_type"`
+	AlarmLevel              int           `json:"alarm_level"`
+	Metric                  MetricInfo    `json:"metric"`
+	Condition               ConditionInfo `json:"condition"`
+	AlarmActions            []ActionInfo  `json:"alarm_actions"`
+	InsufficientdataActions []ActionInfo  `json:"insufficientdata_actions"`
+	OkActions               []ActionInfo  `json:"ok_actions"`
+	AlarmEnabled            bool          `json:"alarm_enabled"`
+	AlarmActionEnabled      bool          `json:"alarm_action_enabled"`
+	UpdateTime              int64         `json:"update_time"`
+	AlarmState              string        `json:"alarm_state"`
+}
+
+type ConditionInfo struct {
+	Period             int    `json:"period"`
+	Filter             string `json:"filter"`
+	ComparisonOperator string `json:"comparison_operator"`
+	Value              int    `json:"value"`
+	Unit               string `json:"unit"`
+	Count              int    `json:"count"`
+}
+
+type MetricInfo struct {
+	Namespace  string          `json:"namespace"`
+	MetricName string          `json:"metric_name"`
+	Dimensions []DimensionInfo `json:"dimensions"`
+}
+
+type ActionInfo struct {
+	Type             string   `json:"type"`
+	NotificationList []string `json:"notificationList"`
+}
+
+type DimensionInfo struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type AlarmRulePage struct {
 	pagination.SinglePageBase
 }
@@ -68,8 +110,9 @@ func AlarmRuleList(client *golangsdk.ServiceClient, opts ListAlarmRuleBuilder) p
 	return pageAlarmRuleList
 }
 
-func ExtractAlarmRules(r pagination.Page) ([]alarmrule.AlarmRule, error) {
-	var s []alarmrule.AlarmRule
+// func ExtractAlarmRules(r pagination.Page) ([]alarmrule.AlarmRule, error) {
+func ExtractAlarmRules(r pagination.Page) ([]AlarmRule, error) {
+	var s []AlarmRule
 	err := ExtractAlarmRulesInto(r, &s)
 	return s, err
 }
@@ -95,21 +138,19 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	if err != nil {
 		return fmt.Errorf("unable to initialize smn client: %v", err)
 	}
-	// We tolerate each error from here: topic, smn can created by another instance
-	// on the same cluster. Alert rules can partly exists without subscription
 	// TODO separate return existing error
 	// check if topic for rds exists
-	/*
-		tl, err := topics.List(smn).Extract()
-		if err != nil {
-			return fmt.Errorf("unable to get topic list: %v", err)
+
+	tl, err := topics.List(smn).Extract()
+	if err != nil {
+		return fmt.Errorf("unable to get topic list: %v", err)
+	}
+	for _, tc := range tl {
+		if tc.Name == nsRds {
+			c.logger.Debug("topic exists for ", nsRds)
 		}
-		for _, tc := range tl {
-			if tc.Name == nsRds {
-				c.logger.Debug("topic exists for ", nsRds)
-			}
-		}
-	*/
+	}
+
 	// create topic
 	newTopic := topics.CreateOps{
 		Name:        nsRds,
@@ -122,17 +163,17 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	}
 
 	// check of subscription exists for rds
-	/*
-		smnList, err := subscriptions.List(smn).Extract()
-		if err != nil {
-			return fmt.Errorf("error extracting subscription list: %v", err)
+
+	smnList, err := subscriptions.List(smn).Extract()
+	if err != nil {
+		return fmt.Errorf("error extracting subscription list: %v", err)
+	}
+	for _, sl := range smnList {
+		if sl.Endpoint == smnEndpoint {
+			c.logger.Error("subscription exists for ", nsRds)
 		}
-		for _, sl := range smnList {
-			if sl.Endpoint == smnEndpoint {
-				c.logger.Error("subscription exists for ", nsRds)
-			}
-		}
-	*/
+	}
+
 	// create smn subscription
 	newSmn := subscriptions.CreateOpts{
 		Endpoint: smnEndpoint,
@@ -293,7 +334,7 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	}
 	for _, alarm := range alarms {
 		if strings.Contains(alarm.AlarmName, nsRds) {
-			alarmDeleteResult := alarmrule.Delete(ces, alarm.AlarmName)
+			alarmDeleteResult := alarmrule.Delete(ces, alarm.AlarmID)
 			fmt.Println("ALARM Rule Delete", alarmDeleteResult)
 		}
 	}
