@@ -113,10 +113,10 @@ func (c *Controller) rdsGetById(client *golangsdk.ServiceClient, rdsId string) (
 	return &n.Instances[0], nil
 }
 
-func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
+func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName string, namespace string) (*instances.RdsInstanceResponse, error) {
 	c.logger.Debug("rdsGetByName ", rdsName)
 	listOpts := instances.ListRdsInstanceOpts{
-		Name: rdsName,
+		Name: namespace + "_" + rdsName,
 	}
 	allPages, err := instances.List(client, listOpts).AllPages()
 	if err != nil {
@@ -135,7 +135,7 @@ func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName strin
 
 func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("rdsCreate ", newRds.Name)
-	rdsCheck, err := c.rdsGetByName(client, newRds.Name)
+	rdsCheck, err := c.rdsGetByName(client, newRds.Name, newRds.Namespace)
 	if rdsCheck != nil {
 		err := fmt.Errorf("rds already exists %s", newRds.Name)
 		return err
@@ -298,7 +298,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		return err
 	}
 	// re-check real rds spec on otc
-	rdsInstance, err := c.rdsGetByName(client, newRds.Name)
+	rdsInstance, err := c.rdsGetByName(client, newRds.Name, newRds.Namespace)
 	if err != nil {
 		err := fmt.Errorf("error getting rdsGetByName: %v", err)
 		return err
@@ -631,7 +631,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		err := fmt.Errorf("error creating rdsclientset: %v", err)
 		return err
 	}
-	rdsInstance, err := c.rdsGetByName(client, newRds.Name)
+	rdsInstance, err := c.rdsGetByName(client, newRds.Name, newRds.Namespace)
 	if err != nil {
 		err := fmt.Errorf("error getting rdsGetByName: %v", err)
 		return err
