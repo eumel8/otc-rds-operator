@@ -145,21 +145,19 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	}
 
 	// list all alarmrules
-	/*
-		pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
-		if err != nil {
-			return fmt.Errorf("ces list failed allpages: %v", err)
+	pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
+	if err != nil {
+		return fmt.Errorf("ces list failed allpages: %v", err)
+	}
+	alarms, err := ExtractAlarmRules(pages)
+	if err != nil {
+		return fmt.Errorf("ces list extract failed: %v", err)
+	}
+	for _, alarm := range alarms {
+		if alarm.AlarmName == nsRds+"-disc-util" {
+			return fmt.Errorf("alarmrule exists for %s", nsRds)
 		}
-		alarms, err := ExtractAlarmRules(pages)
-		if err != nil {
-			return fmt.Errorf("ces list extract failed: %v", err)
-		}
-		for _, alarm := range alarms {
-			if alarm.AlarmName == nsRds+"-disc-util" {
-				return fmt.Errorf("alarmrule exists for %s", nsRds)
-			}
-		}
-	*/
+	}
 
 	alarmDiscUtil := alarmrule.CreateOpts{
 		AlarmName:        nsRds + "-disc-util",
