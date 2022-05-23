@@ -131,7 +131,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 					returnRds.Spec.Volumesize = returnRds.Spec.Volumesize + 10
 					returnNewRds, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, returnRds, metav1.UpdateOptions{})
 					if returnRds.Spec.Volumesize != returnNewRds.Spec.Volumesize {
-						err := fmt.Errorf("error update rds, result empty")
+						err := fmt.Errorf("autopilot error update volumesize spec")
 						c.logger.Error(err)
 					}
 					if err != nil {
