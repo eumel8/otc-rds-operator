@@ -270,6 +270,10 @@ Using `make` in the doc root:
     test-clean: Clean test cache
 ```
 
+## Contribution
+
+cncf.io/contributor-strategy
+
 ## Credits
 
 Frank Kloeker f.kloeker@telekom.de
