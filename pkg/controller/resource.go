@@ -274,19 +274,20 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 			Description: "RDS Operator Last Backup",
 		}
 		backupResult := backups.Create(client, backupOpts)
-		jobResponse, err := backupResult.ExtractJobResponse()
+		backupResponse, err := backupResult.Extract()
+		fmt.Println("BACKUP JOB: ", backupResponse)
 		if err != nil {
 			err := fmt.Errorf("error rds backup job: %v", err)
 			return err
 		}
 
-		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+		if err := instances.WaitForJobCompleted(client, int(1800), backupResponse.ID); err != nil {
 			err := fmt.Errorf("error getting rds backup job: %v", err)
 			return err
 		}
 
 		deleteResult := instances.Delete(client, newRds.Status.Id)
-		jobResponse, err = deleteResult.ExtractJobResponse()
+		jobResponse, err := deleteResult.ExtractJobResponse()
 		if err != nil {
 			err := fmt.Errorf("error rds delete job: %v", err)
 			return err
