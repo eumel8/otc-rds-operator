@@ -250,6 +250,17 @@ Status:
 
 After that the instance in OTC is unmanaged and you can safely delete Rds in Kubernetes Cluster.
 
+### Unforseen deleting
+
+We identified two use cases of unforseen deleting of RDS instances:
+
+* the Cluster Admin deletes the CRD, which caused the delete of all RDS instances in the Cluster
+* the Cluster User deletes the RDS resource in the cluster which deletes of course the RDS instance in OTC
+
+For both use cases we make a manual backup before delete the instance, which will be also not deleted
+by the OTC delete cascade. You can restore the backup on the same instance name and import the RDS resource
+into the cluster.
+
 ## Developement
 
 Using `make` in the doc root:

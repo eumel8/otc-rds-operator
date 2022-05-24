@@ -265,8 +265,27 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 	c.logger.Debug("rdsDelete ", newRds.Name)
 	if newRds.Status.Id != "" {
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is deleting.")
+
+		// make a backup before instance deleting
+		backupOpts := backups.CreateOpts{
+			InstanceID:  newRds.Status.Id,
+			Name:        newRds.Namespace + "_" + newRds.Name + time.Now().Format(golangsdk.RFC3339Milli),
+			Description: "RDS Operator Last Backup",
+		}
+		backupResult := backups.Create(client, backupOpts)
+		jobResponse, err := backupResult.ExtractJobResponse()
+		if err != nil {
+			err := fmt.Errorf("error rds backup job: %v", err)
+			return err
+		}
+
+		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
+			err := fmt.Errorf("error getting rds backup job: %v", err)
+			return err
+		}
+
 		deleteResult := instances.Delete(client, newRds.Status.Id)
-		jobResponse, err := deleteResult.ExtractJobResponse()
+		jobResponse, err = deleteResult.ExtractJobResponse()
 		if err != nil {
 			err := fmt.Errorf("error rds delete job: %v", err)
 			return err
