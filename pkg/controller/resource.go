@@ -267,9 +267,10 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is deleting.")
 
 		// make a backup before instance deleting
+		backuptime := strconv.FormatInt(time.Now().Unix(), 10)
 		backupOpts := backups.CreateOpts{
 			InstanceID:  newRds.Status.Id,
-			Name:        newRds.Namespace + "_" + newRds.Name + time.Now().Format(golangsdk.RFC3339Milli),
+			Name:        newRds.Namespace + "_" + newRds.Name + "_" + backuptime,
 			Description: "RDS Operator Last Backup",
 		}
 		backupResult := backups.Create(client, backupOpts)
