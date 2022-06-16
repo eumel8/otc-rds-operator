@@ -24,6 +24,12 @@ jobs:
     - name: Install Cosign
       uses: sigstore/cosign-installer@main
 
+    - name: Write cosign private key to file
+      env:
+        KEY: ${{ secrets.COSIGN_KEY }}
+      shell: bash
+      run: 'echo "$KEY" > cosign.key'
+
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
@@ -47,10 +53,8 @@ jobs:
         echo "{{ github.ref.type }}"
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        echo ${COSIGN_KEY} > /tmp/my_cosign.key && \
-        cosign sign --key /tmp/my_cosign.key $IMAGE_ID:$VERSION
+        cosign sign --key cosign.key $IMAGE_ID:$VERSION
       env:
-        COSIGN_KEY: ${{secrets.COSIGN_KEY}}
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
     - name: Push & Sign image release
@@ -61,10 +65,8 @@ jobs:
         VERSION=${GITHUB_REF_NAME}
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        echo ${COSIGN_KEY} > /tmp/my_cosign.key && \
-        cosign sign --key /tmp/my_cosign.key $IMAGE_ID:$VERSION
+        cosign sign --key cosign.key $IMAGE_ID:$VERSION
       env:
-        COSIGN_KEY: ${{secrets.COSIGN_KEY}}
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
     - name: slack - GitHub Actions Slack integration
