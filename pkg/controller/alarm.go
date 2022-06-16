@@ -12,6 +12,7 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/pagination"
 )
 
+// alarmrule has no list function
 const (
 	rootPath = "alarms"
 )
@@ -20,49 +21,6 @@ func rootURL(c *golangsdk.ServiceClient) string {
 	return c.ServiceURL(rootPath)
 }
 
-/*
-type AlarmRule struct {
-	AlarmName               string        `json:"alarm_name"`
-	AlarmID                 string        `json:"alarm_id"`
-	AlarmDescription        string        `json:"alarm_description"`
-	AlarmType               string        `json:"alarm_type"`
-	AlarmLevel              int           `json:"alarm_level"`
-	Metric                  MetricInfo    `json:"metric"`
-	Condition               ConditionInfo `json:"condition"`
-	AlarmActions            []ActionInfo  `json:"alarm_actions"`
-	InsufficientdataActions []ActionInfo  `json:"insufficientdata_actions"`
-	OkActions               []ActionInfo  `json:"ok_actions"`
-	AlarmEnabled            bool          `json:"alarm_enabled"`
-	AlarmActionEnabled      bool          `json:"alarm_action_enabled"`
-	UpdateTime              int64         `json:"update_time"`
-	AlarmState              string        `json:"alarm_state"`
-}
-
-type ConditionInfo struct {
-	Period             int    `json:"period"`
-	Filter             string `json:"filter"`
-	ComparisonOperator string `json:"comparison_operator"`
-	Value              int    `json:"value"`
-	Unit               string `json:"unit"`
-	Count              int    `json:"count"`
-}
-
-type MetricInfo struct {
-	Namespace  string          `json:"namespace"`
-	MetricName string          `json:"metric_name"`
-	Dimensions []DimensionInfo `json:"dimensions"`
-}
-
-type ActionInfo struct {
-	Type             string   `json:"type"`
-	NotificationList []string `json:"notificationList"`
-}
-
-type DimensionInfo struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-*/
 type AlarmRulePage struct {
 	pagination.SinglePageBase
 }
@@ -159,7 +117,6 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	topic, err := topics.Create(smn, newTopic).Extract()
 	if err != nil {
 		c.logger.Debug("unable to create topic: %v", err)
-		// return fmt.Errorf("unable to create topic: %v", err)
 	}
 
 	// check of subscription exists for rds
@@ -182,7 +139,6 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	_, err = subscriptions.Create(smn, newSmn, topic.TopicUrn).Extract()
 	if err != nil {
 		c.logger.Debug("error create subscription: %v", err)
-		// return fmt.Errorf("error create subscription: %v", err)
 	}
 
 	// list all alarmrules
@@ -199,7 +155,6 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 			return fmt.Errorf("alarmrule exists for %s", nsRds)
 		}
 	}
-
 	alarmDiscUtil := alarmrule.CreateOpts{
 		AlarmName:        nsRds + "-disc-util",
 		AlarmDescription: "RDS Operator Autopilot",
@@ -228,7 +183,6 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 		AlarmEnabled:       true,
 		AlarmActionEnabled: true,
 	}
-
 	alarmCpuUtil := alarmrule.CreateOpts{
 		AlarmName:        nsRds + "-cpu-util",
 		AlarmDescription: "RDS Operator Autopilot",
@@ -289,19 +243,16 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	c.logger.Info(alarmDiscUtilResult.AlarmID)
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmDiscUtil: %v", err)
-		// return fmt.Errorf("error creating alarmrule alarmDiscUtil: %v", err)
 	}
 	alarmCpuUtilResult, err := alarmrule.Create(ces, alarmCpuUtil).Extract()
 	c.logger.Info(alarmCpuUtilResult.AlarmID)
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmCpuUtil: %v", err)
-		// return fmt.Errorf("error creating alarmrule alarmCpuUtil: %v", err)
 	}
 
 	alarmMemUtilResult, err := alarmrule.Create(ces, alarmMemUtil).Extract()
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmMemUtil: %v", err)
-		// return fmt.Errorf("error creating alarmrule alarmMemUtil: %v", err)
 	}
 	c.logger.Info(alarmMemUtilResult.AlarmID)
 	return nil
@@ -348,11 +299,8 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	}
 	for _, tc := range tl {
 		if tc.Name == nsRds {
-			// smnDeleteResult,err := subscriptions.Delete(smn, tc.TopicUrn).ExtractJobResponse()
 			topicDeleteResult := topics.Delete(smn, tc.TopicUrn)
 			c.logger.Debug("ALARM Topic Delete: ", topicDeleteResult.ErrResult)
-			// c.logger.Debug("ALARM SMN Delete: ", smnDeleteResult)
-			//c.logger.Debug("topic exists for ", nsRds)
 		}
 	}
 	return nil

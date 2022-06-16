@@ -278,10 +278,7 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 			err := fmt.Errorf("error creating rds backup before instance deleting: %v", err)
 			return err
 		}
-		// backupResponse, err := backupResult.Extract()
 		err = backups.WaitForBackup(client, backupOpts.InstanceID, backupResponse.ID, backups.StatusCompleted)
-		//backupList := backups.List(client, &backups.ListOpts{BackupID: backupResponse.ID})
-		//fmt.Println("BACKUP JOB: ", backupList)
 		if err != nil {
 			err := fmt.Errorf("error wait for rds backup before instance deleting: %v", err)
 			return err
