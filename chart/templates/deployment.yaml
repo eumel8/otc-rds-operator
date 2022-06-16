@@ -24,6 +24,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- with .Values.resources }}
+          ports:
+          - name: autopilot
+            containerPort: 8080
+            protocol: TCP
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}

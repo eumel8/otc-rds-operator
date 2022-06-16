@@ -1,0 +1,47 @@
+{{- $ingress := .Values.autopilot.ingress -}}
+{{- $port := .Values.autopilot.port -}}
+{{ $fullName := include "otc-rds-operator.fullname" . }}
+{{ if .Values.autopilot.enabled }}
+{{ if .Values.autopilot.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-autopilot
+  labels:
+    {{- include "otc-rds-operator.labels" . | nindent 4 }}
+  {{- with $ingress.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+{{- if $ingress.tls }}
+  tls:
+    {{- range $ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ tpl . $ | quote }}
+      {{- end }}
+      {{- with .secretName }}
+      secretName: {{ tpl . $ }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+  rules:
+    {{- range $ingress.rules }}
+    - host: {{ tpl .host $ | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $fullName }}-autopilot
+                port:
+                  number: {{ $port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}

@@ -57,6 +57,12 @@ func (c *Controller) Run(ctx context.Context, numWorkers int) error {
 		}, time.Second, ctx.Done())
 	}
 	c.logger.Info("controller ready")
+	// start smn receiver if config param autopilot =true
+	c.SmnReceiver(ctx)
+	//go c.SmnReceiver(ctx.Done())
+	//if err != nil {
+	//	return err
+	//}
 
 	<-ctx.Done()
 	c.logger.Info("stopping controller")

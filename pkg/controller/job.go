@@ -61,7 +61,7 @@ func createJobSpec(name string, namespace string, endpoint string, token string)
 						Env: []corev1.EnvVar{
 							{
 								Name:  "RDS_NAME",
-								Value: name,
+								Value: namespace + "_" + name,
 							},
 							{
 								Name:  "OS_TOKEN",
@@ -88,7 +88,7 @@ func createJobSpec(name string, namespace string, endpoint string, token string)
 						Env: []corev1.EnvVar{
 							{
 								Name:  "RDS_NAME",
-								Value: name,
+								Value: namespace + "_" + name,
 							},
 							{
 								Name:  "OS_TOKEN",

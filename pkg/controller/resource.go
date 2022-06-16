@@ -6,6 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strconv"
+	"strings"
 
 	"net/http"
 	"os"
@@ -19,10 +22,12 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/flavors"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 
 	batch "k8s.io/api/batch/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
@@ -38,13 +43,19 @@ type myRDSRestartOpts struct {
 	Restart struct{} `json:"restart"`
 }
 
+type posflavor []struct {
+	VCPUs int
+	RAM   int
+	Spec  string
+}
+
 func (c *Controller) secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
 	c.logger.Debug("secgroupGet")
 	pages, err := groups.List(client, *opts).AllPages()
 	if err != nil {
 		return nil, err
 	}
-	n, err := groups.ExtractGroups(pages)
+	n, _ := groups.ExtractGroups(pages)
 	if len(n) == 0 {
 		err := errors.New("no secgroup found")
 		return nil, err
@@ -102,10 +113,10 @@ func (c *Controller) rdsGetById(client *golangsdk.ServiceClient, rdsId string) (
 	return &n.Instances[0], nil
 }
 
-func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName string) (*instances.RdsInstanceResponse, error) {
+func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName string, namespace string) (*instances.RdsInstanceResponse, error) {
 	c.logger.Debug("rdsGetByName ", rdsName)
 	listOpts := instances.ListRdsInstanceOpts{
-		Name: rdsName,
+		Name: namespace + "_" + rdsName,
 	}
 	allPages, err := instances.List(client, listOpts).AllPages()
 	if err != nil {
@@ -124,7 +135,7 @@ func (c *Controller) rdsGetByName(client *golangsdk.ServiceClient, rdsName strin
 
 func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("rdsCreate ", newRds.Name)
-	rdsCheck, err := c.rdsGetByName(client, newRds.Name)
+	rdsCheck, err := c.rdsGetByName(client, newRds.Name, newRds.Namespace)
 	if rdsCheck != nil {
 		err := fmt.Errorf("rds already exists %s", newRds.Name)
 		return err
@@ -155,7 +166,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 	createOpts := instances.CreateRdsOpts{}
 	if newRds.Spec.Hamode == "Ha" {
 		createOpts = instances.CreateRdsOpts{
-			Name: newRds.Name,
+			Name: newRds.Namespace + "_" + newRds.Name,
 			Datastore: &instances.Datastore{
 				Type:    newRds.Spec.Datastoretype,
 				Version: newRds.Spec.Datastoreversion,
@@ -183,7 +194,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 		}
 	} else {
 		createOpts = instances.CreateRdsOpts{
-			Name: newRds.Name,
+			Name: newRds.Namespace + "_" + newRds.Name,
 			Datastore: &instances.Datastore{
 				Type:    newRds.Spec.Datastoretype,
 				Version: newRds.Spec.Datastoreversion,
@@ -218,6 +229,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 
+	fmt.Println("CREATE RDS ", newRds)
 	if err := c.UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
@@ -253,6 +265,25 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 	c.logger.Debug("rdsDelete ", newRds.Name)
 	if newRds.Status.Id != "" {
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is deleting.")
+
+		// make a backup before instance deleting
+		backuptime := strconv.FormatInt(time.Now().Unix(), 10)
+		backupOpts := backups.CreateOpts{
+			InstanceID:  newRds.Status.Id,
+			Name:        newRds.Namespace + "_" + newRds.Name + "_" + backuptime,
+			Description: "RDS Operator Last Backup",
+		}
+		backupResponse, err := backups.Create(client, backupOpts).Extract()
+		if err != nil {
+			err := fmt.Errorf("error creating rds backup before instance deleting: %v", err)
+			return err
+		}
+		err = backups.WaitForBackup(client, backupOpts.InstanceID, backupResponse.ID, backups.StatusCompleted)
+		if err != nil {
+			err := fmt.Errorf("error wait for rds backup before instance deleting: %v", err)
+			return err
+		}
+
 		deleteResult := instances.Delete(client, newRds.Status.Id)
 		jobResponse, err := deleteResult.ExtractJobResponse()
 		if err != nil {
@@ -286,7 +317,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		return err
 	}
 	// re-check real rds spec on otc
-	rdsInstance, err := c.rdsGetByName(client, newRds.Name)
+	rdsInstance, err := c.rdsGetByName(client, newRds.Name, newRds.Namespace)
 	if err != nil {
 		err := fmt.Errorf("error getting rdsGetByName: %v", err)
 		return err
@@ -378,7 +409,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 	// Restart instance here
-	if newRds.Status.Reboot == true {
+	if newRds.Status.Reboot {
 		c.logger.Debug("rdsUpdate: restart instance")
 		newRds.Status.Reboot = false
 		if err := c.UpdateStatus(ctx, newRds); err != nil {
@@ -471,7 +502,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
-	if newRds.Status.Logs == true {
+	if newRds.Status.Logs {
 		c.logger.Debug("rdsUpdate: instance errorlogs")
 		newRds.Status.Logs = false
 		if err := c.UpdateStatus(ctx, newRds); err != nil {
@@ -485,6 +516,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 		provider, err := openstack.AuthenticatedClient(opts)
+		if err != nil {
+			err := fmt.Errorf("error building auth client: %v", err)
+			return err
+		}
 		client, _ := openstack.NewIdentityV3(provider, golangsdk.EndpointOpts{})
 
 		if os.Getenv("OS_PROJEKT_ID") != "" {
@@ -510,6 +545,10 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
 			Create(ctx, job, metav1.CreateOptions{})
+		if err != nil {
+			err := fmt.Errorf("error creating logfetch job: %v", err)
+			return err
+		}
 
 		watch, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{LabelSelector: "job-name=" + newRds.Name})
 		if err != nil {
@@ -517,7 +556,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 
-		logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, newRds.Name, metav1.GetOptions{})
+		logInstance := newRds.Namespace + "_" + newRds.Name
+		logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
 		if err != nil {
 			err := fmt.Errorf("error getting logfetch job for watch: %v", err)
 			return err
@@ -573,6 +613,26 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 	}
 
+	if newRds.Spec.Endpoint != "" && !newRds.Status.Autopilot {
+		c.logger.Debug("rdsUpdate: autopilot")
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance set autopilot.")
+		newRds.Status.Autopilot = true
+		if err := c.UpdateStatus(ctx, newRds); err != nil {
+			err := fmt.Errorf("error update rds status for autopilot: %v", err)
+			return err
+		}
+		rdsInstance, err := c.rdsGetById(client, newRds.Status.Id)
+		if err != nil {
+			err := fmt.Errorf("error getting rds by id: %v", err)
+			return err
+		}
+		err = c.CreateAlarm(rdsInstance.Nodes[0].Id, newRds.Spec.Endpoint, newRds.Name, newRds.Namespace)
+		if err != nil {
+			err := fmt.Errorf("error creating alarm: %v", err)
+			return err
+		}
+		return nil
+	}
 	return nil
 }
 
@@ -591,7 +651,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		err := fmt.Errorf("error creating rdsclientset: %v", err)
 		return err
 	}
-	rdsInstance, err := c.rdsGetByName(client, newRds.Name)
+	rdsInstance, err := c.rdsGetByName(client, newRds.Name, newRds.Namespace)
 	if err != nil {
 		err := fmt.Errorf("error getting rdsGetByName: %v", err)
 		return err
@@ -616,7 +676,128 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	return nil
 }
 
-func getProvider() (*golangsdk.ProviderClient, error) {
+func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) (string, error) {
+	provider, err := GetProvider()
+	if err != nil {
+		return "", err
+	}
+	client, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		return "", err
+	}
+
+	azs := strings.Split(newRds.Spec.Availabilityzone, ",")
+	var (
+		az1 string
+		az2 string
+	)
+	az1 = string(azs[0])
+	if len(azs) > 1 {
+		az2 = string(azs[1])
+	} else {
+		az2 = ""
+	}
+	curCpu := "0"
+	curMem := 0
+	posflavor := posflavor{}
+
+	listOpts := flavors.ListOpts{
+		VersionName: newRds.Spec.Datastoreversion,
+	}
+	allFlavorPages, err := flavors.List(client, listOpts, newRds.Spec.Datastoretype).AllPages()
+	if err != nil {
+		klog.Exitf("unable to list flavor: %v", err)
+		return "", err
+	}
+
+	rdsFlavors, err := flavors.ExtractDbFlavors(allFlavorPages)
+	if err != nil {
+		klog.Exitf("unable to extract flavor: %v", err)
+		return "", err
+	}
+
+	for _, rds := range rdsFlavors {
+		if rds.SpecCode == newRds.Spec.Flavorref {
+			curCpu = rds.VCPUs
+			curMem = rds.RAM
+		}
+	}
+	switch raisetype {
+	case "cpu":
+		for _, rds := range rdsFlavors {
+			for n, az := range rds.AzStatus {
+				if n == az1 && az == "normal" {
+					for l, az := range rds.AzStatus {
+						if az2 == "" || l == az2 && az == "normal" {
+							if strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && strings.HasSuffix(rds.SpecCode, ".ha") && rds.VCPUs > curCpu {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+						}
+					}
+				}
+			}
+		}
+		sort.Slice(posflavor, func(i, j int) bool {
+			return posflavor[i].VCPUs < posflavor[j].VCPUs
+		})
+		if len(posflavor) > 0 {
+			return posflavor[0].Spec, nil
+		}
+
+	case "mem":
+		for _, rds := range rdsFlavors {
+			for n, az := range rds.AzStatus {
+				if n == az1 && az == "normal" {
+					for l, az := range rds.AzStatus {
+						if az2 == "" || l == az2 && az == "normal" {
+							if strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && strings.HasSuffix(rds.SpecCode, ".ha") && rds.RAM > curMem {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") && rds.RAM > curMem {
+								iCpu, _ := strconv.Atoi(rds.VCPUs)
+								posflavor = append(posflavor, struct {
+									VCPUs int
+									RAM   int
+									Spec  string
+								}{iCpu, rds.RAM, rds.SpecCode})
+							}
+						}
+
+					}
+
+				}
+
+			}
+		}
+		sort.SliceStable(posflavor, func(i, j int) bool {
+			return posflavor[i].RAM < posflavor[j].RAM
+		})
+		if len(posflavor) > 0 {
+			return posflavor[0].Spec, nil
+		}
+	}
+	return "", fmt.Errorf("no flavor found")
+}
+
+func GetProvider() (*golangsdk.ProviderClient, error) {
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
 	}
@@ -655,7 +836,7 @@ func getProvider() (*golangsdk.ProviderClient, error) {
 }
 
 func (c *Controller) Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
@@ -680,13 +861,21 @@ func (c *Controller) Create(ctx context.Context, newRds *rdsv1alpha1.Rds) error 
 }
 
 func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
 	rdsapi, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
 	if err != nil {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
+	}
+
+	if newRds.Status.Autopilot {
+		err = c.DeleteAlarm(newRds.Name, newRds.Namespace)
+		if err != nil {
+			err := fmt.Errorf("error deleting alarm: %v", err)
+			return err
+		}
 	}
 
 	err = c.rdsDelete(rdsapi, newRds)
@@ -697,7 +886,7 @@ func (c *Controller) Delete(newRds *rdsv1alpha1.Rds) error {
 }
 
 func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}
@@ -705,7 +894,6 @@ func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds
 	if err != nil {
 		return fmt.Errorf("unable to initialize rds client: %v", err)
 	}
-
 	err = c.rdsUpdate(ctx, rdsapi, oldRds, newRds)
 	if err != nil {
 		return fmt.Errorf("rds update failed: %v", err)
@@ -716,7 +904,7 @@ func (c *Controller) Update(ctx context.Context, oldRds *rdsv1alpha1.Rds, newRds
 // Update K8s RDS Resource
 func (c *Controller) UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("UpdateStatus ", newRds.Name)
-	provider, err := getProvider()
+	provider, err := GetProvider()
 	if err != nil {
 		return fmt.Errorf("unable to initialize provider: %v", err)
 	}

@@ -61,11 +61,11 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 			}
 		}
 
-		for _, ds := range *&newRds.Spec.Databases {
+		for _, ds := range newRds.Spec.Databases {
 			c.logger.Debug("query existing database ", ds)
 			res, err := db.Query("SELECT schema_name FROM information_schema.schemata WHERE schema_name='" + ds + "'")
 			if err != nil {
-				err := fmt.Errorf("error query user: %v\n", err)
+				err := fmt.Errorf("error query user: %v", err)
 				return err
 			}
 
