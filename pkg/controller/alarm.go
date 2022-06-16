@@ -20,6 +20,7 @@ func rootURL(c *golangsdk.ServiceClient) string {
 	return c.ServiceURL(rootPath)
 }
 
+/*
 type AlarmRule struct {
 	AlarmName               string        `json:"alarm_name"`
 	AlarmID                 string        `json:"alarm_id"`
@@ -61,7 +62,7 @@ type DimensionInfo struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
-
+*/
 type AlarmRulePage struct {
 	pagination.SinglePageBase
 }
@@ -110,9 +111,8 @@ func AlarmRuleList(client *golangsdk.ServiceClient, opts ListAlarmRuleBuilder) p
 	return pageAlarmRuleList
 }
 
-// func ExtractAlarmRules(r pagination.Page) ([]alarmrule.AlarmRule, error) {
-func ExtractAlarmRules(r pagination.Page) ([]AlarmRule, error) {
-	var s []AlarmRule
+func ExtractAlarmRules(r pagination.Page) ([]alarmrule.AlarmRule, error) {
+	var s []alarmrule.AlarmRule
 	err := ExtractAlarmRulesInto(r, &s)
 	return s, err
 }
@@ -214,6 +214,7 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 		},
 		Condition: alarmrule.ConditionOpts{
 			Period:             300,
+			SuppressDuration:   1800,
 			Filter:             "average",
 			ComparisonOperator: ">=",
 			Value:              90,
@@ -242,6 +243,7 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 		},
 		Condition: alarmrule.ConditionOpts{
 			Period:             300,
+			SuppressDuration:   1800,
 			Filter:             "average",
 			ComparisonOperator: ">=",
 			Value:              90,
@@ -269,6 +271,7 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 		},
 		Condition: alarmrule.ConditionOpts{
 			Period:             300,
+			SuppressDuration:   1800,
 			Filter:             "average",
 			ComparisonOperator: ">=",
 			Value:              90,
