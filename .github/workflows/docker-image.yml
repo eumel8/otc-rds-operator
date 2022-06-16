@@ -20,6 +20,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@main
+
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
@@ -52,6 +56,15 @@ jobs:
         VERSION=${GITHUB_REF_NAME}
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
+
+    - name: Sign image with a key
+      run: |
+        echo ${COSIGN_KEY} > /tmp/my_cosign.key && \
+        cosign sign --key /tmp/my_cosign.key ${TAGS}
+      env:
+        TAGS: ${{ steps.docker_meta.outputs.tags }}
+        COSIGN_KEY: ${{secrets.COSIGN_KEY}}
+        COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
     - name: slack - GitHub Actions Slack integration
       uses: act10ns/slack@v1.5.0
