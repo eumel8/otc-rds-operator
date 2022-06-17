@@ -49,6 +49,7 @@ jobs:
         docker push $IMAGE_ID:$VERSION
         cosign sign --key env://COSIGN_KEY $IMAGE_ID:$VERSION
       env:
+        COSIGN_KEY: ${{secrets.COSIGN_KEY}}
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
     - name: Push & Sign image release
@@ -61,6 +62,7 @@ jobs:
         docker push $IMAGE_ID:$VERSION
         cosign sign --key env://COSIGN_KEY $IMAGE_ID:$VERSION
       env:
+        COSIGN_KEY: ${{secrets.COSIGN_KEY}}
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
     - name: slack - GitHub Actions Slack integration
