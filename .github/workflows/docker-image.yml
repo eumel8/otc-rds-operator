@@ -24,12 +24,6 @@ jobs:
     - name: Install Cosign
       uses: sigstore/cosign-installer@main
 
-    - name: Write cosign private key to file
-      env:
-        KEY: ${{ secrets.COSIGN_KEY }}
-      shell: bash
-      run: 'echo "$KEY" > cosign.key'
-
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
@@ -53,7 +47,7 @@ jobs:
         echo "{{ github.ref.type }}"
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        cosign sign --key cosign.key $IMAGE_ID:$VERSION
+        cosign sign --key env://COSIGN_KEY $IMAGE_ID:$VERSION
       env:
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
@@ -65,7 +59,7 @@ jobs:
         VERSION=${GITHUB_REF_NAME}
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        cosign sign --key cosign.key $IMAGE_ID:$VERSION
+        cosign sign --key env://COSIGN_KEY $IMAGE_ID:$VERSION
       env:
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
