@@ -689,7 +689,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 			},
 		})
 	*/
-	fmt.Println("GET SERVICE ", rdsService.ObjectMeta.Name)
+	// fmt.Println("GET SERVICE ", rdsService.ObjectMeta.Name)
 	if err != nil {
 		err := fmt.Errorf("error getting service: %v", err)
 		return err
