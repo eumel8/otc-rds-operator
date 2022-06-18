@@ -231,7 +231,6 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 
-	fmt.Println("CREATE RDS ", newRds)
 	if err := c.UpdateStatus(ctx, newRds); err != nil {
 		err := fmt.Errorf("error update rds create status: %v", err)
 		return err
@@ -648,44 +647,6 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		err := fmt.Errorf("error init in-cluster config: %v", err)
 		return err
 	}
-	k8sclientset, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		err := fmt.Errorf("error creating k8sclientset: %v", err)
-		return err
-	}
-	rdsService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
-	/*
-		rdsService, err := k8sclientset.CoreV1().Services(c.namespace).Get(&corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      newRds.Name,
-				Namespace: newRds.Namespace,
-			},
-		})
-	*/
-	if err != nil {
-		err := fmt.Errorf("error getting service: %v", err)
-		return err
-	}
-
-	if rdsService == nil {
-		_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      newRds.Name,
-				Namespace: newRds.Namespace,
-				Labels: map[string]string{
-					"k8s-app": "otc-rds-operatpr",
-				},
-			},
-			Spec: corev1.ServiceSpec{
-				Type:         corev1.ServiceTypeExternalName,
-				ExternalName: newRds.Status.Ip,
-			},
-		}, metav1.CreateOptions{})
-		if err != nil {
-			err := fmt.Errorf("error creating service: %v", err)
-			return err
-		}
-	}
 	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
 		err := fmt.Errorf("error creating rdsclientset: %v", err)
@@ -712,6 +673,46 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	if err != nil {
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
+	}
+	// create service
+	k8sclientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		err := fmt.Errorf("error creating k8sclientset: %v", err)
+		return err
+	}
+	rdsService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
+	/*
+		rdsService, err := k8sclientset.CoreV1().Services(c.namespace).Get(&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      newRds.Name,
+				Namespace: newRds.Namespace,
+			},
+		})
+	*/
+	fmt.Println("CREATE SERVICE ", rdsService)
+	if err != nil {
+		err := fmt.Errorf("error getting service: %v", err)
+		return err
+	}
+
+	if rdsService == nil {
+		_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      newRds.Name,
+				Namespace: newRds.Namespace,
+				Labels: map[string]string{
+					"k8s-app": "otc-rds-operatpr",
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Type:         corev1.ServiceTypeExternalName,
+				ExternalName: newRds.Status.Ip,
+			},
+		}, metav1.CreateOptions{})
+		if err != nil {
+			err := fmt.Errorf("error creating service: %v", err)
+			return err
+		}
 	}
 	return nil
 }
