@@ -695,7 +695,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		return err
 	}
 
-	if rdsService.ObjectMeta.Name == "" {
+	if rdsService.ObjectMeta.Name != newRds.Name {
 		rdsCreatedService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      newRds.Name,
