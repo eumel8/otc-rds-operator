@@ -695,7 +695,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		return err
 	}
 
-	if len(rdsService.ObjectMeta.Name) == 0 {
+	if rdsService.ObjectMeta.Name != newRds.Name {
 		fmt.Println("START CREATING SERVICE ")
 		rdsCreatedService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
@@ -716,7 +716,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		}
 		fmt.Println("CREATE SERVICE ", rdsCreatedService)
 	}
-
+	fmt.Println("RETURN UPDATE ")
 	return nil
 }
 
