@@ -689,14 +689,14 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 			},
 		})
 	*/
-	fmt.Println("CREATE SERVICE ", rdsService)
+	fmt.Println("GET SERVICE ", rdsService)
 	if err != nil {
 		err := fmt.Errorf("error getting service: %v", err)
 		return err
 	}
 
 	if rdsService == nil {
-		_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
+		rdsCreatedService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      newRds.Name,
 				Namespace: newRds.Namespace,
@@ -713,7 +713,9 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 			err := fmt.Errorf("error creating service: %v", err)
 			return err
 		}
+		fmt.Println("CREATE SERVICE ", rdsCreatedService)
 	}
+
 	return nil
 }
 
