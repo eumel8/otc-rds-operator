@@ -26,12 +26,14 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 
 	batch "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	rdsv1alpha1clientset "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1/apis/clientset/versioned"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -645,6 +647,44 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	if err != nil {
 		err := fmt.Errorf("error init in-cluster config: %v", err)
 		return err
+	}
+	k8sclientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		err := fmt.Errorf("error creating k8sclientset: %v", err)
+		return err
+	}
+	rdsService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
+	/*
+		rdsService, err := k8sclientset.CoreV1().Services(c.namespace).Get(&corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      newRds.Name,
+				Namespace: newRds.Namespace,
+			},
+		})
+	*/
+	if err != nil {
+		err := fmt.Errorf("error getting service: %v", err)
+		return err
+	}
+
+	if rdsService == nil {
+		_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      newRds.Name,
+				Namespace: newRds.Namespace,
+				Labels: map[string]string{
+					"k8s-app": "otc-rds-operatpr",
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Type:         corev1.ServiceTypeExternalName,
+				ExternalName: newRds.Status.Ip,
+			},
+		}, metav1.CreateOptions{})
+		if err != nil {
+			err := fmt.Errorf("error creating service: %v", err)
+			return err
+		}
 	}
 	rdsclientset, err := rdsv1alpha1clientset.NewForConfig(restConfig)
 	if err != nil {
