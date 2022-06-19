@@ -29,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
@@ -699,7 +700,25 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		err := fmt.Errorf("error update rds: %v", err)
 		return err
 	}
-	// create service
+	// create endpoint + service
+	iport, _ := strconv.Atoi(newRds.Spec.Port)
+	endpoint := &corev1.Endpoints{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      newRds.Name,
+			Namespace: newRds.Namespace,
+			Labels: map[string]string{
+				"k8s-app": "otc-rds-operatpr",
+			},
+		},
+		Subsets: []corev1.EndpointSubset{{
+			Addresses: []corev1.EndpointAddress{{
+				IP: newRds.Status.Ip,
+			}},
+			Ports: []corev1.EndpointPort{{
+				Port: int32(iport),
+			}},
+		}},
+	}
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      newRds.Name,
@@ -709,8 +728,13 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 			},
 		},
 		Spec: corev1.ServiceSpec{
-			Type:         corev1.ServiceTypeExternalName,
-			ExternalName: newRds.Status.Ip,
+			Ports: []corev1.ServicePort{{
+				Port:       int32(iport),
+				Protocol:   "TCP",
+				TargetPort: intstr.FromInt(iport),
+			}},
+			ClusterIP: "None",
+			Type:      corev1.ServiceTypeClusterIP,
 		},
 	}
 	k8sclientset, err := kubernetes.NewForConfig(restConfig)
@@ -722,15 +746,20 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), service, metav1.CreateOptions{})
+			_, err := k8sclientset.CoreV1().Endpoints(newRds.Namespace).Create(context.TODO(), endpoint, metav1.CreateOptions{})
+			if err != nil {
+				err := fmt.Errorf("error creating endpoint: %v", err)
+				return err
+			}
+			_, err = k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), service, metav1.CreateOptions{})
 			if err != nil {
 				err := fmt.Errorf("error creating service: %v", err)
 				return err
 			}
 		} else if k8serrors.IsAlreadyExists(err) {
-			_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Update(context.TODO(), service, metav1.UpdateOptions{})
+			_, err := k8sclientset.CoreV1().Endpoints(newRds.Namespace).Update(context.TODO(), endpoint, metav1.UpdateOptions{})
 			if err != nil {
-				err := fmt.Errorf("error updating service: %v", err)
+				err := fmt.Errorf("error updating endpoint: %v", err)
 				return err
 			}
 		} else {
