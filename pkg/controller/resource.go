@@ -297,6 +297,30 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 			err := fmt.Errorf("error getting rds delete job: %v", err)
 			return err
 		}
+		// delete service
+		restConfig, err := rest.InClusterConfig()
+		if err != nil {
+			err := fmt.Errorf("error init in-cluster config: %v", err)
+			return err
+		}
+		k8sclientset, err := kubernetes.NewForConfig(restConfig)
+		if err != nil {
+			err := fmt.Errorf("error creating k8sclientset: %v", err)
+			return err
+		}
+		_, err = k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
+		if err != nil {
+			if k8serrors.IsAlreadyExists(err) {
+				err := k8sclientset.CoreV1().Services(newRds.Namespace).Delete(context.TODO(), newRds.Name, metav1.DeleteOptions{})
+				if err != nil {
+					err := fmt.Errorf("error deleting service: %v", err)
+					return err
+				}
+			} else {
+				err := fmt.Errorf("error getting service: %v", err)
+				return err
+			}
+		}
 	} else {
 		err := fmt.Errorf("no rds id to delete")
 		return err
@@ -676,49 +700,44 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		return err
 	}
 	// create service
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      newRds.Name,
+			Namespace: newRds.Namespace,
+			Labels: map[string]string{
+				"k8s-app": "otc-rds-operatpr",
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Type:         corev1.ServiceTypeExternalName,
+			ExternalName: newRds.Status.Ip,
+		},
+	}
 	k8sclientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		err := fmt.Errorf("error creating k8sclientset: %v", err)
 		return err
 	}
 	_, err = k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
-	/*
-		rdsService, err := k8sclientset.CoreV1().Services(c.namespace).Get(&corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      newRds.Name,
-				Namespace: newRds.Namespace,
-			},
-		})
-	*/
-	// fmt.Println("GET SERVICE ", rdsService.ObjectMeta.Name)
+
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			fmt.Println("START CREATING SERVICE ")
-			rdsCreatedService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      newRds.Name,
-					Namespace: newRds.Namespace,
-					Labels: map[string]string{
-						"k8s-app": "otc-rds-operatpr",
-					},
-				},
-				Spec: corev1.ServiceSpec{
-					Type:         corev1.ServiceTypeExternalName,
-					ExternalName: newRds.Status.Ip,
-				},
-			}, metav1.CreateOptions{})
+			_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), service, metav1.CreateOptions{})
 			if err != nil {
 				err := fmt.Errorf("error creating service: %v", err)
 				return err
 			}
-			fmt.Println("CREATE SERVICE ", rdsCreatedService)
-
+		} else if k8serrors.IsAlreadyExists(err) {
+			_, err := k8sclientset.CoreV1().Services(newRds.Namespace).Update(context.TODO(), service, metav1.UpdateOptions{})
+			if err != nil {
+				err := fmt.Errorf("error updating service: %v", err)
+				return err
+			}
 		} else {
 			err := fmt.Errorf("error getting service: %v", err)
 			return err
 		}
 	}
-	fmt.Println("RETURN UPDATE ")
 	return nil
 }
 
