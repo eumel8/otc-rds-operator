@@ -1,9 +1,9 @@
 apiVersion: v2
-appVersion: 0.4.2
+appVersion: 0.5.0
 description: Kubernetes Operator for OTC RDS
 name: otc-rds-operator
 type: application
-version: 0.4.1
+version: 0.5.0
 sources:
   - https://github.com/eumel8/otc-rds-operator
 maintainers:
