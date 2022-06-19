@@ -27,6 +27,7 @@ import (
 
 	batch "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -680,7 +681,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		err := fmt.Errorf("error creating k8sclientset: %v", err)
 		return err
 	}
-	rdsService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
+	_, err = k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
 	/*
 		rdsService, err := k8sclientset.CoreV1().Services(c.namespace).Get(&corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
@@ -691,30 +692,31 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 	*/
 	// fmt.Println("GET SERVICE ", rdsService.ObjectMeta.Name)
 	if err != nil {
-		err := fmt.Errorf("error getting service: %v", err)
-		return err
-	}
-
-	if rdsService.ObjectMeta.Name != newRds.Name {
-		fmt.Println("START CREATING SERVICE ")
-		rdsCreatedService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      newRds.Name,
-				Namespace: newRds.Namespace,
-				Labels: map[string]string{
-					"k8s-app": "otc-rds-operatpr",
+		if k8serrors.IsNotFound(err) {
+			fmt.Println("START CREATING SERVICE ")
+			rdsCreatedService, err := k8sclientset.CoreV1().Services(newRds.Namespace).Create(context.TODO(), &corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      newRds.Name,
+					Namespace: newRds.Namespace,
+					Labels: map[string]string{
+						"k8s-app": "otc-rds-operatpr",
+					},
 				},
-			},
-			Spec: corev1.ServiceSpec{
-				Type:         corev1.ServiceTypeExternalName,
-				ExternalName: newRds.Status.Ip,
-			},
-		}, metav1.CreateOptions{})
-		if err != nil {
-			err := fmt.Errorf("error creating service: %v", err)
+				Spec: corev1.ServiceSpec{
+					Type:         corev1.ServiceTypeExternalName,
+					ExternalName: newRds.Status.Ip,
+				},
+			}, metav1.CreateOptions{})
+			if err != nil {
+				err := fmt.Errorf("error creating service: %v", err)
+				return err
+			}
+			fmt.Println("CREATE SERVICE ", rdsCreatedService)
+
+		} else {
+			err := fmt.Errorf("error getting service: %v", err)
 			return err
 		}
-		fmt.Println("CREATE SERVICE ", rdsCreatedService)
 	}
 	fmt.Println("RETURN UPDATE ")
 	return nil
