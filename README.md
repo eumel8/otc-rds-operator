@@ -2,7 +2,7 @@
 
 Kubernetes Operator for OTC RDS
 
-[![Project Status: Active](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#active)
+[![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 `master` branch might be broken, look at the [release page](https://github.com/eumel8/otc-rds-operator/releases) 
 to use a functional version.
