@@ -288,12 +288,13 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 		}
 
 		deleteResult := instances.Delete(client, newRds.Status.Id)
+		fmt.Println("RDS DELETING: Jobesponse")
 		jobResponse, err := deleteResult.ExtractJobResponse()
 		if err != nil {
 			err := fmt.Errorf("error rds delete job: %v", err)
 			return err
 		}
-		fmt.Println("RDS DELETING: Wait for Job")
+		fmt.Println("RDS DELETING: Wait for Job:", jobResponse.JobID)
 		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
 			err := fmt.Errorf("error getting rds delete job: %v", err)
 			return err
