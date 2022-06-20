@@ -313,18 +313,12 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 		}
 		fmt.Println("SERVICE DELETING: Have client:", newRds.Name)
 		serviceResponse, err := k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
-		fmt.Println("SERVICE DELETING: Have respons:", serviceResponse)
-		if err != nil {
+		fmt.Println("SERVICE DELETING: Have response:", serviceResponse.ObjectMeta.Name)
+		if err == nil {
 			fmt.Println("SERVICE DELETING: Have get service")
-			if k8serrors.IsAlreadyExists(err) {
-				err := k8sclientset.CoreV1().Services(newRds.Namespace).Delete(context.TODO(), newRds.Name, metav1.DeleteOptions{})
-				if err != nil {
-					err := fmt.Errorf("error deleting service: %v", err)
-					return err
-				}
-			} else {
-				fmt.Println("SERVICE DELETING: error")
-				err := fmt.Errorf("error getting service: %v", err)
+			err := k8sclientset.CoreV1().Services(newRds.Namespace).Delete(context.TODO(), newRds.Name, metav1.DeleteOptions{})
+			if err != nil {
+				err := fmt.Errorf("error deleting service: %v", err)
 				return err
 			}
 		}
