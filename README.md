@@ -2,7 +2,7 @@
 
 Kubernetes Operator for OTC RDS
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Project Status: Active](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#active)
 
 `master` branch might be broken, look at the [release page](https://github.com/eumel8/otc-rds-operator/releases) 
 to use a functional version.
