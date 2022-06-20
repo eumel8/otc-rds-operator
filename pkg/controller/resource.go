@@ -42,11 +42,6 @@ var (
 	projectID = string("7c3ec0b3db5f476990043258670caf82")
 )
 
-// workaround https://github.com/opentelekomcloud/gophertelekomcloud/issues/342
-type myRDSRestartOpts struct {
-	Restart struct{} `json:"restart"`
-}
-
 type posflavor []struct {
 	VCPUs int
 	RAM   int
@@ -325,14 +320,6 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 	return nil
 }
 
-func (opts myRDSRestartOpts) ToRestartRdsInstanceMap() (map[string]interface{}, error) {
-	b, err := golangsdk.BuildRequestBody(&opts, "")
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
-}
-
 func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceClient, oldRds *rdsv1alpha1.Rds, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("rdsUpdate ", newRds.Name)
 	if newRds.Status.Id == "" {
@@ -441,7 +428,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is rebooting.")
-		// restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
 		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{}, newRds.Status.Id).Extract()
 
 		if err != nil {
