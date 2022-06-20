@@ -24,16 +24,6 @@ rules:
       - watch
       - create
   - apiGroups:
-      - batch
-    resources:
-      - cronjobs
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-  - apiGroups:
     - ""
     resources:
     - events
@@ -44,6 +34,16 @@ rules:
     - list
     - patch
     - watch
+  - apiGroups:
+    - ""
+    resources:
+    - services
+    - endpoints
+    verbs:
+    - create
+    - delete
+    - update
+    - get
   {{ if .Values.ha.enabled }}
   - apiGroups:
       - coordination.k8s.io
