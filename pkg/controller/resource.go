@@ -299,6 +299,7 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 			return err
 		}
 		// delete service
+		fmt.Println("SERVICE DELETING: Start")
 		restConfig, err := rest.InClusterConfig()
 		if err != nil {
 			err := fmt.Errorf("error init in-cluster config: %v", err)
@@ -309,8 +310,10 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 			err := fmt.Errorf("error creating k8sclientset: %v", err)
 			return err
 		}
+		fmt.Println("SERVICE DELETING: Have client")
 		_, err = k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
 		if err != nil {
+			fmt.Println("SERVICE DELETING: Have get service")
 			if k8serrors.IsAlreadyExists(err) {
 				err := k8sclientset.CoreV1().Services(newRds.Namespace).Delete(context.TODO(), newRds.Name, metav1.DeleteOptions{})
 				if err != nil {
@@ -318,10 +321,12 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 					return err
 				}
 			} else {
+				fmt.Println("SERVICE DELETING: error")
 				err := fmt.Errorf("error getting service: %v", err)
 				return err
 			}
 		}
+		fmt.Println("SERVICE DELETING: End")
 	} else {
 		err := fmt.Errorf("no rds id to delete")
 		return err
