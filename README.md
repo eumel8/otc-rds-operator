@@ -103,6 +103,47 @@ with the host defintion in `privileges` list.
 Databases/Users/Privileges will created but not deleted within the Controller. If the database or
 user is missing, the Controller will recreate it. Privileges will not adjust if the user exists.
 
+### Usage of the Database
+
+To use the database in an app deployment beside credentials the database hostname is required.
+This can be fetched by command
+
+```bash
+kubectl -n rds1 get rds my-rds-single -o go-template='{{.status.ip}}'
+10.9.3.181
+```
+
+OTC RDS Operator provides additionally a [Headless Service](https://kubernetes.io/docs/concepts/services-networking/service/#without-selectors). Application can use the service name, where the endpoint IP updates automatically
+by the Operator.
+
+```bash
+kubectl -n rds1 get service my-rds-single
+NAME            TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
+my-rds-single   ClusterIP   None         <none>        3306/TCP   9m17s
+kubectl -n rds1 get ep my-rds-single
+NAME            ENDPOINTS         AGE
+my-rds-single   10.9.3.181:3306   9m22s
+```
+
+```bash
+mysql -hmy-rds-single -uroot -p+
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MySQL connection id is 397
+Server version: 8.0.21-5 MySQL Community Server - (GPL)
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MySQL [(none)]>
+```
+
+Other solutions might be ExternalName-type services, which works only on hostnames,
+not ip-addresses, because Cluster-DNS will generate a CNAME for this entry. This
+requires a DNS name for the database, which can be realized by OTC DNS service. In
+any case, the Kubernetes cluster needs a direct network connection to the database,
+so it's installed in the same VPC/Subnet or it's available via VPC-Peering.
+
 ## Operation
 
 ### Resize Flavor
