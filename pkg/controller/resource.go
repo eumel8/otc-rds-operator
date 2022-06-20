@@ -441,7 +441,9 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Update", "This instance is rebooting.")
-		restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
+		// restartResult, err := instances.Restart(client, myRDSRestartOpts{}, newRds.Status.Id).Extract()
+		restartResult, err := instances.Restart(client, instances.RestartRdsInstanceOpts{}, newRds.Status.Id).Extract()
+
 		if err != nil {
 			err := fmt.Errorf("error rebooting rds: %v", err)
 			return err
