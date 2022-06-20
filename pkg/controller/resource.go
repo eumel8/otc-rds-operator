@@ -288,19 +288,17 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 		}
 
 		deleteResult := instances.Delete(client, newRds.Status.Id)
-		fmt.Println("RDS DELETING: Jobesponse")
 		jobResponse, err := deleteResult.ExtractJobResponse()
 		if err != nil {
 			err := fmt.Errorf("error rds delete job: %v", err)
 			return err
 		}
-		fmt.Println("RDS DELETING: Wait for Job:", jobResponse.JobID)
+		c.logger.Debug("rds deleting, wait for job: ", jobResponse.JobID)
 		if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
 			err := fmt.Errorf("error getting rds delete job: %v", err)
 			return err
 		}
 		// delete service
-		fmt.Println("SERVICE DELETING: Start")
 		restConfig, err := rest.InClusterConfig()
 		if err != nil {
 			err := fmt.Errorf("error init in-cluster config: %v", err)
@@ -311,18 +309,15 @@ func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alp
 			err := fmt.Errorf("error creating k8sclientset: %v", err)
 			return err
 		}
-		fmt.Println("SERVICE DELETING: Have client:", newRds.Name)
 		serviceResponse, err := k8sclientset.CoreV1().Services(newRds.Namespace).Get(context.TODO(), newRds.Name, metav1.GetOptions{})
-		fmt.Println("SERVICE DELETING: Have response:", serviceResponse.ObjectMeta.Name)
 		if err == nil {
-			fmt.Println("SERVICE DELETING: Have get service")
-			err := k8sclientset.CoreV1().Services(newRds.Namespace).Delete(context.TODO(), newRds.Name, metav1.DeleteOptions{})
+			c.logger.Debug("rds deleting service for: ", serviceResponse.ObjectMeta.Name)
+			err := k8sclientset.CoreV1().Services(serviceResponse.ObjectMeta.Namespace).Delete(context.TODO(), serviceResponse.ObjectMeta.Name, metav1.DeleteOptions{})
 			if err != nil {
 				err := fmt.Errorf("error deleting service: %v", err)
 				return err
 			}
 		}
-		fmt.Println("SERVICE DELETING: End")
 	} else {
 		err := fmt.Errorf("no rds id to delete")
 		return err
