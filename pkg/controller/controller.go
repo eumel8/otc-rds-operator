@@ -145,6 +145,7 @@ func New(
 		DeleteFunc: ctrl.delRds,
 		UpdateFunc: ctrl.updateRds,
 	})
+	logger.Debug("START controller namespace:", namespace)
 
 	return ctrl
 }
