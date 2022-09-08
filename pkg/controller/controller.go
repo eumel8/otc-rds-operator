@@ -123,9 +123,10 @@ func New(
 	recorder record.EventRecorder,
 ) *Controller {
 
-	rdsInformerFactory := rdsinformers.NewSharedInformerFactory(
+	rdsInformerFactory := rdsinformers.NewSharedInformerFactoryWithOptions(
 		rdsClientSet,
 		10*time.Second,
+		rdsinformers.WithNamespace("rds1"),
 	)
 	rdsInformer := rdsInformerFactory.Mcsps().V1alpha1().Rdss().Informer()
 
@@ -145,7 +146,6 @@ func New(
 		DeleteFunc: ctrl.delRds,
 		UpdateFunc: ctrl.updateRds,
 	})
-	logger.Debug("START controller namespace:", namespace)
 
 	return ctrl
 }
