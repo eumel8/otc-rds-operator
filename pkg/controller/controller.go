@@ -17,15 +17,18 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+
+	"golang.org/x/exp/slices"
 )
 
 type Controller struct {
-	kubeClientSet kubernetes.Interface
-	rdsInformer   cache.SharedIndexInformer
-	queue         workqueue.RateLimitingInterface
-	namespace     string
-	logger        log.Logger
-	recorder      record.EventRecorder
+	kubeClientSet   kubernetes.Interface
+	rdsInformer     cache.SharedIndexInformer
+	queue           workqueue.RateLimitingInterface
+	namespace       string
+	watchnamespaces string
+	logger          log.Logger
+	recorder        record.EventRecorder
 }
 
 func (c *Controller) Run(ctx context.Context, numWorkers int) error {
@@ -72,9 +75,20 @@ func (c *Controller) Run(ctx context.Context, numWorkers int) error {
 
 func (c *Controller) addRds(obj interface{}) {
 	c.logger.Debug("adding rds")
+	// Eumel: check namespace list here
+	/*
+			if !c.chop.Config().IsWatchedNamespace(chi.Namespace) {
+			return
+		}
+	*/
 	rds, ok := obj.(*rdsv1alpha1.Rds)
 	if !ok {
 		c.logger.Errorf("unexpected object %v", obj)
+		return
+	}
+	w := strings.Fields(c.watchnamespaces)
+	if !slices.Contains(w, rds.Namespace) {
+		c.logger.Errorf("WATCHNAMESPACES: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
@@ -119,26 +133,33 @@ func New(
 	kubeClientSet kubernetes.Interface,
 	rdsClientSet rdsv1alpha1clientset.Interface,
 	namespace string,
+	watchnamespaces string,
 	logger log.Logger,
 	recorder record.EventRecorder,
 ) *Controller {
 
-	rdsInformerFactory := rdsinformers.NewSharedInformerFactoryWithOptions(
+	/*rdsInformerFactory := rdsinformers.NewSharedInformerFactoryWithOptions(
 		rdsClientSet,
 		10*time.Second,
-		rdsinformers.WithNamespace("rds1","rds2"),
+		rdsinformers.WithNamespace("rds1"),
+	)
+	*/
+	rdsInformerFactory := rdsinformers.NewSharedInformerFactory(
+		rdsClientSet,
+		10*time.Second,
 	)
 	rdsInformer := rdsInformerFactory.Mcsps().V1alpha1().Rdss().Informer()
 
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	ctrl := &Controller{
-		kubeClientSet: kubeClientSet,
-		rdsInformer:   rdsInformer,
-		queue:         queue,
-		namespace:     namespace,
-		logger:        logger,
-		recorder:      recorder,
+		kubeClientSet:   kubeClientSet,
+		rdsInformer:     rdsInformer,
+		queue:           queue,
+		namespace:       namespace,
+		watchnamespaces: watchnamespaces,
+		logger:          logger,
+		recorder:        recorder,
 	}
 
 	rdsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
