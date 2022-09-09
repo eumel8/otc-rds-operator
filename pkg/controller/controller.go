@@ -126,7 +126,7 @@ func New(
 	rdsInformerFactory := rdsinformers.NewSharedInformerFactoryWithOptions(
 		rdsClientSet,
 		10*time.Second,
-		rdsinformers.WithNamespace("rds1"),
+		rdsinformers.WithNamespace("rds1","rds2"),
 	)
 	rdsInformer := rdsInformerFactory.Mcsps().V1alpha1().Rdss().Informer()
 
