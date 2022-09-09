@@ -45,20 +45,22 @@ func (m Metrics) String() string {
 }
 
 type Config struct {
-	KubeConfig string
-	Namespace  string
-	NumWorkers int
-	HA         HA
-	Metrics    Metrics
-	Env        string
-	LogLevel   string
+	KubeConfig      string
+	Namespace       string
+	WatchNamespaces string
+	NumWorkers      int
+	HA              HA
+	Metrics         Metrics
+	Env             string
+	LogLevel        string
 }
 
 func (c Config) String() string {
 	return fmt.Sprintf(
-		"Config{KubeConfig='%s'Namespace='%s'NumWorkers='%d'HA='%v'Metrics='%v'Env='%s'LogLevel='%s'}",
+		"Config{KubeConfig='%s'Namespace='%s'WatchNamespaces='%s'NumWorkers='%d'HA='%v'Metrics='%v'Env='%s'LogLevel='%s'}",
 		c.KubeConfig,
 		c.Namespace,
+		c.WatchNamespaces,
 		c.NumWorkers,
 		c.HA,
 		c.Metrics,
@@ -83,9 +85,10 @@ func GetConfig() (Config, error) {
 	}
 
 	return Config{
-		KubeConfig: env.Get("KUBECONFIG", ""),
-		Namespace:  env.Get("NAMESPACE", "default"),
-		NumWorkers: env.GetInt("NUM_WORKERS", 4),
+		KubeConfig:      env.Get("KUBECONFIG", ""),
+		Namespace:       env.Get("NAMESPACE", "default"),
+		WatchNamespaces: env.Get("WATCHNAMESPACES", "default"),
+		NumWorkers:      env.GetInt("NUM_WORKERS", 4),
 		HA: HA{
 			Enabled:       ha,
 			NodeId:        nodeId,

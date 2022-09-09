@@ -43,7 +43,7 @@ func main() {
 		restConfig, errKubeConfig = rest.InClusterConfig()
 	}
 	if errKubeConfig != nil {
-		logger.Fatal("error getting kubernetes config ", err)
+		logger.Fatal("error getting kubernetes config ", errKubeConfig)
 	}
 
 	kubeClientSet, err := kubernetes.NewForConfig(restConfig)
@@ -65,6 +65,7 @@ func main() {
 		kubeClientSet,
 		rdsv1alpha1ClientSet,
 		config.Namespace,
+		config.WatchNamespaces,
 		logger.WithField("type", "controller"),
 		recorder,
 	)

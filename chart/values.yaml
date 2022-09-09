@@ -12,6 +12,9 @@ logLevel: info
 
 numWorkers: 4
 
+# list of namespaces where the operator should watch
+# watchnamespaces: ns1 ns2 ns3
+
 ha:
   enabled: true
   leaderElection:

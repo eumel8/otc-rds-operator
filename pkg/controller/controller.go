@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/gotway/gotway/pkg/log"
@@ -17,15 +18,18 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+
+	"golang.org/x/exp/slices"
 )
 
 type Controller struct {
-	kubeClientSet kubernetes.Interface
-	rdsInformer   cache.SharedIndexInformer
-	queue         workqueue.RateLimitingInterface
-	namespace     string
-	logger        log.Logger
-	recorder      record.EventRecorder
+	kubeClientSet   kubernetes.Interface
+	rdsInformer     cache.SharedIndexInformer
+	queue           workqueue.RateLimitingInterface
+	namespace       string
+	watchnamespaces string
+	logger          log.Logger
+	recorder        record.EventRecorder
 }
 
 func (c *Controller) Run(ctx context.Context, numWorkers int) error {
@@ -77,6 +81,11 @@ func (c *Controller) addRds(obj interface{}) {
 		c.logger.Errorf("unexpected object %v", obj)
 		return
 	}
+	w := strings.Fields(c.watchnamespaces)
+	if !slices.Contains(w, rds.Namespace) {
+		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
+		return
+	}
 	c.queue.Add(event{
 		eventType: addRds,
 		newObj:    rds.DeepCopy(),
@@ -88,6 +97,11 @@ func (c *Controller) delRds(obj interface{}) {
 	rds, ok := obj.(*rdsv1alpha1.Rds)
 	if !ok {
 		c.logger.Errorf("unexpected object %v", obj)
+		return
+	}
+	w := strings.Fields(c.watchnamespaces)
+	if !slices.Contains(w, rds.Namespace) {
+		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
@@ -108,6 +122,11 @@ func (c *Controller) updateRds(oldObj, newObj interface{}) {
 		c.logger.Errorf("unexpected new object %v", newObj)
 		return
 	}
+	w := strings.Fields(c.watchnamespaces)
+	if !slices.Contains(w, rds.Namespace) {
+		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
+		return
+	}
 	c.queue.Add(event{
 		eventType: updateRds,
 		oldObj:    oldRds.DeepCopy(),
@@ -119,10 +138,17 @@ func New(
 	kubeClientSet kubernetes.Interface,
 	rdsClientSet rdsv1alpha1clientset.Interface,
 	namespace string,
+	watchnamespaces string,
 	logger log.Logger,
 	recorder record.EventRecorder,
 ) *Controller {
 
+	/*rdsInformerFactory := rdsinformers.NewSharedInformerFactoryWithOptions(
+		rdsClientSet,
+		10*time.Second,
+		rdsinformers.WithNamespace("rds1"),
+	)
+	*/
 	rdsInformerFactory := rdsinformers.NewSharedInformerFactory(
 		rdsClientSet,
 		10*time.Second,
@@ -132,12 +158,13 @@ func New(
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	ctrl := &Controller{
-		kubeClientSet: kubeClientSet,
-		rdsInformer:   rdsInformer,
-		queue:         queue,
-		namespace:     namespace,
-		logger:        logger,
-		recorder:      recorder,
+		kubeClientSet:   kubeClientSet,
+		rdsInformer:     rdsInformer,
+		queue:           queue,
+		namespace:       namespace,
+		watchnamespaces: watchnamespaces,
+		logger:          logger,
+		recorder:        recorder,
 	}
 
 	rdsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
