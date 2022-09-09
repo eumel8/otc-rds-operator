@@ -7,7 +7,7 @@ metadata:
     {{- include "otc-rds-operator.labels" . | nindent 4 }}
 data:
   NAMESPACE: {{ .Release.Namespace }}
-  WATCHNAMESPACES: {{ .Values.watchNamespaces | quote }}
+  WATCHNAMESPACES: {{ .Values.watchNamespaces | default "default" | quote }}
   NUM_WORKERS: {{ .Values.numWorkers | quote }}
   HA_ENABLED: {{ .Values.ha.enabled | quote }}
   {{ if .Values.ha.enabled }}
