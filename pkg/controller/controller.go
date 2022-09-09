@@ -76,12 +76,6 @@ func (c *Controller) Run(ctx context.Context, numWorkers int) error {
 
 func (c *Controller) addRds(obj interface{}) {
 	c.logger.Debug("adding rds")
-	// Eumel: check namespace list here
-	/*
-			if !c.chop.Config().IsWatchedNamespace(chi.Namespace) {
-			return
-		}
-	*/
 	rds, ok := obj.(*rdsv1alpha1.Rds)
 	if !ok {
 		c.logger.Errorf("unexpected object %v", obj)
@@ -89,7 +83,7 @@ func (c *Controller) addRds(obj interface{}) {
 	}
 	w := strings.Fields(c.watchnamespaces)
 	if !slices.Contains(w, rds.Namespace) {
-		c.logger.Errorf("WATCHNAMESPACES: %s not in watchlist", rds.Namespace)
+		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
@@ -103,6 +97,11 @@ func (c *Controller) delRds(obj interface{}) {
 	rds, ok := obj.(*rdsv1alpha1.Rds)
 	if !ok {
 		c.logger.Errorf("unexpected object %v", obj)
+		return
+	}
+	w := strings.Fields(c.watchnamespaces)
+	if !slices.Contains(w, rds.Namespace) {
+		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
@@ -121,6 +120,11 @@ func (c *Controller) updateRds(oldObj, newObj interface{}) {
 	rds, ok := newObj.(*rdsv1alpha1.Rds)
 	if !ok {
 		c.logger.Errorf("unexpected new object %v", newObj)
+		return
+	}
+	w := strings.Fields(c.watchnamespaces)
+	if !slices.Contains(w, rds.Namespace) {
+		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
