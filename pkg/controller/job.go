@@ -16,6 +16,7 @@ var (
 	privledged = bool(false)
 	readonly   = bool(true)
 )
+
 func createJob(newRds *rdsv1alpha1.Rds, endpoint string, token string, image string) *batchv1.Job {
 	// func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job {
 	return &batchv1.Job{

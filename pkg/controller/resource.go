@@ -547,14 +547,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		token, err := tokens.Create(client, &authOptions).ExtractToken()
 		if err != nil {
-			err := fmt.Errorf("error getting token in logfetch in scope %s: %v", err,projectID)
+			err := fmt.Errorf("error getting token in logfetch in scope %s: %v", err, projectID)
 			return err
 		}
 
+		image := string("ghcr.io/eumel8/otcrdslogs:latest")
 		if os.Getenv("JOB_IMAGE") != "" {
 			image = os.Getenv("JOB_IMAGE")
-		} else {
-			image = string("ghcr.io/eumel8/otcrdslogs:latest")
 		}
 
 		job := createJob(newRds, opts.IdentityEndpoint, token.ID, image)
