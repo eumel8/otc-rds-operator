@@ -533,7 +533,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 		client, _ := openstack.NewIdentityV3(provider, golangsdk.EndpointOpts{})
 
-		if os.Getenv("OS_PROJEKT_ID") != "" {
+		if os.Getenv("OS_PROJECT_ID") != "" {
 			projectID = os.Getenv("OS_PROJECT_ID")
 		}
 
