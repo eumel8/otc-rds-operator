@@ -551,7 +551,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			return err
 		}
 
-		job := createJob(newRds, opts.IdentityEndpoint, token.ID)
+		if os.Getenv("JOB_IMAGE") != "" {
+			image = os.Getenv("JOB_IMAGE")
+		} else {
+			image = string("ghcr.io/eumel8/otcrdslogs:latest")
+		}
+
+		job := createJob(newRds, opts.IdentityEndpoint, token.ID, image)
 
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
