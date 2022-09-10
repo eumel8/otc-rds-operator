@@ -1,8 +1,15 @@
-# otc-rds-operator
+# OTC RDS Operator
 
-Kubernetes Operator for OTC RDS
+Kubernetes Operator for OTC RDS. Manage your OTC RDS instances in Kubernetes.
 
 ![](otc-rds-operator.png)
+
+## Presentations
+
+* Build your [own Level 5 Operator on K8S](https://slides.com/frankkloeker/otc-rds-operator)
+* [Blog](https://eumel8.github.io/blog/2022/05/27/build-your-own-level-5-operator-on-k8s-en.html)
+* Current [Feature Set](https://slides.com/frankkloeker/otc-rds-operator-feature)
+* Operator on [Operator Hub](https://operatorhub.io/operator/otc-rds-operator)
 
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
@@ -48,6 +55,8 @@ In a minimal set and if you use `eu-de` region, only `domain_name`, `username`, 
 ```bash
 helm -n rdsoperator upgrade -i rdsoperator --set otc.domain_name=<OTC-EU-DE-000000000010000000001> --set otc.username=<user> --set otc.password=<password> chart --create-namespace
 ```
+
+note: In version 0.6.0 you must set `watchnamespaces` to declare which namespaces allowed to create RDS instances. Otherwise only default namespace is allowed.
 
 ## Custom Resource Definitions (CRDs)
 
