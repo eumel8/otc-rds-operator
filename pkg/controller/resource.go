@@ -547,7 +547,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		token, err := tokens.Create(client, &authOptions).ExtractToken()
 		if err != nil {
-			err := fmt.Errorf("error getting token in logfetch: %v", err)
+			err := fmt.Errorf("error getting token in logfetch in scope %s: %v", err,projectID)
 			return err
 		}
 
