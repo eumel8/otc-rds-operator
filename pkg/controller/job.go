@@ -12,13 +12,12 @@ import (
 )
 
 var (
-	image      = string("ghcr.io/eumel8/otcrdslogs:latest")
 	user       = int64(1000)
 	privledged = bool(false)
 	readonly   = bool(true)
 )
 
-func createJob(newRds *rdsv1alpha1.Rds, endpoint string, token string) *batchv1.Job {
+func createJob(newRds *rdsv1alpha1.Rds, endpoint string, token string, image string) *batchv1.Job {
 	// func createJob(newRds *rdsv1alpha1.Rds, opts golangsdk.AuthOptions) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -32,11 +31,11 @@ func createJob(newRds *rdsv1alpha1.Rds, endpoint string, token string) *batchv1.
 				),
 			},
 		},
-		Spec: createJobSpec(newRds.Name, newRds.Namespace, endpoint, token),
+		Spec: createJobSpec(newRds.Name, newRds.Namespace, endpoint, token, image),
 	}
 }
 
-func createJobSpec(name string, namespace string, endpoint string, token string) batchv1.JobSpec {
+func createJobSpec(name string, namespace string, endpoint string, token string, image string) batchv1.JobSpec {
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{

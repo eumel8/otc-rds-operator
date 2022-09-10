@@ -25,6 +25,7 @@ ha:
 
 # addEnv:
 #   OS_DEBUG: 1
+#   JOB_IMAGE: ghcr.io/eumel8/otcrdslogs:latest
 
 otc: {}
 # otc:

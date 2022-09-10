@@ -547,11 +547,16 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		token, err := tokens.Create(client, &authOptions).ExtractToken()
 		if err != nil {
-			err := fmt.Errorf("error getting token in logfetch: %v", err)
+			err := fmt.Errorf("error getting token in logfetch in scope %s: %v", err, projectID)
 			return err
 		}
 
-		job := createJob(newRds, opts.IdentityEndpoint, token.ID)
+		image := string("ghcr.io/eumel8/otcrdslogs:latest")
+		if os.Getenv("JOB_IMAGE") != "" {
+			image = os.Getenv("JOB_IMAGE")
+		}
+
+		job := createJob(newRds, opts.IdentityEndpoint, token.ID, image)
 
 		_, err = c.kubeClientSet.BatchV1().
 			Jobs(newRds.Namespace).
