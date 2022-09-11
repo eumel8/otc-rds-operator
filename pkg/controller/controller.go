@@ -82,7 +82,7 @@ func (c *Controller) addRds(obj interface{}) {
 		return
 	}
 	w := strings.Fields(c.watchnamespaces)
-	if !slices.Contains(w, rds.Namespace) {
+	if !slices.Contains(w, rds.Namespace) && !slices.Contains(w, "*") {
 		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
@@ -100,7 +100,7 @@ func (c *Controller) delRds(obj interface{}) {
 		return
 	}
 	w := strings.Fields(c.watchnamespaces)
-	if !slices.Contains(w, rds.Namespace) {
+	if !slices.Contains(w, rds.Namespace) && !slices.Contains(w, "*") {
 		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
@@ -123,7 +123,7 @@ func (c *Controller) updateRds(oldObj, newObj interface{}) {
 		return
 	}
 	w := strings.Fields(c.watchnamespaces)
-	if !slices.Contains(w, rds.Namespace) {
+	if !slices.Contains(w, rds.Namespace) && !slices.Contains(w, "*") {
 		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}

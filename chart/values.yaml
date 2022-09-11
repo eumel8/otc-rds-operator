@@ -12,7 +12,7 @@ logLevel: info
 
 numWorkers: 4
 
-# list of namespaces where the operator should watch
+# list of namespaces where the operator should watch, '*' for all namespaces
 # watchnamespaces: ns1 ns2 ns3
 
 ha:
