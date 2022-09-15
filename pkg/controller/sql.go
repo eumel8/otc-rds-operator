@@ -51,14 +51,14 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 					if strings.Contains(pr, "ALTER") {
 						_, err := db.Query(pr)
 						if err != nil {
-							fmt.Errorf("error creating privileges: %v\n", err)
+							err := fmt.Errorf("error creating privileges: %v\n", err)
 						}
 						_, err = db.Query("FLUSH PRIVILEGES")
 						if err != nil {
-							fmt.Errorf("error flush privileges: %v\n", err)
+							err := fmt.Errorf("error flush privileges: %v\n", err)
 						}
 					} else {
-						fmt.Errorf("privileges contains no ALTER: %s\n", pr)
+						err := fmt.Errorf("privileges contains no ALTER: %s\n", pr)
 					}
 
 				}
@@ -77,7 +77,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				c.logger.Debug("create database ", ds)
 				_, err := db.Query("CREATE DATABASE " + ds)
 				if err != nil {
-					fmt.Errorf("error creating database: %v\n", err)
+					err := fmt.Errorf("error creating database: %v\n", err)
 				}
 			}
 		}
