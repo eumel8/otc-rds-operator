@@ -33,13 +33,17 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			res, err := db.Query("SELECT user FROM user where user = '" + su.Name + "'")
 			if err != nil {
-				fmt.Printf("error query user: %v", err)
+				err := fmt.Errorf("error query user: %v", err)
+				return err
 			}
 
 			if !res.Next() {
 				c.logger.Debug("create sql user ", su.Name)
 				_, err := db.Query("CREATE USER '" + su.Name + "'@'" + su.Host + "' IDENTIFIED BY '" + su.Password + "'")
-				fmt.Printf("error creating user: %v\n", err)
+				if err != nil {
+					err := fmt.Errorf("error creating user: %v", err)
+					return err
+				}
 
 				for _, pr := range su.Privileges {
 					c.logger.Debug("create privileges user ", su.Name)
@@ -47,14 +51,14 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 					if strings.Contains(pr, "ALTER") {
 						_, err := db.Query(pr)
 						if err != nil {
-							fmt.Printf("error creating privileges: %v\n", err)
+							fmt.Errorf("error creating privileges: %v\n", err)
 						}
 						_, err = db.Query("FLUSH PRIVILEGES")
 						if err != nil {
-							fmt.Printf("error flush privileges: %v\n", err)
+							fmt.Errorf("error flush privileges: %v\n", err)
 						}
 					} else {
-						fmt.Printf("privileges contains no ALTER: %s\n", pr)
+						fmt.Errorf("privileges contains no ALTER: %s\n", pr)
 					}
 
 				}
@@ -73,7 +77,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				c.logger.Debug("create database ", ds)
 				_, err := db.Query("CREATE DATABASE " + ds)
 				if err != nil {
-					fmt.Printf("error creating database: %v\n", err)
+					fmt.Errorf("error creating database: %v\n", err)
 				}
 			}
 		}
