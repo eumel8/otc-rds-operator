@@ -48,7 +48,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				for _, pr := range su.Privileges {
 					c.logger.Debug("create privileges user ", su.Name)
 					// this query must be validated against sql injection
-					if strings.Contains(pr, "ALTER") {
+					if strings.Contains(pr, "GRANT") {
 						_, err := db.Query(pr)
 						if err != nil {
 							err = fmt.Errorf("error creating privileges: %v\n", err)
@@ -58,7 +58,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 							err = fmt.Errorf("error flush privileges: %v\n", err)
 						}
 					} else {
-						err = fmt.Errorf("privileges contains no ALTER: %s\n", pr)
+						err = fmt.Errorf("privileges contains no GRANT: %s\n", pr)
 					}
 
 				}
