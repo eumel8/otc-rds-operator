@@ -224,7 +224,8 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 		err := fmt.Errorf("error creating rds instance: %v", err)
 		return err
 	}
-	newRds.Spec.Password = "xxxxxxxxxx"
+	// hide RDS root password, makes creating schema and user impossible
+	// newRds.Spec.Password = "xxxxxxxxxx"
 	newRds.Status.Id = r.Instance.Id
 	newRds.Status.Status = r.Instance.Status
 
