@@ -11,6 +11,11 @@ Kubernetes Operator for OTC RDS. Manage your OTC RDS instances in Kubernetes.
 * Current [Feature Set](https://slides.com/frankkloeker/otc-rds-operator-feature)
 * Operator on [Operator Hub](https://operatorhub.io/operator/otc-rds-operator)
 
+## Demo App
+
+We provide a [Demo App](https://github.com/eumel8/oro-demoapp) how to interact
+with RDS resources in Go apps.
+
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 `master` branch might be broken, look at the [release page](https://github.com/eumel8/otc-rds-operator/releases) 
