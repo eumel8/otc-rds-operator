@@ -4,6 +4,6 @@ bin/
 vendor/
 .env
 cover.*
-values.*
+*.yaml
 github.com/
 manifests/examples/loadtest.yml
