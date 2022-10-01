@@ -579,7 +579,8 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		}
 
 		if err != nil {
-			time.Sleep(5 * time.Second)
+			c.logger.Debug("DEBUG: sleep for :", newRds)
+			time.Sleep(10 * time.Second)
 			logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
 			err = fmt.Errorf("error getting logfetch job for watch: %v", err)
 			if err != nil {
