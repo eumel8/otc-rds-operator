@@ -263,7 +263,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("rdsDelete ", newRds.Name)
 	if newRds.Status.Id != "" {
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is deleting.")
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Delete", "This instance is deleting.")
 
 		// make a backup before instance deleting
 		backuptime := strconv.FormatInt(time.Now().Unix(), 10)
