@@ -1,5 +1,6 @@
 {{ if .Values.rbac.user.enabled }}
 {{ $fullNameUser := print (include "otc-rds-operator.fullname" .) "-user" }}
+{{- if not (contains "*" .Values.watchNamespaces) }}
 {{- $ns1 := (splitList " " .Values.watchNamespaces ) }}
 {{- range $s1 := $ns1 }}
 ---
@@ -16,5 +17,6 @@ subjects:
   - kind: Group
     name: system:authenticated
     apiGroup: rbac.authorization.k8s.io
+{{ end }}
 {{ end }}
 {{ end }}

@@ -1,5 +1,6 @@
 {{ if .Values.rbac.user.enabled }}
 {{ $fullNameUser := print (include "otc-rds-operator.fullname" .) "-user" }}
+{{- if not (contains "*" .Values.watchNamespaces) }}
 {{- $ns1 := (splitList " " .Values.watchNamespaces ) }}
 {{- range $s1 := $ns1 }}
 ---
@@ -20,5 +21,6 @@ rules:
       - list
       - update
       - watch
+{{ end }}
 {{ end }}
 {{ end }}
