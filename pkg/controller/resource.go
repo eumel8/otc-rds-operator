@@ -564,8 +564,6 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 			err := fmt.Errorf("error creating logfetch job: %v", err)
 			return err
 		}
-		// wait 3 seconds to appear the job before using it
-		time.Sleep(3 * time.Second)
 
 		watch, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{LabelSelector: "job-name=" + newRds.Name})
 		if err != nil {
@@ -576,8 +574,12 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 		logInstance := newRds.Namespace + "_" + newRds.Name
 		logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
 		if err != nil {
+			time.Sleep(5 * time.Second)
+			logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
 			err := fmt.Errorf("error getting logfetch job for watch: %v", err)
-			return err
+			if err != nil {
+				return err
+			}
 		}
 
 		if logjob == nil {
