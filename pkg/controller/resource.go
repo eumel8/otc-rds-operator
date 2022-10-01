@@ -561,7 +561,7 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		_, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Create(ctx, job, metav1.CreateOptions{})
 		if err != nil {
-			if errors.IsAlreadyExists(err) {
+			if k8serrors.IsAlreadyExists(err) {
 				c.logger.Debug("logfetch job already exists for ", newRds.Name)
 				return nil
 			}
