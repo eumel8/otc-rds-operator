@@ -559,13 +559,13 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		job := createJob(newRds, opts.IdentityEndpoint, token.ID, image)
 
-		_, err = c.kubeClientSet.BatchV1().
-			Jobs(newRds.Namespace).
-			Create(ctx, job, metav1.CreateOptions{})
+		_, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Create(ctx, job, metav1.CreateOptions{})
 		if err != nil {
 			err := fmt.Errorf("error creating logfetch job: %v", err)
 			return err
 		}
+		// wait 3 seconds to appear the job before using it
+		time.Sleep(3 * time.Second)
 
 		watch, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Watch(ctx, metav1.ListOptions{LabelSelector: "job-name=" + newRds.Name})
 		if err != nil {
