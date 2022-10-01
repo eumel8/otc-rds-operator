@@ -23,4 +23,4 @@ data:
   {{ end }}
   ENV: {{ .Values.env }}
   LOG_LEVEL: {{ .Values.logLevel }}
-  REFRESH_TIME: {{ .Values.refreshTime }}
+  REFRESH_TIME: {{ .Values.refreshTime | quote }}

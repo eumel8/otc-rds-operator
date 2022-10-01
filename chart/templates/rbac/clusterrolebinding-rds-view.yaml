@@ -1,4 +1,4 @@
-{{ if .Values.rbac.enabled }}
+{{ if .Values.rbac.master.enabled }}
 {{ $fullNameView := print (include "otc-rds-operator.fullname" .) "-view" }}
 {{ $fullName := include "otc-rds-operator.fullname" . }}
 ---

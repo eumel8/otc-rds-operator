@@ -1,25 +1,20 @@
 {{ if .Values.rbac.user.enabled }}
-{{ $fullName := include "otc-rds-operator.fullname" . }}
-{{ $fullNameUser := print (include "otc-rds-operator.fullname" .) }}
+{{ $fullNameUser := print (include "otc-rds-operator.fullname" .) "-user" }}
 {{- $ns1 := (splitList " " .Values.watchNamespaces ) }}
-{{- $ns2 := (splitList " " .Values.watchNamespaces | reverse) }}
 {{- range $s1 := $ns1 }}
-{{- range $s2 := $ns2 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ $fullNameUser }} "-" {{ $s2 }}
+  name: {{ $fullNameUser }}
   namespace: {{ $s1 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ $fullNameUser }} "-" {{ $s2 }}
+  name: {{ $fullNameUser }}
 subjects:
   - kind: Group
     name: system:authenticated
     apiGroup: rbac.authorization.k8s.io
-
-{{ end }}
 {{ end }}
 {{ end }}
