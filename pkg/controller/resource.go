@@ -573,18 +573,22 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		logInstance := newRds.Namespace + "_" + newRds.Name
 		logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
-		if err != nil {
-			time.Sleep(5 * time.Second)
-			logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
-			err := fmt.Errorf("error getting logfetch job for watch: %v", err)
-			if err != nil {
-				return err
-			}
-		}
-
 		if logjob == nil {
 			err := fmt.Errorf("error finding logfetch job for watch: %v", err)
 			return err
+		}
+
+		if err != nil {
+			time.Sleep(5 * time.Second)
+			logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
+			err = fmt.Errorf("error getting logfetch job for watch: %v", err)
+			if err != nil {
+				return err
+			}
+			if logjob == nil {
+				err := fmt.Errorf("error finding logfetch job for watch: %v", err)
+				return err
+			}
 		}
 
 		events := watch.ResultChan()
