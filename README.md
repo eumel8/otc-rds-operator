@@ -339,7 +339,9 @@ rbac:
 This installation includes:
 
 * ClusterRole with `aggregate-to-admin` label which elovates RDS ,Events, Service, Job API resources cluster-wide to admin
-* ClusterRolebinding to connect this ClusterRole to each ServiceAccount. That's a kind of risky.
+* RoleBinding to inheritate this permissions to the Operator namespaced.
+* ClusterRole to view/get/watch  RDS API resources
+* ClusterRolebinding to connect this ClusterRole to each ServiceAccount. That's required to watch cluster-wide on RDS events by the Operator
 * ClusterRole with `aggregate-to-admin` label which elovates election/leases API resources cluster-wide to admin. This is required for project-admin to inheritate this permissions to the Operator namespaced.
 * Role/RoleBinding for election/leases API resources to operator.
 * ServiceAccount for Operator operation
@@ -355,9 +357,6 @@ watchNamespaces: rds2 rds4
 rbac:
   enabled: false
 ```
-
-IMPORTANT: Don't duplicate namespaces in `watchNamespaces` space.
-Otherwise you will create unforseen RDS resources.
 
 Add `--skip-crds` to the Helm install parameters
 
@@ -395,7 +394,6 @@ subjects:
     name: system:authenticated
     apiGroup: rbac.authorization.k8s.io
 ```
-
 
 ### Unforseen deleting
 

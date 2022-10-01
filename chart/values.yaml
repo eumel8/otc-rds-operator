@@ -12,12 +12,20 @@ logLevel: info
 
 numWorkers: 4
 
+# to prevent throttling on OTC API increase refreshTime at least to 10 sec
+refreshTime: 10
+
 # list of namespaces where the operator should watch, '*' for all namespaces
 # watchnamespaces: ns1 ns2 ns3
 
-# create clusterrole and clusterrolebinding
+# create RBAC for multi-tenancy
+# master creates necessary clusterrole and clusterrolebinding
+# user creates namespaced rolebindings for authenticated cluster user
 rbac:
-  enabled: true
+  master:
+    enabled: false
+  user:
+    enabled: false
 
 ha:
   enabled: true
