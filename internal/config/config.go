@@ -53,11 +53,12 @@ type Config struct {
 	Metrics         Metrics
 	Env             string
 	LogLevel        string
+	RefreshTime     int
 }
 
 func (c Config) String() string {
 	return fmt.Sprintf(
-		"Config{KubeConfig='%s'Namespace='%s'WatchNamespaces='%s'NumWorkers='%d'HA='%v'Metrics='%v'Env='%s'LogLevel='%s'}",
+		"Config{KubeConfig='%s'Namespace='%s'WatchNamespaces='%s'NumWorkers='%d'HA='%v'Metrics='%v'Env='%s'LogLevel='%sRefreshTime'%d'}",
 		c.KubeConfig,
 		c.Namespace,
 		c.WatchNamespaces,
@@ -66,6 +67,7 @@ func (c Config) String() string {
 		c.Metrics,
 		c.Env,
 		c.LogLevel,
+		c.RefreshTime,
 	)
 }
 
@@ -102,7 +104,8 @@ func GetConfig() (Config, error) {
 			Path:    env.Get("METRICS_PATH", "/metrics"),
 			Port:    env.Get("METRICS_PORT", "2112"),
 		},
-		Env:      env.Get("ENV", "local"),
-		LogLevel: env.Get("LOG_LEVEL", "debug"),
+		Env:         env.Get("ENV", "local"),
+		LogLevel:    env.Get("LOG_LEVEL", "debug"),
+		RefreshTime: env.GetInt("REFRESH_TIME", 10),
 	}, nil
 }
