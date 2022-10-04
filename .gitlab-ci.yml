@@ -1,15 +1,12 @@
-# Generic Gitlab CI Pipeline for Go apps including:
-# SAST
-# Coverage
-# Format/Test
-# Build
-# Docker Image build, push, sign
-# Mirror Code to Github
-# Secret Variables configured in Gitlab->Settings->CI/CD->Variables
-# Review/Adjust *all* variables and runner tags
-
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 variables:
-  HTTP_PROXY: "http://proxy.devops.telekom.de:3128/"
+  HTTP_PROXY: http://proxy.devops.telekom.de:3128/
   HTTPS_PROXY: "$HTTP_PROXY"
   http_proxy: "$HTTP_PROXY"
   https_proxy: "$HTTP_PROXY"
@@ -20,25 +17,18 @@ variables:
   REPO_NAME: caas/otc-rds-operator
   GITHUB_REPO: eumel8/otc-rds-operator
   GITHUB_BRANCH: master
-  # GITHUB_SSH_PRIVATE_KEY: in github.com registered ssh key pair
-  # COSIGN_KEY: private cosign signing key (file)
-  # DOCKER_AUTH_CONFIG: pre-defined MCICD variable for .docker/config.json
-  # MTR_NEW_AUTH_TOKEN: pre-defined MCICD variable with base64 emcodes auth-part of .docker/config.json
-
 default:
   tags:
-    - ${GITLAB_RUNNER}
+  - "${GITLAB_RUNNER}"
   retry:
     max: 2
-    when: # Retry in case of runner issues, stuck job, or scheduler failure
-      - runner_system_failure
-      - stuck_or_timeout_failure
-      - scheduler_failure
-
-# https://docs.gitlab.com/ee/user/application_security/sast/
+    when:
+    - runner_system_failure
+    - stuck_or_timeout_failure
+    - scheduler_failure
 include:
 - template: Security/SAST.gitlab-ci.yml
-
+- template: Security/Dependency-Scanning.gitlab-ci.yml
 stages:
 - test
 - build
@@ -46,23 +36,19 @@ stages:
 - push
 - sign
 - deliver-github
-
 sast:
   stage: test
-
-# https://docs.gitlab.com/ee/ci/testing/test_coverage_visualization.html#go-example
-# https://docs.gitlab.com/ee/ci/testing/unit_test_report_examples.html
 coverage:
   image: mtr.devops.telekom.de/mcsps/golang:1.18
   stage: test
   script:
-    - go get gotest.tools/gotestsum
-    - go get github.com/boumenot/gocover-cobertura
-    - go install gotest.tools/gotestsum
-    - gotestsum --junitfile report.xml --format standard-verbose
-    - go test -coverprofile=c.out ./cmd/
-    - go tool cover -html=c.out -o coverage.html
-    - go run github.com/boumenot/gocover-cobertura < c.out > coverage.xml
+  - go get gotest.tools/gotestsum
+  - go get github.com/boumenot/gocover-cobertura
+  - go install gotest.tools/gotestsum
+  - gotestsum --junitfile report.xml --format standard-verbose
+  - go test -coverprofile=c.out ./cmd/
+  - go tool cover -html=c.out -o coverage.html
+  - go run github.com/boumenot/gocover-cobertura < c.out > coverage.xml
   artifacts:
     when: always
     reports:
@@ -71,125 +57,108 @@ coverage:
         coverage_format: cobertura
         path: coverage.xml
     paths:
-      - "*coverage.html"
-  coverage: '/coverage: \d+.\d+% of statements/'
-
-# badge: https://gitlab.devops.telekom.de/%{project_path}/badges/%{default_branch}/pipeline.svg
-# link: https://gitlab.devops.telekom.de/%{project_path}/-/pipelines
-# badge: https://gitlab.devops.telekom.de/%{project_path}/badges/master/coverage.svg?job=coverage
-# link: https://mcsps.pages.devops.telekom.de/playground/otc-rds-client/coverage.html
+    - "*coverage.html"
+  coverage: "/coverage: \\d+.\\d+% of statements/"
 pages:
   stage: build
   script:
-    - rm -rf public/*
-    - cp -r coverage* public/
+  - rm -rf public/*
+  - cp -r coverage* public/
   artifacts:
     paths:
-      - public
+    - public
     expire_in: 30 days
   only:
-    - master
-
+  - master
 format:
   image: mtr.devops.telekom.de/mcsps/golang:1.18
   stage: test
   script:
-    # - go fmt $(go list ./... | grep -v /vendor/)
-    # - go vet $(go list ./... | grep -v /vendor/)
-    # - go test -race $(go list ./... | grep -v /vendor/)
-    - make fmt
-    - make vet
-    - make lint
-
+  - make fmt
+  - make vet
+  - make lint
 compile:
   image: mtr.devops.telekom.de/mcsps/golang:1.18
   stage: build
   script:
-    - make build
-    # - mkdir -p rds
-    # - go build -o rds ./...
+  - make build
   artifacts:
     paths:
     - bin
     expire_in: 1 week
-
-# https://gitlab.devops.telekom.de/cicd-hub/codesharing-cicd/mtr-build-dockerfile/-/blob/main/build-dockerfile.yml
-# https://gitlab.devops.telekom.de/rani/system-team/demos/build-container-image-demo/-/blob/main/.gitlab-ci.yml
 container-build:
   stage: image
   image:
     name: artifactory.devops.telekom.de/gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
+    entrypoint:
+    - ''
   cache:
-    key: $CI_COMMIT_REF_SLUG
+    key: "$CI_COMMIT_REF_SLUG"
     paths:
-      - "build/"
+    - build/
   script:
-    - export DOCKERFILE_LOCATION=$(find . -name Dockerfile -print -quit)
-    - export PRIVATE_GO_SERVER=$(echo ${CI_SERVER_URL} | sed 's/https:\/\///g')
-    - |
-      KANIKO_PARAMS="--registry-mirror dockerhub.devops.telekom.de
-                     --context ${CI_PROJECT_DIR}
-                     --destination ${REGISTRY}/${REPO_NAME}:latest
-                     --destination ${REGISTRY}/${REPO_NAME}:${CI_PIPELINE_ID}
-                     --build-arg http_proxy=${http_proxy}
-                     --build-arg https_proxy=${https_proxy}
-                     --build-arg no_proxy=${no_proxy}
-                     --build-arg CI_USER=gitlab-ci-token
-                     --build-arg CI_JOB_TOKEN=${CI_JOB_TOKEN}
-                     --build-arg PRIVATE_GO_SERVER=${PRIVATE_GO_SERVER}
-                     --build-arg DOCKER_BUILD_ENVIRONMENT=${DOCKER_BUILD_ENVIRONMENT}
-                     --dockerfile ${DOCKERFILE_LOCATION}"
-      # if test "${CI_COMMIT_REF_PROTECTED}" != 'true'; then
-      #   KANIKO_PARAMS="${KANIKO_PARAMS} --no-push"
-      # fi
-      if test "${CI_COMMIT_TAG}" != ""; then
-        KANIKO_PARAMS="${KANIKO_PARAMS} --destination ${REGISTRY}/${REPO_NAME}:${CI_COMMIT_TAG}"
-      fi
-      echo "${KANIKO_PARAMS}" | xargs /kaniko/executor
+  - export DOCKERFILE_LOCATION=$(find . -name Dockerfile -print -quit)
+  - export PRIVATE_GO_SERVER=$(echo ${CI_SERVER_URL} | sed 's/https:\/\///g')
+  - |
+    KANIKO_PARAMS="--registry-mirror dockerhub.devops.telekom.de
+                   --context ${CI_PROJECT_DIR}
+                   --destination ${REGISTRY}/${REPO_NAME}:latest
+                   --destination ${REGISTRY}/${REPO_NAME}:${CI_PIPELINE_ID}
+                   --build-arg http_proxy=${http_proxy}
+                   --build-arg https_proxy=${https_proxy}
+                   --build-arg no_proxy=${no_proxy}
+                   --build-arg CI_USER=gitlab-ci-token
+                   --build-arg CI_JOB_TOKEN=${CI_JOB_TOKEN}
+                   --build-arg PRIVATE_GO_SERVER=${PRIVATE_GO_SERVER}
+                   --build-arg DOCKER_BUILD_ENVIRONMENT=${DOCKER_BUILD_ENVIRONMENT}
+                   --dockerfile ${DOCKERFILE_LOCATION}"
+    # if test "${CI_COMMIT_REF_PROTECTED}" != 'true'; then
+    #   KANIKO_PARAMS="${KANIKO_PARAMS} --no-push"
+    # fi
+    if test "${CI_COMMIT_TAG}" != ""; then
+      KANIKO_PARAMS="${KANIKO_PARAMS} --destination ${REGISTRY}/${REPO_NAME}:${CI_COMMIT_TAG}"
+    fi
+    echo "${KANIKO_PARAMS}" | xargs /kaniko/executor
   only:
     variables:
-      - $MTR_NEW_AUTH_TOKEN
-
+    - "$MTR_NEW_AUTH_TOKEN"
 container-sign:
   image: mtr.devops.telekom.de/mcsps/cosign:v1.8.0
-  #needs: [compile]
   stage: sign
   script:
-    - mkdir -p "/home/nonroot/.docker"
-    - echo "$DOCKER_AUTH_CONFIG" > /home/nonroot/.docker/config.json
-    - cosign sign --key ${COSIGN_KEY} $REGISTRY/$REPO_NAME:latest
-    - cosign sign --key ${COSIGN_KEY} $REGISTRY/$REPO_NAME:$CI_PIPELINE_ID
-    - if test "${CI_COMMIT_TAG}" != ""; then cosign sign --key ${COSIGN_KEY} $REGISTRY/$REPO_NAME:${CI_COMMIT_TAG}; fi
+  - mkdir -p "/home/nonroot/.docker"
+  - echo "$DOCKER_AUTH_CONFIG" > /home/nonroot/.docker/config.json
+  - cosign sign --key ${COSIGN_KEY} $REGISTRY/$REPO_NAME:latest
+  - cosign sign --key ${COSIGN_KEY} $REGISTRY/$REPO_NAME:$CI_PIPELINE_ID
+  - if test "${CI_COMMIT_TAG}" != ""; then cosign sign --key ${COSIGN_KEY} $REGISTRY/$REPO_NAME:${CI_COMMIT_TAG};
+    fi
   only:
     refs:
-      - tags
-      - master
-      - main
+    - tags
+    - master
+    - main
     variables:
-      - $COSIGN_KEY
-      - $MTR_NEW_AUTH_TOKEN
-
+    - "$COSIGN_KEY"
+    - "$MTR_NEW_AUTH_TOKEN"
 deliver-github:
   image: mtr.devops.telekom.de/mcsps/mcsps-tools:latest
   stage: deliver-github
   script:
-    #- apt-get install -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confnew openssh-client
-    - apk add openssh-client
-    - mkdir -p ~/.ssh/
-    - ssh-keyscan github.com >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
-    - eval $(ssh-agent -s)
-    - echo "$GITHUB_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - git config --global user.name "MCICD Sync"
-    - git config --global user.email "mcsps-dis@telekom.de"
-    - git remote remove github || true
-    - git remote add github git@github.com:${GITHUB_REPO}.git
-    - git remote -v
-    - git fetch github
-    - git push github --force HEAD:$GITHUB_BRANCH
+  - apk add openssh-client
+  - mkdir -p ~/.ssh/
+  - ssh-keyscan github.com >> ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts
+  - eval $(ssh-agent -s)
+  - echo "$GITHUB_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - git config --global user.name "MCICD Sync"
+  - git config --global user.email "mcsps-dis@telekom.de"
+  - git remote remove github || true
+  - git remote add github git@github.com:${GITHUB_REPO}.git
+  - git remote -v
+  - git fetch github
+  - git push github --force HEAD:$GITHUB_BRANCH
   except:
     variables:
-      - $GITHUB_SSH_PRIVATE_KEY == null
-      - $GITHUB_REPO == null
-      - $GITHUB_BRANCH == null
+    - "$GITHUB_SSH_PRIVATE_KEY == null"
+    - "$GITHUB_REPO == null"
+    - "$GITHUB_BRANCH == null"
