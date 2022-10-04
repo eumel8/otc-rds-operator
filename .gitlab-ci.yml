@@ -17,8 +17,8 @@ variables:
   no_proxy: "$NO_PROXY"
   GITLAB_RUNNER: otc_run_docker_k8s_xl
   REGISTRY: mtr.devops.telekom.de
-  REPO_NAME: caas/otc-rds-client
-  GITHUB_REPO: eumel8/otc-rds-client
+  REPO_NAME: caas/otc-rds-operator
+  GITHUB_REPO: eumel8/otc-rds-operator
   GITHUB_BRANCH: ciintegration
   # GITHUB_SSH_PRIVATE_KEY: in github.com registered ssh key pair
   # COSIGN_KEY: private cosign signing key (file)
