@@ -156,7 +156,7 @@ deliver-github:
   - git remote add github git@github.com:${GITHUB_REPO}.git
   - git remote -v
   - git fetch github
-  - git push github --force HEAD:$GITHUB_BRANCH
+  - git push github --force HEAD:$GITHUB_BRANCH --tags
   except:
     variables:
     - "$GITHUB_SSH_PRIVATE_KEY == null"
