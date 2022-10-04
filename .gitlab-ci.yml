@@ -71,7 +71,7 @@ coverage:
         coverage_format: cobertura
         path: coverage.xml
     paths:
-      - *coverage.html
+      - "*coverage.html"
   coverage: '/coverage: \d+.\d+% of statements/'
 
 # badge: https://gitlab.devops.telekom.de/%{project_path}/badges/%{default_branch}/pipeline.svg
