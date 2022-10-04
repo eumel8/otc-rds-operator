@@ -60,7 +60,7 @@ coverage:
     - go get github.com/boumenot/gocover-cobertura
     - go install gotest.tools/gotestsum
     - gotestsum --junitfile report.xml --format standard-verbose
-    - go test -coverprofile=c.out
+    - go test -coverprofile=c.out ./cmd/
     - go tool cover -html=c.out
     - go run github.com/boumenot/gocover-cobertura < c.out > coverage.xml
   artifacts:
