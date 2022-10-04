@@ -1,0 +1,22 @@
+{{ if .Values.rbac.user.enabled }}
+{{ $fullNameUser := print (include "otc-rds-operator.fullname" .) "-user" }}
+{{- if not (contains "*" .Values.watchNamespaces) }}
+{{- $ns1 := (splitList " " .Values.watchNamespaces ) }}
+{{- range $s1 := $ns1 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullNameUser }}
+  namespace: {{ $s1 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullNameUser }}
+subjects:
+  - kind: Group
+    name: system:authenticated
+    apiGroup: rbac.authorization.k8s.io
+{{ end }}
+{{ end }}
+{{ end }}

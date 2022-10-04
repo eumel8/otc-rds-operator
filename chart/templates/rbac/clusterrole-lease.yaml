@@ -1,0 +1,24 @@
+{{ if .Values.rbac.master.enabled }}
+{{ if .Values.ha.enabled }}
+{{ $fullNameLease := print (include "otc-rds-operator.fullname" .) "-lease" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rdsoperator-lease
+  labels:
+    {{- include "otc-rds-operator.labels" . | nindent 4 }}
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - watch
+      - create
+      - update
+{{ end }}
+{{ end }}

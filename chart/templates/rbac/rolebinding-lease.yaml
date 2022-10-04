@@ -1,15 +1,16 @@
+{{ $fullNameLease := print (include "otc-rds-operator.fullname" .) "-lease" }}
 {{ $fullName := include "otc-rds-operator.fullname" . }}
+{{ if .Values.ha.enabled }}
+---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: {{ $fullName }}
-  labels:
-    {{- include "otc-rds-operator.labels" . | nindent 4 }}
+  name: {{ $fullNameLease }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ $fullName }}
+  kind: Role
+  name: {{ $fullNameLease }}
 subjects:
   - kind: ServiceAccount
     name: {{ $fullName }}
-    namespace: {{ .Release.Namespace }}
+{{ end }}

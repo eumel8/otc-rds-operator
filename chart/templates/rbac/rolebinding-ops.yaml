@@ -1,0 +1,24 @@
+{{ $fullName := include "otc-rds-operator.fullname" . }}
+{{ $fullNameOps := print (include "otc-rds-operator.fullname" .) }}
+{{- if not (contains "*" .Values.watchNamespaces) }}
+{{- $ns1 := (splitList " " .Values.watchNamespaces ) }}
+{{- $ns2 := (splitList " " .Values.watchNamespaces | reverse) }}
+{{- range $s1 := $ns1 }}
+{{- range $s2 := $ns2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullNameOps }}-{{ $s2 }}
+  namespace: {{ $s1 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rdsoperator
+subjects:
+  - kind: ServiceAccount
+    name: {{ $fullName }}
+    namespace: {{ $s2 }}
+{{ end }}
+{{ end }}
+{{ end }}

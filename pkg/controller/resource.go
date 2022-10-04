@@ -263,7 +263,7 @@ func (c *Controller) rdsCreate(ctx context.Context, netclient1 *golangsdk.Servic
 func (c *Controller) rdsDelete(client *golangsdk.ServiceClient, newRds *rdsv1alpha1.Rds) error {
 	c.logger.Debug("rdsDelete ", newRds.Name)
 	if newRds.Status.Id != "" {
-		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Create", "This instance is deleting.")
+		c.recorder.Eventf(newRds, rdsv1alpha1.EventTypeNormal, "Delete", "This instance is deleting.")
 
 		// make a backup before instance deleting
 		backuptime := strconv.FormatInt(time.Now().Unix(), 10)
@@ -559,10 +559,12 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		job := createJob(newRds, opts.IdentityEndpoint, token.ID, image)
 
-		_, err = c.kubeClientSet.BatchV1().
-			Jobs(newRds.Namespace).
-			Create(ctx, job, metav1.CreateOptions{})
+		_, err = c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Create(ctx, job, metav1.CreateOptions{})
 		if err != nil {
+			if k8serrors.IsAlreadyExists(err) {
+				c.logger.Debug("logfetch job already exists for ", newRds.Name)
+				return nil
+			}
 			err := fmt.Errorf("error creating logfetch job: %v", err)
 			return err
 		}
@@ -575,14 +577,22 @@ func (c *Controller) rdsUpdate(ctx context.Context, client *golangsdk.ServiceCli
 
 		logInstance := newRds.Namespace + "_" + newRds.Name
 		logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
-		if err != nil {
-			err := fmt.Errorf("error getting logfetch job for watch: %v", err)
-			return err
-		}
-
 		if logjob == nil {
 			err := fmt.Errorf("error finding logfetch job for watch: %v", err)
 			return err
+		}
+
+		if err != nil {
+			time.Sleep(5 * time.Second)
+			logjob, err := c.kubeClientSet.BatchV1().Jobs(newRds.Namespace).Get(ctx, logInstance, metav1.GetOptions{})
+			err = fmt.Errorf("error getting logfetch job for watch: %v", err)
+			if err != nil {
+				return err
+			}
+			if logjob == nil {
+				err := fmt.Errorf("error finding logfetch job for watch: %v", err)
+				return err
+			}
 		}
 
 		events := watch.ResultChan()

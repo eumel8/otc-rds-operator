@@ -30,6 +30,7 @@ type Controller struct {
 	watchnamespaces string
 	logger          log.Logger
 	recorder        record.EventRecorder
+	refreshtime     int
 }
 
 func (c *Controller) Run(ctx context.Context, numWorkers int) error {
@@ -83,7 +84,7 @@ func (c *Controller) addRds(obj interface{}) {
 	}
 	w := strings.Fields(c.watchnamespaces)
 	if !slices.Contains(w, rds.Namespace) && !slices.Contains(w, "*") {
-		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
+		c.logger.Debug("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
@@ -101,7 +102,7 @@ func (c *Controller) delRds(obj interface{}) {
 	}
 	w := strings.Fields(c.watchnamespaces)
 	if !slices.Contains(w, rds.Namespace) && !slices.Contains(w, "*") {
-		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
+		c.logger.Debug("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
@@ -124,7 +125,7 @@ func (c *Controller) updateRds(oldObj, newObj interface{}) {
 	}
 	w := strings.Fields(c.watchnamespaces)
 	if !slices.Contains(w, rds.Namespace) && !slices.Contains(w, "*") {
-		c.logger.Errorf("watchnamespaces: %s not in watchlist", rds.Namespace)
+		c.logger.Debug("watchnamespaces: %s not in watchlist", rds.Namespace)
 		return
 	}
 	c.queue.Add(event{
@@ -141,17 +142,12 @@ func New(
 	watchnamespaces string,
 	logger log.Logger,
 	recorder record.EventRecorder,
+	refreshtime int,
 ) *Controller {
 
-	/*rdsInformerFactory := rdsinformers.NewSharedInformerFactoryWithOptions(
-		rdsClientSet,
-		10*time.Second,
-		rdsinformers.WithNamespace("rds1"),
-	)
-	*/
 	rdsInformerFactory := rdsinformers.NewSharedInformerFactory(
 		rdsClientSet,
-		10*time.Second,
+		time.Duration(refreshtime)*time.Second,
 	)
 	rdsInformer := rdsInformerFactory.Mcsps().V1alpha1().Rdss().Informer()
 
@@ -165,6 +161,7 @@ func New(
 		watchnamespaces: watchnamespaces,
 		logger:          logger,
 		recorder:        recorder,
+		refreshtime:     refreshtime,
 	}
 
 	rdsInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
