@@ -51,8 +51,16 @@ to use a functional version.
 Look at the `otc` section in the [chart/values.yaml](chart.values.yaml) to provide credentials.
 Best case to generate your own values.yaml and install the app:
 
+via this repo:
+
 ```bash
 helm -n rdsoperator upgrade -i rdsoperator -f values.yaml chart --create-namespace
+```
+
+via Helm Chart Repo (required helm 3.10+):
+
+```bash
+helm -n rdsoperator upgrade -i rdsoperator -f values.yaml --version 0.7.1 oci://mtr.devops.telekom.de/caas/charts/otc-rds-operator
 ```
 
 In a minimal set and if you use `eu-de` region, only `domain_name`, `username`, and `password` are required:

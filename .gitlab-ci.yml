@@ -179,6 +179,7 @@ deliver-oci:
   image: mtr.devops.telekom.de/mcsps/mcsps-tools:latest
   stage: deliver-oci
   script:
+  - helm version
   - helm package chart
   - HELM_EXPERIMENTAL_OCI=1 helm registry login $REGISTRY -u $OCI_USER -p $OCI_PASSWORD
   - HELM_EXPERIMENTAL_OCI=1 helm push $(ls *.tgz| head -1) oci://$REGISTRY/$CHART_REPO
