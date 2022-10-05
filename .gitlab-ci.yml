@@ -181,6 +181,5 @@ deliver-oci:
   script:
   - helm package chart
   - HELM_EXPERIMENTAL_OCI=1 helm registry login $REGISTRY -u $OCI_USER -p $OCI_PASSWORD
-  - OCI=$(ls *.tgz| head -1)
-  - echo $OCI
-  - HELM_EXPERIMENTAL_OCI=1 helm push $(ls *.tgz| head -1) oci://$REGISTRY/$CHART_REPO --debug
+  - HELM_EXPERIMENTAL_OCI=1 helm push $(ls *.tgz| head -1) oci://mtr.devops.telekom.de/caas/charts  --debug
+  #- HELM_EXPERIMENTAL_OCI=1 helm push $(ls *.tgz| head -1) oci://$REGISTRY/$CHART_REPO --debug
