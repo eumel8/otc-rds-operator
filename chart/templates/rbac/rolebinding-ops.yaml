@@ -1,5 +1,6 @@
 {{ $fullName := include "otc-rds-operator.fullname" . }}
 {{ $fullNameOps := print (include "otc-rds-operator.fullname" .) }}
+{{- if .Values.watchNamespaces }}
 {{- if not (contains "*" .Values.watchNamespaces) }}
 {{- $ns1 := (splitList " " .Values.watchNamespaces ) }}
 {{- $ns2 := (splitList " " .Values.watchNamespaces | reverse) }}
@@ -19,6 +20,7 @@ subjects:
   - kind: ServiceAccount
     name: {{ $fullName }}
     namespace: {{ $s2 }}
+{{ end }}
 {{ end }}
 {{ end }}
 {{ end }}
