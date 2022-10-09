@@ -51,8 +51,16 @@ to use a functional version.
 Look at the `otc` section in the [chart/values.yaml](chart.values.yaml) to provide credentials.
 Best case to generate your own values.yaml and install the app:
 
+via this repo:
+
 ```bash
 helm -n rdsoperator upgrade -i rdsoperator -f values.yaml chart --create-namespace
+```
+
+via Helm Chart Repo (required helm 3.10+):
+
+```bash
+helm -n rdsoperator upgrade -i rdsoperator -f values.yaml --version 0.7.1 oci://mtr.devops.telekom.de/caas/charts/otc-rds-operator
 ```
 
 In a minimal set and if you use `eu-de` region, only `domain_name`, `username`, and `password` are required:
@@ -307,6 +315,94 @@ Status:
 
 After that the instance in OTC is unmanaged and you can safely delete Rds in Kubernetes Cluster.
 
+### Multitenancy
+
+version>=0.7.0
+
+In a single installation we have one cluster with one Operator, managed by one cluster-admin,
+who installs the Operator and creates the RDS instances, to use by itself. The following scenario
+has multi instances of the Operator running in one cluster, installed by cluster-admin/project-admins
+with different OTC tenants in the backend. RDS instances are installed by the the project-admins or
+project-member. 
+
+| Resource                              | Scope              | Role          |
+|---------------------------------------|--------------------|---------------|
+| HA election/leases                    | Operator Namespace | user          | 
+| RDS get/list/create/delete            | Watched Namespaces | admin         |
+| RDS get/list/create/delete            | Watched Namespaces | project-admin |
+| RDS get/list/create/delete            | Watched Namespaces | (user)        |
+| Event/Service/Job create/list/watch   | Watched Namespaces | operator      |
+| RBAC Clusterrole/Clusterrolebinding   | cluster-wide       | cluster-admin |
+
+#### Cluster Operator
+
+The first Operator installation needs cluster-admin permissions and the option
+
+```yaml
+watchNamespaces: rds1 rds3
+rbac:
+  enabled: true
+```
+
+This installation includes:
+
+* ClusterRole with `aggregate-to-admin` label which elovates RDS ,Events, Service, Job API resources cluster-wide to admin
+* RoleBinding to inheritate this permissions to the Operator namespaced.
+* ClusterRole to view/get/watch  RDS API resources
+* ClusterRolebinding to connect this ClusterRole to each ServiceAccount. That's required to watch cluster-wide on RDS events by the Operator
+* ClusterRole with `aggregate-to-admin` label which elovates election/leases API resources cluster-wide to admin. This is required for project-admin to inheritate this permissions to the Operator namespaced.
+* Role/RoleBinding for election/leases API resources to operator.
+* ServiceAccount for Operator operation
+
+The CRD will also installed with this instance.
+
+#### Project Operator
+
+Each other installation needs normal admin/project-admin permissions and the option
+
+```yaml
+watchNamespaces: rds2 rds4
+rbac:
+  enabled: false
+```
+
+Add `--skip-crds` to the Helm install parameters
+
+As a project-admin you can decide if your users can also handle RDS instances.
+Apply this role manually in each namespace where you want:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rdsusers
+rules:
+  - apiGroups:
+      - otc.mcsps.de
+    resources:
+      - rdss
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rdsusers
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rdsusers
+subjects:
+  - kind: Group
+    name: system:authenticated
+    apiGroup: rbac.authorization.k8s.io
+```
+
 ### Unforseen deleting
 
 We identified two use cases of unforseen deleting of RDS instances:
@@ -317,6 +413,9 @@ We identified two use cases of unforseen deleting of RDS instances:
 For both use cases we make a manual backup before delete the instance, which will be also not deleted
 by the OTC delete cascade. You can restore the backup on the same instance name and import the RDS resource
 into the cluster.
+
+Update: The OTC will make also automatically a backup before the RDS instance is deleted. Watch your
+backup store for left backup data.
 
 ## Developement
 

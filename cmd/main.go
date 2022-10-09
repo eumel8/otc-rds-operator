@@ -68,6 +68,7 @@ func main() {
 		config.WatchNamespaces,
 		logger.WithField("type", "controller"),
 		recorder,
+		config.RefreshTime,
 	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), []os.Signal{

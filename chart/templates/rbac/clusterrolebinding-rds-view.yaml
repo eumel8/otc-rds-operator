@@ -1,0 +1,17 @@
+{{ if .Values.rbac.master.enabled }}
+{{ $fullNameView := print (include "otc-rds-operator.fullname" .) "-view" }}
+{{ $fullName := include "otc-rds-operator.fullname" . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $fullNameView }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rdsoperator-view
+subjects:
+- kind: Group
+  name: system:serviceaccounts
+  apiGroup: rbac.authorization.k8s.io
+{{ end }}

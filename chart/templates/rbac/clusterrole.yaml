@@ -1,18 +1,27 @@
+{{ if .Values.rbac.master.enabled }}
+{{ $fullName := include "otc-rds-operator.fullname" . }}
+{{ $fullNameOps := print (include "otc-rds-operator.fullname" .) "-ops" }}
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "otc-rds-operator.fullname" . }}
+  name: rdsoperator
   labels:
     {{- include "otc-rds-operator.labels" . | nindent 4 }}
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
 rules:
   - apiGroups:
       - otc.mcsps.de
     resources:
       - rdss
     verbs:
+      - create
+      - delete
       - get
       - list
       - update
+      - patch
       - watch
   - apiGroups:
       - batch
@@ -44,14 +53,4 @@ rules:
     - delete
     - update
     - get
-  {{ if .Values.ha.enabled }}
-  - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - get
-      - watch
-      - create
-      - update
-  {{ end }}
+{{ end }}
