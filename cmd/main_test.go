@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
-
+	"time"
 	"io/ioutil"
 	"net/http"
-	// kubernetes "k8s.io/client-go/kubernetes/fake"
 )
 
 const RdsApiReply = `
@@ -45,24 +45,20 @@ users:
 func MockMuxer() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/apis/otc.mcsps.de/v1alpha1/rdss?limit=500&resourceVersion=0", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_, _ = fmt.Fprint(w, RdsApiReply)
-		}
-	})
+	// https://stackoverflow.com/questions/47148240/correct-way-to-match-url-path-to-page-name-with-url-routing-in-go
 	// watch: /apis/otc.mcsps.de/v1alpha1/rdss?allowWatchBookmarks=true&resourceVersion=265294298&timeout=5m29s&timeoutSeconds=329&watch=true
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
+		if strings.Contains(r.URL.Path,"/apis/otc.mcsps.de/v1alpha1/rdss") {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-
-			//_, _ = fmt.Fprint(w, "OK")
 			_, _ = fmt.Fprint(w, RdsApiReply)
-			// Debug output of the request
+			time.Sleep(3 * time.Second)
+			return
+		}
+		if r.URL.Path != "/" {
+			
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
 			uri := r.URL.String()
 			fmt.Printf("Uri: %s\n", string(uri))
 			body, err := ioutil.ReadAll(r.Body)
@@ -70,6 +66,7 @@ func MockMuxer() {
 				panic(err)
 			}
 			fmt.Printf("Body: %s\n", body)
+			return	
 		}
 	})
 
@@ -90,18 +87,18 @@ func MockMuxer() {
 }
 
 func Test_main(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		// TODO: Add test cases.
-		{"maintest"},
-	}
 	os.Setenv("KUBECONFIG", "test-fixtures/kube-config.yaml")
 	go MockMuxer()
+    timeout := time.After(5 * time.Second)
+    done := make(chan bool)
+    go func() {
+        main() // We make a roughly fly over test if controller is starting
+        time.Sleep(3 * time.Second)
+        done <- true
+    }()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			main()
-		})
-	}
+    select {
+    case <-timeout:
+    case <-done:
+    }
 }
