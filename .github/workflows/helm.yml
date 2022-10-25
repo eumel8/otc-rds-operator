@@ -12,19 +12,21 @@ jobs:
       with:
         args: |
           helm plugin install https://github.com/quintush/helm-unittest
-          helm unittest -3 chart/    
+          helm lint chart/    
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
     - name: helm template
       uses: wahyd4/kubectl-helm-action@master
       with:
         args: |
           helm template chart/
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
     - name: helm unittest
       uses: wahyd4/kubectl-helm-action@master
       with:
         args: |
           helm plugin install https://github.com/quintush/helm-unittest
           helm unittest -3 chart/    
-      #env:
-      #  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-      #with:
-      #  args: kubectl apply -f manifest.yaml
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
