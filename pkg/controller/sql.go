@@ -100,8 +100,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				c.logger.Debug("create database ", ds)
 				stmt, err := db.Prepare("CREATE DATABASE IF NOT EXISTS ?")
 				if err != nil {
-					err := fmt.Errorf("error prepare create database statement: %v", err)
-					return err
+					c.logger.Error("error prepare creating database statement: %v\n", err)
 				}
 				defer stmt.Close()
 				_, err = stmt.Exec(ds)
