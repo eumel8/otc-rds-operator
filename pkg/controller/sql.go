@@ -109,7 +109,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 						c.logger.Error("error creating database: %v\n", err)
 					}
 				} else {
-					c.logger.Error("error schema name validation: %s\n", db)
+					c.logger.Error("error schema name validation: %s\n", ds)
 				}
 			}
 		}
