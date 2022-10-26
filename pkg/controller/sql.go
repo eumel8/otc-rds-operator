@@ -45,13 +45,14 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if !res.Next() {
 				c.logger.Debug("create sql user ", su.Name)
-				stmt, err := db.Prepare("CREATE USER IF NOT EXISTS `?`@`?` IDENTIFIED BY `?`")
-				if err != nil {
-					err := fmt.Errorf("error prepare creating user: %v", err)
-					return err
-				}
-				defer stmt.Close()
-				_, err = stmt.Exec(su.Name, su.Host, su.Password)
+				// stmt, err := db.Prepare("CREATE USER IF NOT EXISTS `?`@`?` IDENTIFIED BY `?`")
+				// if err != nil {
+				// 	err := fmt.Errorf("error prepare creating user: %v", err)
+				// 	return err
+				// }
+				// defer stmt.Close()
+				// _, err = stmt.Exec(su.Name, su.Host, su.Password)
+				_, err := db.Query("CREATE USER IF NOT EXISTS '" + su.Name + "'@'" + su.Host + "' IDENTIFIED BY '" + su.Password + "'")
 				if err != nil {
 					err := fmt.Errorf("error execute creating user: %v", err)
 					return err
