@@ -36,7 +36,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				err := fmt.Errorf("error prepare query user: %v", err)
 				return err
 			}
-			defer stmt.Close() 
+			defer stmt.Close()
 			res, err := stmt.Query(su.Name)
 			if err != nil {
 				err := fmt.Errorf("error execute query user: %v", err)
@@ -45,12 +45,12 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if !res.Next() {
 				c.logger.Debug("create sql user ", su.Name)
-				stmt, err := db.Prepare("CREATE USER IF NOT EXISTS ? @ ? IDENTIFIED BY ?")
+				stmt, err := db.Prepare("CREATE USER IF NOT EXISTS '?'@'?' IDENTIFIED BY '?'")
 				if err != nil {
 					err := fmt.Errorf("error prepare creating user: %v", err)
 					return err
 				}
-				defer stmt.Close() 
+				defer stmt.Close()
 				_, err = stmt.Query(su.Name, su.Host, su.Password)
 				if err != nil {
 					err := fmt.Errorf("error execute creating user: %v", err)
@@ -88,7 +88,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				err := fmt.Errorf("error prepare query schema: %v", err)
 				return err
 			}
-			defer stmt.Close() 
+			defer stmt.Close()
 			res, err := stmt.Query(ds)
 			if err != nil {
 				err := fmt.Errorf("error execute query schema: %v", err)
@@ -102,7 +102,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 					err := fmt.Errorf("error prepare create database statement: %v", err)
 					return err
 				}
-				defer stmt.Close() 
+				defer stmt.Close()
 				_, err = stmt.Exec(ds)
 				if err != nil {
 					c.logger.Error("error creating database: %v\n", err)
