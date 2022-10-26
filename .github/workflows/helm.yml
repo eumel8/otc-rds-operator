@@ -1,5 +1,9 @@
 # https://github.com/marketplace/actions/kubectl-helm
-on: push
+on:
+  push:
+    paths:
+      - chart/**
+
 name: helmtest
 jobs:
   deploy:
