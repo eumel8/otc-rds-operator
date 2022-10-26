@@ -89,7 +89,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				err := fmt.Errorf("error prepare query schema: %v", err)
 				return err
 			}
-			defer stmt.Close()
+			// defer stmt.Close()
 			res, err := stmt.Query(ds)
 			if err != nil {
 				err := fmt.Errorf("error execute query schema: %v", err)
@@ -102,7 +102,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 				if err != nil {
 					c.logger.Error("error prepare creating database statement: %v\n", err)
 				}
-				defer stmt.Close()
+				// defer stmt.Close()
 				_, err = stmt.Exec(ds)
 				if err != nil {
 					c.logger.Error("error creating database: %v\n", err)
