@@ -14,7 +14,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 	if newRds.Spec.Datastoretype == "MySQL" {
 
 		c.logger.Debug("connecting database")
-		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql?interpolateParams=true")
+		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql?interpolateParams=false")
 
 		if err != nil {
 			err := fmt.Errorf("error connecting database: %v", err)
@@ -45,7 +45,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if !res.Next() {
 				c.logger.Debug("create sql user ", su.Name)
-				stmt, err := db.Prepare("CREATE USER IF NOT EXISTS `?`@`?` IDENTIFIED BY '?'")
+				stmt, err := db.Prepare("CREATE USER IF NOT EXISTS ?@? IDENTIFIED BY ?")
 				if err != nil {
 					err := fmt.Errorf("error prepare creating user: %v", err)
 					return err
