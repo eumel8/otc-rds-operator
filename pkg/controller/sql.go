@@ -98,7 +98,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if !res.Next() {
 				c.logger.Debug("create database ", ds)
-				validSchema, err := regexp.Compile("[a-zA-Z0-9_%*]")
+				validSchema, err := regexp.Compile("[a-zA-Z0-9]")
 				if err != nil {
 					c.logger.Error("error compile regex for schema: %v", err)
 					return err
