@@ -75,7 +75,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 							c.logger.Error("error flush privileges: %v\n", err)
 						}
 					} else {
-						c.logger.Error("privileges contains no GRANT: %s\n", pr)
+						c.logger.Error("error validating grant: %s\n", pr)
 					}
 
 				}
@@ -98,14 +98,18 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if !res.Next() {
 				c.logger.Debug("create database ", ds)
-				stmk, err := db.Prepare("CREATE DATABASE ?")
+				validSchema, err := regexp.Compile(`^[a-zA-Z0-9_%*]$`)
 				if err != nil {
-					c.logger.Error("error prepare creating database statement: %v\n", err)
+					c.logger.Error("error compile regex for schema: %v", err)
+					return err
 				}
-				defer stmk.Close()
-				_, err = stmk.Query(ds)
-				if err != nil {
-					c.logger.Error("error creating database: %v\n", err)
+				if validSchema.MatchString(ds) {
+					_, err := db.Query("CREATE DATABASE IF NOT EXISTS " + ds)
+					if err != nil {
+						c.logger.Error("error creating database: %v\n", err)
+					}
+				} else {
+					c.logger.Error("error schema name validation: %s\n", db)
 				}
 			}
 		}
