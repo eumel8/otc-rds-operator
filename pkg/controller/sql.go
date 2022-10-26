@@ -14,7 +14,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 	if newRds.Spec.Datastoretype == "MySQL" {
 
 		c.logger.Debug("connecting database")
-		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql?interpolateParams=false")
+		db, err := sql.Open("mysql", "root:"+newRds.Spec.Password+"@tcp("+newRds.Status.Ip+":"+newRds.Spec.Port+")/mysql?interpolateParams=true")
 
 		if err != nil {
 			err := fmt.Errorf("error connecting database: %v", err)
