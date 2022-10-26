@@ -60,7 +60,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 				for _, pr := range su.Privileges {
 					c.logger.Debug("create privileges user ", su.Name)
-					validGrant, err := regexp.Compile(`^[a-zA-Z0-9._%*'\s]$`)
+					validGrant, err := regexp.Compile("[a-zA-Z0-9._%*' ]")
 					if err != nil {
 						err := fmt.Errorf("error compile regex: %v", err)
 						return err
@@ -98,7 +98,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if !res.Next() {
 				c.logger.Debug("create database ", ds)
-				validSchema, err := regexp.Compile(`^[a-zA-Z0-9_%*]$`)
+				validSchema, err := regexp.Compile("[a-zA-Z0-9_%*]")
 				if err != nil {
 					c.logger.Error("error compile regex for schema: %v", err)
 					return err
@@ -109,7 +109,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 						c.logger.Error("error creating database: %v\n", err)
 					}
 				} else {
-					c.logger.Error("error schema name validation: %s\n", ds)
+					c.logger.Error("error schema name validation: %s", ds)
 				}
 			}
 		}
