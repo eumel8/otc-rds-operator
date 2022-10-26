@@ -44,7 +44,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 			if !res.Next() {
 				c.logger.Debug("create sql user ", su.Name)
-				stmt, err := db.Prepare("CREATE USER ?@? IDENTIFIED BY ?")
+				stmt, err := db.Prepare("CREATE USER '?'@'?' IDENTIFIED BY ?")
 				if err != nil {
 					err := fmt.Errorf("error prepare creating user: %v", err)
 					return err
