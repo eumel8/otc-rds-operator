@@ -74,7 +74,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 							c.logger.Error("error flush privileges: %v\n", err)
 						}
 					} else {
-						c.logger.Error("error validating grant: %s\n", pr)
+						c.logger.Error("error validating grant: ", pr)
 					}
 
 				}
@@ -109,7 +109,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 					}
 				}
 			} else {
-				c.logger.Error("error schema name validation: %s", ds)
+				c.logger.Error("error schema name validation: ", ds)
 			}
 		}
 
