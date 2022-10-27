@@ -62,8 +62,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 					c.logger.Debug("create privileges user ", su.Name)
 					validGrant, err := regexp.Compile("^[a-zA-Z0-9 '*\\._%]*$")
 					if err != nil {
-						err := fmt.Errorf("error compile regex: %v", err)
-						continue
+						c.logger.Error("error compile regex: %v", err)
 					}
 					if validGrant.MatchString(pr) {
 						_, err := db.Query(pr)
