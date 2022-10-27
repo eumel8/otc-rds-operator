@@ -63,7 +63,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 					validGrant, err := regexp.Compile("^[a-zA-Z0-9 '*\\._%]*$")
 					if err != nil {
 						err := fmt.Errorf("error compile regex: %v", err)
-						return err
+						continue
 					}
 					if validGrant.MatchString(pr) {
 						_, err := db.Query(pr)
@@ -83,34 +83,34 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 		}
 
 		for _, ds := range newRds.Spec.Databases {
-			c.logger.Debug("query existing database ", ds)
-			stmt, err := db.Prepare("SELECT schema_name FROM information_schema.schemata WHERE schema_name= ?")
+			validSchema, err := regexp.Compile("^[a-zA-Z0-9]*$")
 			if err != nil {
-				err := fmt.Errorf("error prepare query schema: %v", err)
-				return err
+				c.logger.Error("error compile regex for schema: %v", err)
+				continue
 			}
-			defer stmt.Close()
-			res, err := stmt.Query(ds)
-			if err != nil {
-				err := fmt.Errorf("error execute query schema: %v", err)
-				return err
-			}
-
-			if !res.Next() {
-				c.logger.Debug("create database ", ds)
-				validSchema, err := regexp.Compile("^[a-zA-Z0-9]*$")
+			if validSchema.MatchString(ds) {
+				c.logger.Debug("query existing database ", ds)
+				stmt, err := db.Prepare("SELECT schema_name FROM information_schema.schemata WHERE schema_name= ?")
 				if err != nil {
-					c.logger.Error("error compile regex for schema: %v", err)
+					err := fmt.Errorf("error prepare query schema: %v", err)
 					return err
 				}
-				if validSchema.MatchString(ds) {
+				defer stmt.Close()
+				res, err := stmt.Query(ds)
+				if err != nil {
+					err := fmt.Errorf("error execute query schema: %v", err)
+					return err
+				}
+
+				if !res.Next() {
+					c.logger.Debug("create database ", ds)
 					_, err := db.Query("CREATE DATABASE IF NOT EXISTS " + ds)
 					if err != nil {
 						c.logger.Error("error creating database: %v\n", err)
 					}
-				} else {
-					c.logger.Error("error schema name validation: %s", ds)
 				}
+			} else {
+				c.logger.Error("error schema name validation: %s", ds)
 			}
 		}
 
