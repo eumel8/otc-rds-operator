@@ -684,7 +684,8 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 		return err
 	}
 	if len(rdsInstance.PrivateIps) > 0 {
-		newRds.Status.Ip = rdsInstance.PrivateIps[0]
+		// DEBUG 20221028 NO IP change
+		// newRds.Status.Ip = rdsInstance.PrivateIps[0]
 	} else {
 		newRds.Status.Ip = "0.0.0.0"
 	}
