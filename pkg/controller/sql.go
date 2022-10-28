@@ -3,7 +3,7 @@ package controller
 import (
 	"database/sql"
 	"fmt"
-	"strings"
+	"regexp"
 
 	rdsv1alpha1 "github.com/eumel8/otc-rds-operator/pkg/rds/v1alpha1"
 	_ "github.com/go-sql-driver/mysql"
@@ -31,24 +31,40 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 
 		for _, su := range *newRds.Spec.Users {
 
-			res, err := db.Query("SELECT user FROM user where user = '" + su.Name + "'")
+			stmt, err := db.Prepare("SELECT user FROM user where user = ?")
 			if err != nil {
-				err := fmt.Errorf("error query user: %v", err)
+				err := fmt.Errorf("error prepare query user: %v", err)
+				return err
+			}
+			defer stmt.Close()
+			res, err := stmt.Query(su.Name)
+			if err != nil {
+				err := fmt.Errorf("error execute query user: %v", err)
 				return err
 			}
 
 			if !res.Next() {
 				c.logger.Debug("create sql user ", su.Name)
-				_, err := db.Query("CREATE USER '" + su.Name + "'@'" + su.Host + "' IDENTIFIED BY '" + su.Password + "'")
+				// stmt, err := db.Prepare("CREATE USER IF NOT EXISTS `?`@`?` IDENTIFIED BY `?`")
+				// if err != nil {
+				// 	err := fmt.Errorf("error prepare creating user: %v", err)
+				// 	return err
+				// }
+				// defer stmt.Close()
+				// _, err = stmt.Exec(su.Name, su.Host, su.Password)
+				_, err := db.Query("CREATE USER IF NOT EXISTS '" + su.Name + "'@'" + su.Host + "' IDENTIFIED BY '" + su.Password + "'")
 				if err != nil {
-					err := fmt.Errorf("error creating user: %v", err)
+					err := fmt.Errorf("error execute creating user: %v", err)
 					return err
 				}
 
 				for _, pr := range su.Privileges {
 					c.logger.Debug("create privileges user ", su.Name)
-					// this query must be validated against sql injection
-					if strings.Contains(pr, "GRANT") {
+					validGrant, err := regexp.Compile("^[a-zA-Z0-9 '*\\._%]*$")
+					if err != nil {
+						c.logger.Error("error compile regex: %v", err)
+					}
+					if validGrant.MatchString(pr) {
 						_, err := db.Query(pr)
 						if err != nil {
 							c.logger.Error("error creating privileges: %v\n", err)
@@ -58,7 +74,7 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 							c.logger.Error("error flush privileges: %v\n", err)
 						}
 					} else {
-						c.logger.Error("privileges contains no GRANT: %s\n", pr)
+						c.logger.Error("error validating grant: ", pr)
 					}
 
 				}
@@ -66,19 +82,34 @@ func (c *Controller) CreateSqlUser(newRds *rdsv1alpha1.Rds) error {
 		}
 
 		for _, ds := range newRds.Spec.Databases {
-			c.logger.Debug("query existing database ", ds)
-			res, err := db.Query("SELECT schema_name FROM information_schema.schemata WHERE schema_name='" + ds + "'")
+			validSchema, err := regexp.Compile("^[a-zA-Z0-9]*$")
 			if err != nil {
-				err := fmt.Errorf("error query user: %v", err)
-				return err
+				c.logger.Error("error compile regex for schema: %v", err)
+				continue
 			}
-
-			if !res.Next() {
-				c.logger.Debug("create database ", ds)
-				_, err := db.Query("CREATE DATABASE " + ds)
+			if validSchema.MatchString(ds) {
+				c.logger.Debug("query existing database ", ds)
+				stmt, err := db.Prepare("SELECT schema_name FROM information_schema.schemata WHERE schema_name= ?")
 				if err != nil {
-					c.logger.Error("error creating database: %v\n", err)
+					err := fmt.Errorf("error prepare query schema: %v", err)
+					return err
 				}
+				defer stmt.Close()
+				res, err := stmt.Query(ds)
+				if err != nil {
+					err := fmt.Errorf("error execute query schema: %v", err)
+					return err
+				}
+
+				if !res.Next() {
+					c.logger.Debug("create database ", ds)
+					_, err := db.Query("CREATE DATABASE IF NOT EXISTS " + ds)
+					if err != nil {
+						c.logger.Error("error creating database: %v\n", err)
+					}
+				}
+			} else {
+				c.logger.Error("error schema name validation: ", ds)
 			}
 		}
 
