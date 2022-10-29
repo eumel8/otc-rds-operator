@@ -6,7 +6,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
 	github.com/gotway/gotway v0.0.11
-	github.com/opentelekomcloud/gophertelekomcloud v0.5.12
+	github.com/opentelekomcloud/gophertelekomcloud v0.5.23
 	golang.org/x/exp v0.0.0-20220909130031-43970299f5e2
 	k8s.io/api v0.23.6
 	k8s.io/apimachinery v0.23.6

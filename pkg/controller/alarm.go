@@ -6,13 +6,16 @@ import (
 
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/cloudeyeservice/alarmrule"
+
+	// "github.com/opentelekomcloud/gophertelekomcloud/openstack/cloudeyeservice/alarmrule"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/ces/v1/alarms"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/smn/v2/subscriptions"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/smn/v2/topics"
-	"github.com/opentelekomcloud/gophertelekomcloud/pagination"
+	// "github.com/opentelekomcloud/gophertelekomcloud/pagination"
 )
 
 // alarmrule has no list function
+/*
 const (
 	rootPath = "alarms"
 )
@@ -78,7 +81,7 @@ func ExtractAlarmRules(r pagination.Page) ([]alarmrule.AlarmRule, error) {
 func ExtractAlarmRulesInto(r pagination.Page, v interface{}) error {
 	return r.(AlarmRulePage).Result.ExtractIntoSlicePtr(v, "metric_alarms")
 }
-
+*/
 func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespace string) error {
 	nsRds := namespace + "_" + rdsName
 	// initial provider
@@ -142,119 +145,121 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	}
 
 	// list all alarmrules
-	pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
+	//ListAlarmOpts :=
+	alarmList, err := alarms.ListAlarms(ces, alarms.ListAlarmsOpts{})
 	if err != nil {
-		return fmt.Errorf("ces list failed allpages: %v", err)
+		return fmt.Errorf("ces list alarm failed: %v", err)
 	}
-	alarms, err := ExtractAlarmRules(pages)
-	if err != nil {
-		return fmt.Errorf("ces list extract failed: %v", err)
-	}
-	for _, alarm := range alarms {
+	//alarms, err := ExtractAlarmRules(pages)
+	//if err != nil {
+	//	return fmt.Errorf("ces list extract failed: %v", err)
+	//}
+	t := true
+	for _, alarm := range alarmList.MetricAlarms {
 		if alarm.AlarmName == nsRds+"-disc-util" {
 			return fmt.Errorf("alarmrule exists for %s", nsRds)
 		}
 	}
-	alarmDiscUtil := alarmrule.CreateOpts{
+	alarmDiscUtil := alarms.CreateAlarmOpts{
 		AlarmName:        nsRds + "-disc-util",
 		AlarmDescription: "RDS Operator Autopilot",
 		AlarmLevel:       2,
-		Metric: alarmrule.MetricOpts{
+		Metric: alarms.MetricForAlarm{
 			Namespace:  "SYS.RDS",
 			MetricName: "rds039_disk_util",
-			Dimensions: []alarmrule.DimensionOpts{{
+			Dimensions: []alarms.MetricsDimension{{
 				Name:  "rds_instance_id",
 				Value: instanceId,
 			}},
 		},
-		Condition: alarmrule.ConditionOpts{
-			Period:             300,
-			SuppressDuration:   1800,
+		Condition: alarms.Condition{
+			Period: 300,
+			//SuppressDuration:   1800,
 			Filter:             "average",
 			ComparisonOperator: ">=",
 			Value:              90,
 			Unit:               "",
 			Count:              3,
 		},
-		AlarmActions: []alarmrule.ActionOpts{{
+		AlarmActions: []alarms.AlarmActions{{
 			Type:             "notification",
 			NotificationList: []string{topic.TopicUrn},
 		}},
-		AlarmEnabled:       true,
-		AlarmActionEnabled: true,
+		AlarmEnabled:       &t,
+		AlarmActionEnabled: &t,
 	}
-	alarmCpuUtil := alarmrule.CreateOpts{
+	alarmCpuUtil := alarms.CreateAlarmOpts{
 		AlarmName:        nsRds + "-cpu-util",
 		AlarmDescription: "RDS Operator Autopilot",
 		AlarmLevel:       2,
-		Metric: alarmrule.MetricOpts{
+		Metric: alarms.MetricForAlarm{
 			Namespace:  "SYS.RDS",
 			MetricName: "rds001_cpu_util",
-			Dimensions: []alarmrule.DimensionOpts{{
+			Dimensions: []alarms.MetricsDimension{{
 				Name:  "rds_instance_id",
 				Value: instanceId,
 			}},
 		},
-		Condition: alarmrule.ConditionOpts{
-			Period:             300,
-			SuppressDuration:   1800,
+		Condition: alarms.Condition{
+			Period: 300,
+			// SuppressDuration:   1800,
 			Filter:             "average",
 			ComparisonOperator: ">=",
 			Value:              90,
 			Unit:               "",
 			Count:              3,
 		},
-		AlarmActions: []alarmrule.ActionOpts{{
+		AlarmActions: []alarms.AlarmActions{{
 			Type:             "notification",
 			NotificationList: []string{topic.TopicUrn},
 		}},
-		AlarmEnabled:       true,
-		AlarmActionEnabled: true,
+		AlarmEnabled:       &t,
+		AlarmActionEnabled: &t,
 	}
-	alarmMemUtil := alarmrule.CreateOpts{
+	alarmMemUtil := alarms.CreateAlarmOpts{
 		AlarmName:        nsRds + "-mem-util",
 		AlarmDescription: "RDS Operator Autopilot",
 		AlarmLevel:       2,
-		Metric: alarmrule.MetricOpts{
+		Metric: alarms.MetricForAlarm{
 			Namespace:  "SYS.RDS",
 			MetricName: "rds002_mem_util",
-			Dimensions: []alarmrule.DimensionOpts{{
+			Dimensions: []alarms.MetricsDimension{{
 				Name:  "rds_instance_id",
 				Value: instanceId,
 			}},
 		},
-		Condition: alarmrule.ConditionOpts{
-			Period:             300,
-			SuppressDuration:   1800,
+		Condition: alarms.Condition{
+			Period: 300,
+			// SuppressDuration:   1800,
 			Filter:             "average",
 			ComparisonOperator: ">=",
 			Value:              90,
 			Unit:               "",
 			Count:              3,
 		},
-		AlarmActions: []alarmrule.ActionOpts{{
+		AlarmActions: []alarms.AlarmActions{{
 			Type:             "notification",
 			NotificationList: []string{topic.TopicUrn},
 		}},
-		AlarmEnabled:       true,
-		AlarmActionEnabled: true,
+		AlarmEnabled:       &t,
+		AlarmActionEnabled: &t,
 	}
-	alarmDiscUtilResult, err := alarmrule.Create(ces, alarmDiscUtil).Extract()
-	c.logger.Info(alarmDiscUtilResult.AlarmID)
+	alarmIdDiscUtil, err := alarms.CreateAlarm(ces, alarmDiscUtil)
+	c.logger.Info(alarmIdDiscUtil)
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmDiscUtil: %v", err)
 	}
-	alarmCpuUtilResult, err := alarmrule.Create(ces, alarmCpuUtil).Extract()
-	c.logger.Info(alarmCpuUtilResult.AlarmID)
+	alarmIdCpuUtil, err := alarms.CreateAlarm(ces, alarmCpuUtil)
+	c.logger.Info(alarmIdCpuUtil)
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmCpuUtil: %v", err)
 	}
 
-	alarmMemUtilResult, err := alarmrule.Create(ces, alarmMemUtil).Extract()
+	alarmIdMemUtil, err := alarms.CreateAlarm(ces, alarmMemUtil)
 	if err != nil {
 		c.logger.Debug("error creating alarmrule alarmMemUtil: %v", err)
 	}
-	c.logger.Info(alarmMemUtilResult.AlarmID)
+	c.logger.Info(alarmIdMemUtil)
 	return nil
 }
 
@@ -277,18 +282,13 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	}
 
 	// delete alarm rules
-	pages, err := AlarmRuleList(ces, &ListAlarmRuleOpts{}).AllPages()
-	if err != nil {
-		return fmt.Errorf("ces list failed allpages: %v", err)
-	}
-	alarms, err := ExtractAlarmRules(pages)
-	if err != nil {
-		return fmt.Errorf("ces list extract failed: %v", err)
-	}
-	for _, alarm := range alarms {
+
+	alarmList, err := alarms.ListAlarms(ces, alarms.ListAlarmsOpts{})
+
+	for _, alarm := range alarmList.MetricAlarms {
 		if strings.Contains(alarm.AlarmName, nsRds) {
-			alarmDeleteResult := alarmrule.Delete(ces, alarm.AlarmID)
-			c.logger.Debug("ALARM Rule Delete: ", alarmDeleteResult.ErrResult)
+			alarmDeleteResult := alarms.DeleteAlarm(ces, alarm.AlarmId)
+			c.logger.Debug("ALARM Rule Delete: ", alarmDeleteResult)
 		}
 	}
 
