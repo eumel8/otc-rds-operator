@@ -1,4 +1,5 @@
 {{ $fullName := include "otc-rds-operator.fullname" . }}
+{{ $releaseNamespace := .Release.Namespace -}}
 {{ $fullNameOps := print (include "otc-rds-operator.fullname" .) }}
 {{- if .Values.watchNamespaces }}
 {{- if not (contains "*" .Values.watchNamespaces) }}
@@ -19,7 +20,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ $fullName }}
-    namespace: {{ $s2 }}
+    namespace: {{ $releaseNamespace }}
 {{ end }}
 {{ end }}
 {{ end }}

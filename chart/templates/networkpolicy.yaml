@@ -15,6 +15,12 @@ spec:
     - port: 5432
       protocol: TCP
   - ports:
+    - port: 6443
+      protocol: TCP
+  - ports:
+    - port: 443
+      protocol: TCP
+  - ports:
     - port: 53
       protocol: TCP
   - ports:
