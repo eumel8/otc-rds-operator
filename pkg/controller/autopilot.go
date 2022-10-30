@@ -143,6 +143,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 				if strings.Contains(subscriber.Message, "rds001_cpu_util") {
 					c.logger.Info("rds001_cpu_util alarm for ", namespace, "_", rdsName)
 					newFlavor, err := c.RdsFlavorLookup(returnRds, "cpu")
+					c.logger.Debug("cpu alarm, received flavor: ", newFlavor)
 					if err != nil {
 						err := fmt.Errorf("error lookup next flavor rds001_cpu_util alarm: %v", err)
 						c.logger.Error(err)
