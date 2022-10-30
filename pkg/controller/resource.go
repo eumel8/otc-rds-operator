@@ -771,6 +771,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 }
 
 func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) (string, error) {
+	c.logger.Debug("RdsFlavorLookup: ", raisetype)
 	provider, err := GetProvider()
 	if err != nil {
 		return "", err
