@@ -205,9 +205,9 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 			// SuppressDuration:   1800,
 			Filter:             "average",
 			ComparisonOperator: ">=",
-			Value:              90,
+			Value:              50,
 			Unit:               "",
-			Count:              3,
+			Count:              1,
 		},
 		AlarmActions: []alarms.AlarmActions{{
 			Type:             "notification",
