@@ -849,6 +849,7 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})
 		if len(posflavor) > 0 {
+			c.logger.Debug("Debug CPU FLAVOR: ", posflavor)
 			return posflavor[0].Spec, nil
 		}
 
