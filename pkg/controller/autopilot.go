@@ -127,7 +127,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 
 				c.logger.Debug("SMN received message: ", subscriber.Message)
 				if strings.Contains(subscriber.Message, "rds039_disk_util") {
-					c.logger.Info("rds039_disk_util alarm ", rdsName, namespace)
+					c.logger.Info("rds039_disk_util alarm ", namespace, "_", rdsName)
 					returnRds.Spec.Volumesize = returnRds.Spec.Volumesize + 10
 					returnNewRds, err := rdsclientset.McspsV1alpha1().Rdss(namespace).Update(ctx, returnRds, metav1.UpdateOptions{})
 					if returnRds.Spec.Volumesize != returnNewRds.Spec.Volumesize {
@@ -141,7 +141,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 
 				}
 				if strings.Contains(subscriber.Message, "rds001_cpu_util") {
-					c.logger.Info("rds001_cpu_util alarm for ", rdsName, namespace)
+					c.logger.Info("rds001_cpu_util alarm for ", namespace, "_", rdsName)
 					newFlavor, err := c.RdsFlavorLookup(returnRds, "cpu")
 					if err != nil {
 						err := fmt.Errorf("error lookup next flavor rds001_cpu_util alarm: %v", err)
@@ -156,7 +156,7 @@ func (c *Controller) SmnReceiver(ctx context.Context) error {
 					}
 				}
 				if strings.Contains(subscriber.Message, "rds002_mem_util") {
-					c.logger.Info("rds002_mem_util alarm for", rdsName, namespace)
+					c.logger.Info("rds002_mem_util alarm for", namespace, "_", rdsName)
 					newFlavor, err := c.RdsFlavorLookup(returnRds, "mem")
 					if err != nil {
 						err := fmt.Errorf("error lookup next flavor rds002_mem_util alarm: %v", err)
