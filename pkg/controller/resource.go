@@ -14,7 +14,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/gochore/uniq"
 	// "github.com/googlecodelabs/tools/claat/util"
+
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
@@ -846,15 +848,14 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 				}
 			}
 		}
-		sort.SliceStable(posflavor, func(i, j int) bool {
-			return posflavor[i].VCPUs < posflavor[j].VCPUs
-		})
 		/*
-			uniqflavor := make([]int, 0)
-			for key := range posflavor {
-				uniqflavor = append(uniqflavor, key.Spec)
-			}
+			sort.Slice(posflavor, func(i, j int) bool {
+				return posflavor[i].VCPUs < posflavor[j].VCPUs
+			})
 		*/
+		posflavor = posflavor[:uniq.Slice(posflavor, func(i, j int) bool {
+			return posflavor[i].VCPUs < posflavor[j].VCPUs
+		})]
 		if len(posflavor) > 0 {
 			c.logger.Debug("Debug CPU FLAVOR 0: ==", posflavor[0].Spec, "==")
 			c.logger.Debug("Debug CPU FLAVOR 1: ==", posflavor[1].Spec, "==")
