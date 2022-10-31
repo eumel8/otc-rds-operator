@@ -856,13 +856,11 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 		posflavor = posflavor[:uniq.Slice(posflavor, func(i, j int) bool {
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})]
-		if len(posflavor) > 0 {
-			c.logger.Debug("Debug CPU FLAVOR 0: ==", posflavor[0].Spec, "==")
-			c.logger.Debug("Debug CPU FLAVOR 1: ==", posflavor[1].Spec, "==")
-			c.logger.Debug("Debug CPU FLAVOR 2: ==", posflavor[2].Spec, "==")
-			c.logger.Debug("Debug CPU FLAVOR 3: ==", posflavor[3].Spec, "==")
+		// sometimes the current flavor is received after this search, so we will return the next flavor
+		if newRds.Spec.Flavorref == posflavor[0].Spec {
+			return posflavor[1].Spec, nil
+		} else {
 			return posflavor[0].Spec, nil
-			// return posflavor[0].Spec, nil
 		}
 
 	case "mem":
