@@ -14,6 +14,7 @@ import (
 	"os"
 	"time"
 
+	// "github.com/googlecodelabs/tools/claat/util"
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
@@ -848,12 +849,17 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 		sort.Slice(posflavor, func(i, j int) bool {
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})
+		uniqflavor := make([]int, 0)
+		for key := range posflavor {
+			uniqflavor = append(uniqflavor, key)
+		}
 		if len(posflavor) > 0 {
-			c.logger.Debug("Debug CPU FLAVOR 0: ==", posflavor[0].Spec, "==")
-			c.logger.Debug("Debug CPU FLAVOR 1: ==", posflavor[1].Spec, "==")
-			c.logger.Debug("Debug CPU FLAVOR 2: ==", posflavor[2].Spec, "==")
-			c.logger.Debug("Debug CPU FLAVOR 3: ==", posflavor[3].Spec, "==")
+			c.logger.Debug("Debug CPU FLAVOR 0: ==", uniqflavor[0], "==")
+			c.logger.Debug("Debug CPU FLAVOR 1: ==", uniqflavor[1], "==")
+			c.logger.Debug("Debug CPU FLAVOR 2: ==", uniqflavor[2], "==")
+			c.logger.Debug("Debug CPU FLAVOR 3: ==", uniqflavor[3], "==")
 			return posflavor[0].Spec, nil
+			// return posflavor[0].Spec, nil
 		}
 
 	case "mem":
@@ -1018,3 +1024,17 @@ func (c *Controller) UpdateStatus(ctx context.Context, newRds *rdsv1alpha1.Rds) 
 	}
 	return nil
 }
+
+/*
+func Unique(stringSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range stringSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+*/
