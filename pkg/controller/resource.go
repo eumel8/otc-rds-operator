@@ -846,18 +846,20 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 				}
 			}
 		}
-		sort.Slice(posflavor, func(i, j int) bool {
+		sort.SliceStable(posflavor, func(i, j int) bool {
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})
-		uniqflavor := make([]int, 0)
-		for key := range posflavor {
-			uniqflavor = append(uniqflavor, key)
-		}
+		/*
+			uniqflavor := make([]int, 0)
+			for key := range posflavor {
+				uniqflavor = append(uniqflavor, key.Spec)
+			}
+		*/
 		if len(posflavor) > 0 {
-			c.logger.Debug("Debug CPU FLAVOR 0: ==", uniqflavor[0], "==")
-			c.logger.Debug("Debug CPU FLAVOR 1: ==", uniqflavor[1], "==")
-			c.logger.Debug("Debug CPU FLAVOR 2: ==", uniqflavor[2], "==")
-			c.logger.Debug("Debug CPU FLAVOR 3: ==", uniqflavor[3], "==")
+			c.logger.Debug("Debug CPU FLAVOR 0: ==", posflavor[0].Spec, "==")
+			c.logger.Debug("Debug CPU FLAVOR 1: ==", posflavor[1].Spec, "==")
+			c.logger.Debug("Debug CPU FLAVOR 2: ==", posflavor[2].Spec, "==")
+			c.logger.Debug("Debug CPU FLAVOR 3: ==", posflavor[3].Spec, "==")
 			return posflavor[0].Spec, nil
 			// return posflavor[0].Spec, nil
 		}
