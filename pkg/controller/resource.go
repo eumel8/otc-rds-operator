@@ -806,6 +806,7 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 	}
 
 	rdsFlavors, err := flavors.ExtractDbFlavors(allFlavorPages)
+	c.logger.Debug("Debug rdsFlavors: ", rdsFlavors)
 	if err != nil {
 		klog.Exitf("unable to extract flavor: %v", err)
 		return "", err
