@@ -806,7 +806,6 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 	}
 
 	rdsFlavors, err := flavors.ExtractDbFlavors(allFlavorPages)
-	c.logger.Debug("Debug rdsFlavors: ", rdsFlavors)
 	if err != nil {
 		klog.Exitf("unable to extract flavor: %v", err)
 		return "", err
@@ -850,7 +849,10 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})
 		if len(posflavor) > 0 {
-			c.logger.Debug("Debug CPU FLAVOR: ", posflavor)
+			c.logger.Debug("Debug CPU FLAVOR 0: ==", posflavor[0].Spec, "==")
+			c.logger.Debug("Debug CPU FLAVOR 1: ==", posflavor[1].Spec, "==")
+			c.logger.Debug("Debug CPU FLAVOR 2: ==", posflavor[2].Spec, "==")
+			c.logger.Debug("Debug CPU FLAVOR 3: ==", posflavor[3].Spec, "==")
 			return posflavor[0].Spec, nil
 		}
 
