@@ -835,7 +835,7 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 									Spec  string
 								}{iCpu, rds.RAM, rds.SpecCode})
 							}
-							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") {
+							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") && rds.VCPUs > curCpu {
 								iCpu, _ := strconv.Atoi(rds.VCPUs)
 								posflavor = append(posflavor, struct {
 									VCPUs int
@@ -857,14 +857,18 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})]
 		// sometimes the current flavor is received after this search, so we will return the next flavor
+
 		for _, fl := range posflavor {
 			c.logger.Debug("DEBUG RdsFlavorList: ", fl.Spec)
 		}
-		if newRds.Spec.Flavorref == posflavor[0].Spec {
-			return posflavor[1].Spec, nil
-		} else {
-			return posflavor[0].Spec, nil
-		}
+		/*
+			if newRds.Spec.Flavorref == posflavor[0].Spec {
+				return posflavor[1].Spec, nil
+			} else {
+				return posflavor[0].Spec, nil
+			}
+		*/
+		return posflavor[0].Spec, nil
 
 	case "mem":
 		for _, rds := range rdsFlavors {
