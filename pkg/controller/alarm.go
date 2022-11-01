@@ -7,81 +7,11 @@ import (
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 
-	// "github.com/opentelekomcloud/gophertelekomcloud/openstack/cloudeyeservice/alarmrule"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/ces/v1/alarms"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/smn/v2/subscriptions"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/smn/v2/topics"
-	// "github.com/opentelekomcloud/gophertelekomcloud/pagination"
 )
 
-// alarmrule has no list function
-/*
-const (
-	rootPath = "alarms"
-)
-
-func rootURL(c *golangsdk.ServiceClient) string {
-	return c.ServiceURL(rootPath)
-}
-
-type AlarmRulePage struct {
-	pagination.SinglePageBase
-}
-
-type ListAlarmRuleOpts struct {
-	AlarmName    string   `q:"alarm_name"`
-	MetricAlarms []string `q:"metric_alarms"`
-	MetaData     MetaData `q:"meta_data"`
-}
-
-type MetaData struct {
-	Count  int    `q:"count"`
-	Marker string `q:"marker"`
-	Total  int    `q:"total"`
-}
-
-type ListAlarmRuleBuilder interface {
-	ToAlarmRuleListDetailQuery() (string, error)
-}
-
-func (opts ListAlarmRuleOpts) ToAlarmRuleListDetailQuery() (string, error) {
-	q, err := golangsdk.BuildQueryString(opts)
-	if err != nil {
-		return "", err
-	}
-	return q.String(), err
-}
-
-func AlarmRuleList(client *golangsdk.ServiceClient, opts ListAlarmRuleBuilder) pagination.Pager {
-	url := rootURL(client)
-	if opts != nil {
-		query, err := opts.ToAlarmRuleListDetailQuery()
-
-		if err != nil {
-			return pagination.Pager{Err: err}
-		}
-		url += query
-	}
-
-	pageAlarmRuleList := pagination.NewPager(client, url, func(r pagination.PageResult) pagination.Page {
-		return AlarmRulePage{pagination.SinglePageBase(r)}
-	})
-
-	alarmruleheader := map[string]string{"Content-Type": "application/json"}
-	pageAlarmRuleList.Headers = alarmruleheader
-	return pageAlarmRuleList
-}
-
-func ExtractAlarmRules(r pagination.Page) ([]alarmrule.AlarmRule, error) {
-	var s []alarmrule.AlarmRule
-	err := ExtractAlarmRulesInto(r, &s)
-	return s, err
-}
-
-func ExtractAlarmRulesInto(r pagination.Page, v interface{}) error {
-	return r.(AlarmRulePage).Result.ExtractIntoSlicePtr(v, "metric_alarms")
-}
-*/
 func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName string, namespace string) error {
 	nsRds := namespace + "_" + rdsName
 	// initial provider
@@ -101,7 +31,6 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 	}
 	// TODO separate return existing error
 	// check if topic for rds exists
-
 	tl, err := topics.List(smn).Extract()
 	if err != nil {
 		return fmt.Errorf("unable to get topic list: %v", err)
@@ -224,9 +153,9 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 			Period:             300,
 			Filter:             "average",
 			ComparisonOperator: ">=",
-			Value:              30,
+			Value:              90,
 			Unit:               "",
-			Count:              1,
+			Count:              3,
 		},
 		AlarmActions: []alarms.AlarmActions{{
 			Type:             "notification",
@@ -273,9 +202,7 @@ func (c *Controller) DeleteAlarm(rdsName string, namespace string) error {
 	}
 
 	// delete alarm rules
-
 	alarmList, err := alarms.ListAlarms(ces, alarms.ListAlarmsOpts{})
-
 	for _, alarm := range alarmList.MetricAlarms {
 		if strings.Contains(alarm.AlarmName, nsRds) {
 			alarmDeleteResult := alarms.DeleteAlarm(ces, alarm.AlarmId)
