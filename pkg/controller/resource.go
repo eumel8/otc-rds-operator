@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -848,27 +847,12 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 				}
 			}
 		}
-		/*
-			sort.Slice(posflavor, func(i, j int) bool {
-				return posflavor[i].VCPUs < posflavor[j].VCPUs
-			})
-		*/
 		posflavor = posflavor[:uniq.Slice(posflavor, func(i, j int) bool {
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})]
-		// sometimes the current flavor is received after this search, so we will return the next flavor
-
-		for _, fl := range posflavor {
-			c.logger.Debug("DEBUG RdsFlavorList: ", fl.Spec)
+		if len(posflavor) > 0 {
+			return posflavor[0].Spec, nil
 		}
-		/*
-			if newRds.Spec.Flavorref == posflavor[0].Spec {
-				return posflavor[1].Spec, nil
-			} else {
-				return posflavor[0].Spec, nil
-			}
-		*/
-		return posflavor[0].Spec, nil
 
 	case "mem":
 		for _, rds := range rdsFlavors {
@@ -900,9 +884,10 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 
 			}
 		}
-		sort.SliceStable(posflavor, func(i, j int) bool {
+
+		posflavor = posflavor[:uniq.Slice(posflavor, func(i, j int) bool {
 			return posflavor[i].RAM < posflavor[j].RAM
-		})
+		})]
 		if len(posflavor) > 0 {
 			return posflavor[0].Spec, nil
 		}

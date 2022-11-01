@@ -144,16 +144,10 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 		c.logger.Debug("error create subscription: %v", err)
 	}
 
-	// list all alarmrules
-	//ListAlarmOpts :=
 	alarmList, err := alarms.ListAlarms(ces, alarms.ListAlarmsOpts{})
 	if err != nil {
 		return fmt.Errorf("ces list alarm failed: %v", err)
 	}
-	//alarms, err := ExtractAlarmRules(pages)
-	//if err != nil {
-	//	return fmt.Errorf("ces list extract failed: %v", err)
-	//}
 	t := true
 	for _, alarm := range alarmList.MetricAlarms {
 		if alarm.AlarmName == nsRds+"-disc-util" {
@@ -173,8 +167,7 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 			}},
 		},
 		Condition: alarms.Condition{
-			Period: 300,
-			//SuppressDuration:   1800,
+			Period:             300,
 			Filter:             "average",
 			ComparisonOperator: ">=",
 			Value:              90,
@@ -201,13 +194,12 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 			}},
 		},
 		Condition: alarms.Condition{
-			Period: 300,
-			// SuppressDuration:   1800,
+			Period:             300,
 			Filter:             "average",
 			ComparisonOperator: ">=",
-			Value:              50,
+			Value:              90,
 			Unit:               "",
-			Count:              1,
+			Count:              3,
 		},
 		AlarmActions: []alarms.AlarmActions{{
 			Type:             "notification",
@@ -229,13 +221,12 @@ func (c *Controller) CreateAlarm(instanceId string, smnEndpoint string, rdsName 
 			}},
 		},
 		Condition: alarms.Condition{
-			Period: 300,
-			// SuppressDuration:   1800,
+			Period:             300,
 			Filter:             "average",
 			ComparisonOperator: ">=",
-			Value:              90,
+			Value:              30,
 			Unit:               "",
-			Count:              3,
+			Count:              1,
 		},
 		AlarmActions: []alarms.AlarmActions{{
 			Type:             "notification",
