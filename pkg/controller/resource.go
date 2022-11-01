@@ -857,6 +857,9 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
 		})]
 		// sometimes the current flavor is received after this search, so we will return the next flavor
+		for _, fl := range posflavor {
+			c.logger.Debug("DEBUG RdsFlavorList: ", fl.Spec)
+		}
 		if newRds.Spec.Flavorref == posflavor[0].Spec {
 			return posflavor[1].Spec, nil
 		} else {
