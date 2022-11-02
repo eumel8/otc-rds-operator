@@ -6,13 +6,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gochore/uniq"
+	// "github.com/googlecodelabs/tools/claat/util"
 
 	"github.com/gophercloud/utils/client"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
@@ -771,6 +773,7 @@ func (c *Controller) rdsUpdateStatus(ctx context.Context, client *golangsdk.Serv
 }
 
 func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) (string, error) {
+	c.logger.Debug("RdsFlavorLookup: ", raisetype)
 	provider, err := GetProvider()
 	if err != nil {
 		return "", err
@@ -831,7 +834,7 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 									Spec  string
 								}{iCpu, rds.RAM, rds.SpecCode})
 							}
-							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") {
+							if !strings.HasSuffix(newRds.Spec.Flavorref, ".ha") && !strings.HasSuffix(rds.SpecCode, ".rr") && !strings.HasSuffix(rds.SpecCode, ".ha") && rds.VCPUs > curCpu {
 								iCpu, _ := strconv.Atoi(rds.VCPUs)
 								posflavor = append(posflavor, struct {
 									VCPUs int
@@ -844,9 +847,9 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 				}
 			}
 		}
-		sort.Slice(posflavor, func(i, j int) bool {
+		posflavor = posflavor[:uniq.Slice(posflavor, func(i, j int) bool {
 			return posflavor[i].VCPUs < posflavor[j].VCPUs
-		})
+		})]
 		if len(posflavor) > 0 {
 			return posflavor[0].Spec, nil
 		}
@@ -881,9 +884,10 @@ func (c *Controller) RdsFlavorLookup(newRds *rdsv1alpha1.Rds, raisetype string) 
 
 			}
 		}
-		sort.SliceStable(posflavor, func(i, j int) bool {
+
+		posflavor = posflavor[:uniq.Slice(posflavor, func(i, j int) bool {
 			return posflavor[i].RAM < posflavor[j].RAM
-		})
+		})]
 		if len(posflavor) > 0 {
 			return posflavor[0].Spec, nil
 		}
