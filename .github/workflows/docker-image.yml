@@ -13,6 +13,7 @@ permissions:
   pull-requests: write
   issues: write
   repository-projects: write
+  packages: write
     
 env:
   IMAGE_NAME: otc-rds-operator
