@@ -2,6 +2,10 @@
 
 Kubernetes Operator for OTC RDS. Manage your OTC RDS instances in Kubernetes.
 
+[![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Go Report Card](https://goreportcard.com/badge/github.com/eumel8/otc-rds-operator)](https://goreportcard.com/report/github.com/eumel8/otc-rds-operator)
+
+
 ![](otc-rds-operator.png)
 
 ## Presentations
@@ -15,11 +19,6 @@ Kubernetes Operator for OTC RDS. Manage your OTC RDS instances in Kubernetes.
 
 We provide a [Demo App](https://github.com/eumel8/oro-demoapp) how to interact
 with RDS resources in Go apps.
-
-[![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-
-`master` branch might be broken, look at the [release page](https://github.com/eumel8/otc-rds-operator/releases) 
-to use a functional version.
 
 ## Prerequisites
 
