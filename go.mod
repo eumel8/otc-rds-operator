@@ -7,7 +7,7 @@ require (
 	github.com/gochore/uniq v1.1.0
 	github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
 	github.com/gotway/gotway v0.0.12
-	github.com/opentelekomcloud/gophertelekomcloud v0.5.23
+	github.com/opentelekomcloud/gophertelekomcloud v0.5.25
 	golang.org/x/exp v0.0.0-20220909130031-43970299f5e2
 	k8s.io/api v0.25.4
 	k8s.io/apimachinery v0.25.4
