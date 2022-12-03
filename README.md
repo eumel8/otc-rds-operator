@@ -4,13 +4,13 @@ Kubernetes Operator for OTC RDS. Manage your OTC RDS instances in Kubernetes.
 
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Go Report Card](https://goreportcard.com/badge/github.com/eumel8/otc-rds-operator)](https://goreportcard.com/report/github.com/eumel8/otc-rds-operator)
-
-
-![](otc-rds-operator.png)
+[![Release](https://img.shields.io/github/v/release/eumel8/otc-rds-operator?display_name=tag)](https://github.com/eumel8/otc-rds-operator/releases)
+[![RDS](https://img.shields.io/github/search/eumel8/otc-rds-operator/rds)](https://github.com/topics/rds)
 
 ## Presentations
 
-* Build your [own Level 5 Operator on K8S](https://slides.com/frankkloeker/otc-rds-operator)
+* Build your [own Level 5 Operator on K8S](https://slides.com/frankkloeker/otc-rds-operator) (Slides)
+* [KCD Berlin 2022](https://www.youtube.com/watch?v=ZEnu0JpyjQs)
 * [Blog](https://eumel8.github.io/blog/2022/05/27/build-your-own-level-5-operator-on-k8s-en.html)
 * Current [Feature Set](https://slides.com/frankkloeker/otc-rds-operator-feature)
 * Operator on [Operator Hub](https://operatorhub.io/operator/otc-rds-operator)
