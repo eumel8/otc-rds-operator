@@ -46,7 +46,7 @@ jobs:
         echo "{{ github.ref.type }}"
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        cosign sign --key env://COSIGN_KEY $IMAGE_ID:$VERSION
+        cosign sign -d --key env://COSIGN_KEY $IMAGE_ID:$VERSION
       env:
         COSIGN_KEY: ${{secrets.COSIGN_KEY}}
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
