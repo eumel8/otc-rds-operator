@@ -7,7 +7,7 @@ set -o pipefail
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 HACK_PKG=${HACK_PKG:-$(
   cd "${SCRIPT_ROOT}"
-  ls -d -1 ./vendor/k8s.io/kube_codegen.sh 2>/dev/null || echo ../code-generator
+  ls -d -1 ./vendor/k8s.io/code-generator/kube_codegen.sh 2>/dev/null || echo ../code-generator
 )}
 GO_PKG="github.com/eumel8/otc-rds-operator/pkg"
 
