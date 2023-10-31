@@ -46,7 +46,7 @@ jobs:
         echo "{{ github.ref.type }}"
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        cosign sign --key env://COSIGN_KEY $IMAGE_ID:$VERSION
+        cosign sign --key env://COSIGN_KEY --tlog-upload=false $IMAGE_ID:$VERSION
       env:
         COSIGN_KEY: ${{secrets.COSIGN_KEY}}
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
@@ -58,15 +58,7 @@ jobs:
         VERSION=${GITHUB_REF_NAME}
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        cosign sign --key env://COSIGN_KEY $IMAGE_ID:$VERSION
+        cosign sign --key env://COSIGN_KEY --tlog-upload=false $IMAGE_ID:$VERSION
       env:
         COSIGN_KEY: ${{secrets.COSIGN_KEY}}
         COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
-    - name: slack - GitHub Actions Slack integration
-      uses: act10ns/slack@v1.5.0
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      with: 
-        status: ${{ job.status }}
-        channel: '#dt-paas-alerts-test-2'
-        message: Deploying {{ env.GITHUB_REF_NAME }} branch
