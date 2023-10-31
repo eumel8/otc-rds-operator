@@ -11,7 +11,7 @@ HACK_PKG=${HACK_PKG:-$(
 )}
 GO_PKG="github.com/eumel8/otc-rds-operator/pkg"
 
-bash "${HACK_PKG}"/kube_codegen.sh "all" \
+bash "${HACK_PKG}"/code-generator "all" \
   ${GO_PKG}/rds/v1alpha1/apis \
   ${GO_PKG} \
   rds:v1alpha1 \
