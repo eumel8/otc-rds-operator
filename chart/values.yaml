@@ -88,11 +88,19 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+podSecurityContext:
+  fsGroup: 1000
+  supplementalGroups:
+  - 1000
 securityContext:
   allowPrivilegeEscalation: false
-  capabilities: {}
+  capabilities:
+    drop:
+    - ALL
   privileged: false
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
+  runAsGroup: 1000
 
 nodeSelector: {}
