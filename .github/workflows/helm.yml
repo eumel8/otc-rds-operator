@@ -30,6 +30,6 @@ jobs:
       with:
         args: |
           helm plugin install https://github.com/quintush/helm-unittest
-          helm unittest -3 chart/    
+          helm unittest chart/    
       env:
         KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
