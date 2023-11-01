@@ -30,7 +30,7 @@ jobs:
     - name: Log in to registry
       # This is where you will update the PAT to GITHUB_TOKEN
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-    - name: Push & Sign image
+    - name: Push image
       run: |
         IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
         # Change all uppercase to lowercase
@@ -46,10 +46,6 @@ jobs:
         echo "{{ github.ref.type }}"
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
-        cosign sign --key env://COSIGN_KEY --tlog-upload=false $IMAGE_ID:$VERSION
-      env:
-        COSIGN_KEY: ${{secrets.COSIGN_KEY}}
-        COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
     - name: Push & Sign image release
       if: github.ref.type == 'tag'
       run: |
