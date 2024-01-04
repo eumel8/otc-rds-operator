@@ -9,7 +9,7 @@ require (
 	github.com/gotway/gotway v0.0.13
 	github.com/opentelekomcloud/gophertelekomcloud v0.5.25
 	golang.org/x/exp v0.0.0-20220909130031-43970299f5e2
-	k8s.io/api v0.28.4
+	k8s.io/api v0.29.0
 	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go v0.28.4
 	k8s.io/code-generator v0.29.0
