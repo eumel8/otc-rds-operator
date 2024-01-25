@@ -1,5 +1,7 @@
 # OTC RDS Operator
 
+DEPRECATION NOTICE (Jan 2024): It was a great experience to learn and grow with this project and bring things together in Cloud and Kubernetes. Due the focus shift there is no need anymore for an RDS operator on Open Telekom Cloud. I stopped maintenance this project and started to archive.
+
 Kubernetes Operator for OTC RDS. Manage your OTC RDS instances in Kubernetes.
 
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
